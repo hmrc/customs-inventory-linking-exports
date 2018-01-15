@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<inventoryLinkingQueryRequest xmlns="http://gov.uk/customs/inventoryLinking/v1">
+  <queryUCR>
+    <ucr>GB/AAAA-00000</ucr>
+    <ucrType>D</ucrType>
+  </queryUCR>
+  <agentDetails>
+    <EORI>EORI</EORI>
+    <agentLocation>location</agentLocation>
+    <agentRole>AGR</agentRole>
+  </agentDetails>
+</inventoryLinkingQueryRequest>

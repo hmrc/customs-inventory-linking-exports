@@ -1,0 +1,39 @@
+@import play.api.libs.json.Json
+@import uk.gov.hmrc.customs.inventorylinking.export.model.ApiDefinitionConfig
+@(apiDefinitionConfig: ApiDefinitionConfig)
+{
+  "scopes": [
+    {
+      "key": "@apiDefinitionConfig.apiScope",
+      "name": "Inventory Exports Movement Request",
+      "description": "Submit an Inventory Exports Movement Request"
+    }
+  ],
+  "api": {
+    "name": "Customs Inventory Linking Exports",
+    "description": "Customs Inventory Linking Exports",
+    "context": "@apiDefinitionConfig.apiContext",
+    "versions": [
+      {
+        "version": "1.0",
+        "status": "PUBLISHED",
+        "access": {
+          "type": "PRIVATE",
+          "whitelistedApplicationIds": @Json.toJson(apiDefinitionConfig.whitelistedApplicationIds)
+        },
+        "fieldDefinitions": [
+          {
+            "name": "callbackUrl",
+            "description": "The URL of your HTTPS webservice that HMRC calls to notify you regarding request submission.",
+            "type": "URL"
+          },
+          {
+            "name": "securityToken",
+            "description": "The full value of Authorization HTTP header that will be used when notifying you.",
+            "type": "SecureToken"
+          }
+        ]
+      }
+    ]
+  }
+}
