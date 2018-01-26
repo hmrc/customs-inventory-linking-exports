@@ -16,7 +16,8 @@
     "versions": [
       {
         "version": "1.0",
-        "status": "PUBLISHED",
+        "status": "STABLE",
+        "endpointsEnabled": true,
         "access": {
           "type": "PRIVATE",
           "whitelistedApplicationIds": @Json.toJson(apiDefinitionConfig.whitelistedApplicationIds)
