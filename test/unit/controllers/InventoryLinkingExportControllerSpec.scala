@@ -24,7 +24,6 @@ import play.api.libs.json.Json
 import play.api.mvc._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import play.mvc.Http.Status.NO_CONTENT
 import uk.gov.hmrc.auth.core.AuthProvider.{GovernmentGateway, PrivilegedApplication}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.{EmptyRetrieval, Retrievals}
@@ -107,18 +106,18 @@ class InventoryLinkingExportControllerSpec extends UnitSpec with Matchers with M
       }
     }
 
-    "respond with status 204 and conversationId in header for a processed valid CSP request" in {
+    "respond with status 202 and conversationId in header for a processed valid CSP request" in {
       authoriseCsp()
       testSubmitResult(ValidRequest) { result =>
-        status(result) shouldBe NO_CONTENT
+        status(result) shouldBe ACCEPTED
         header("X-Conversation-ID", result) shouldBe Some(conversationIdValue)
       }
     }
 
-    "respond with status 204 and conversationId in header for a processed valid non-CSP request" in {
+    "respond with status 202 and conversationId in header for a processed valid non-CSP request" in {
       authoriseNonCsp(Some(declarantEori))
       testSubmitResult(ValidRequest) { result =>
-        status(result) shouldBe NO_CONTENT
+        status(result) shouldBe ACCEPTED
         header("X-Conversation-ID", result) shouldBe Some(conversationIdValue)
       }
     }

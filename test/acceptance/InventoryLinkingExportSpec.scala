@@ -73,8 +73,8 @@ class InventoryLinkingExportSpec extends AcceptanceTestSpec
       When("a POST request with data is sent to the API")
       val result: Future[Result] = route(app = app, request).value
 
-      Then(s"a response with a 204 (NO_CONTENT) status is received")
-      status(result) shouldBe NO_CONTENT
+      Then("a response with a 202 (ACCEPTED) status is received")
+      status(result) shouldBe ACCEPTED
 
       And("the response body is empty")
       contentAsString(result) shouldBe 'empty
@@ -94,7 +94,7 @@ class InventoryLinkingExportSpec extends AcceptanceTestSpec
       When("a POST request with data is sent to the API")
       val result: Future[Result] = route(app = app, request).value
 
-      Then(s"a response with a 401 (UNAUTHORIZED) status is received")
+      Then("a response with a 401 (UNAUTHORIZED) status is received")
       status(result) shouldBe UNAUTHORIZED
 
       And("the response body is empty")
@@ -115,8 +115,8 @@ class InventoryLinkingExportSpec extends AcceptanceTestSpec
       When("a POST request with data is sent to the API")
       val result: Future[Result] = route(app = app, request).value
 
-      Then(s"a response with a 204 (NO_CONTENT) status is received")
-      status(result) shouldBe NO_CONTENT
+      Then("a response with a 202 (ACCEPTED) status is received")
+      status(result) shouldBe ACCEPTED
 
       And("the response body is empty")
       contentAsString(result) shouldBe 'empty
@@ -136,7 +136,7 @@ class InventoryLinkingExportSpec extends AcceptanceTestSpec
       When("a POST request with data is sent to the API")
       val result: Future[Result] = route(app = app, request).value
 
-      Then(s"a response with a 401 (UNAUTHORIZED) status is received")
+      Then("a response with a 401 (UNAUTHORIZED) status is received")
       status(result) shouldBe UNAUTHORIZED
 
       And("the response body is empty")
@@ -160,8 +160,8 @@ class InventoryLinkingExportSpec extends AcceptanceTestSpec
       When("a POST request with data is sent to the API")
       val result: Future[Result] = route(app = app, request).value
 
-      Then(s"a response with a 204 (NO_CONTENT) status is received")
-      status(result) shouldBe NO_CONTENT
+      Then("a response with a 202 (ACCEPTED) status is received")
+      status(result) shouldBe ACCEPTED
 
       And("the response body is empty")
       contentAsString(result) shouldBe 'empty
@@ -184,8 +184,8 @@ class InventoryLinkingExportSpec extends AcceptanceTestSpec
       When("a POST request with data is sent to the API")
       val result: Future[Result] = route(app = app, request).value
 
-      Then(s"a response with a 204 (NO_CONTENT) status is received")
-      status(result) shouldBe NO_CONTENT
+      Then("a response with a 202 (ACCEPTED) status is received")
+      status(result) shouldBe ACCEPTED
 
       And("the response body is empty")
       contentAsString(result) shouldBe 'empty
