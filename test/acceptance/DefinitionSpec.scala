@@ -28,9 +28,7 @@ import scala.concurrent.Future
 
 class DefinitionSpec extends AcceptanceTestSpec with Matchers {
 
-  override implicit lazy val app: Application = new GuiceApplicationBuilder().configure(Map(
-    "api.access.version-1.0.whitelistedApplicationIds" -> List("someId-1", "someId-2")
-  )).build()
+  override implicit lazy val app: Application = new GuiceApplicationBuilder().build()
 
   feature("Ensure definition file") {
 
@@ -67,11 +65,7 @@ class DefinitionSpec extends AcceptanceTestSpec with Matchers {
           |        "status": "STABLE",
           |        "endpointsEnabled": true,
           |        "access": {
-          |          "type": "PRIVATE",
-          |          "whitelistedApplicationIds": [
-          |            "someId-1",
-          |            "someId-2"
-          |          ]
+          |          "type": "PUBLIC"
           |        },
           |        "fieldDefinitions": [
           |          {
