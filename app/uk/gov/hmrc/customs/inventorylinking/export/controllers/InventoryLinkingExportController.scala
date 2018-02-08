@@ -80,7 +80,7 @@ class InventoryLinkingExportController @Inject()(override val authConnector: Inv
     logger.debug("processXmlPayload")
     (authoriseCspSubmission(xml) orElseIfInsufficientEnrolments authoriseNonCspSubmission(xml) orElse unauthorised)
       .map {
-        case Right(conversationId) => NoContent.as(MimeTypes.XML).withHeaders(X_CONVERSATION_ID_HEADER_NAME -> conversationId.value)
+        case Right(conversationId) => Accepted.as(MimeTypes.XML).withHeaders(X_CONVERSATION_ID_HEADER_NAME -> conversationId.value)
         case Left(errorResponse) => errorResponse.XmlResult
       }
       .recoverWith {
