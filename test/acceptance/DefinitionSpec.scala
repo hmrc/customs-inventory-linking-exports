@@ -62,7 +62,7 @@ class DefinitionSpec extends AcceptanceTestSpec with Matchers {
           |    "versions": [
           |      {
           |        "version": "1.0",
-          |        "status": "STABLE",
+          |        "status": "BETA",
           |        "endpointsEnabled": true,
           |        "access": {
           |          "type": "PUBLIC"
