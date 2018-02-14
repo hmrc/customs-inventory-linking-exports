@@ -39,7 +39,7 @@ class MdgExportsConnector @Inject()(http: WSHttp,
 
   def send(xml: NodeSeq, date: DateTime, correlationId: UUID): Future[HttpResponse] = {
     val config = Option(serviceConfigProvider.getConfig("mdg-exports")).getOrElse(throw new IllegalArgumentException("config not found"))
-    val bearerToken = "Basic " + config.bearerToken.getOrElse(throw new IllegalStateException("no bearer token was found in config"))
+    val bearerToken = "Bearer " + config.bearerToken.getOrElse(throw new IllegalStateException("no bearer token was found in config"))
     implicit val hc = HeaderCarrier(extraHeaders = getHeaders(date, correlationId), authorization = Some(Authorization(bearerToken)))
     post(xml, config.url)
   }
