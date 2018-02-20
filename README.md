@@ -1,6 +1,6 @@
 # customs-inventory-linking-exports
 
-This service offers a interface for Inventory Linking Exports. 
+This service offers an interface for Inventory Linking Exports.
 
 The objective of the service POST API is as follows:
 
