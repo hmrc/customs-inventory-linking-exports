@@ -40,7 +40,7 @@ uses:
     securedBy: [ sec.oauth_2_0: { scopes: [ "write:customs-inventory-linking-exports" ] } ]
     body:
       application/xml:
-#        type: !include schemas/customs/wrapper.xsd
+        type: !include schemas/customs/wrapper.xsd
         examples:
           example-1: !include examples/consolidationRequest.xml
           example-2: !include examples/movementRequest.xml
