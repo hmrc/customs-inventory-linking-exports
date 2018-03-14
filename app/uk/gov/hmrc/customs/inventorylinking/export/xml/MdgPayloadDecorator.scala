@@ -18,18 +18,20 @@ package uk.gov.hmrc.customs.inventorylinking.export.xml
 
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
+import uk.gov.hmrc.customs.inventorylinking.export.model.BadgeIdentifier
 
-import scala.xml.{NamespaceBinding, NodeSeq}
+import scala.xml.NodeSeq
 
 class MdgPayloadDecorator() {
 
-  def decorate(xml: NodeSeq, conversationId: String, correlationId: String, clientId: String, dateTime: DateTime): NodeSeq = {
+  def decorate(xml: NodeSeq, conversationId: String, correlationId: String, clientId: String, maybeBadgeIdentifier: Option[BadgeIdentifier], dateTime: DateTime): NodeSeq = {
 
     <n1:InventoryLinkingExportsInboundRequest xmlns:inv="http://gov.uk/customs/inventoryLinking/v1"
                                               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                                               xmlns:gw="http://gov.uk/customs/inventoryLinking/gatewayHeader/v1"
                                               xmlns:n1="http://www.hmrc.gov.uk/cds/inventorylinking/exportmovement">
       <n1:requestCommon>
+        { if(maybeBadgeIdentifier.isDefined) <gw:badgeIdentifier>{maybeBadgeIdentifier.get.value}</gw:badgeIdentifier> }
         <gw:clientID>{clientId}</gw:clientID>
         <gw:conversationID>{conversationId}</gw:conversationID>
         <gw:correlationID>{correlationId}</gw:correlationID>

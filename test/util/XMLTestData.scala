@@ -19,7 +19,7 @@ package util
 import java.util.UUID
 
 import org.joda.time.{DateTime, DateTimeZone}
-import uk.gov.hmrc.customs.inventorylinking.export.model.Eori
+import uk.gov.hmrc.customs.inventorylinking.export.model.{BadgeIdentifier, Eori}
 import org.scalatest.prop.TableDrivenPropertyChecks.Table
 
 import scala.xml.Elem
@@ -100,11 +100,13 @@ object XMLTestData {
   def wrappedValidXML(clientId: String = clientId,
                       conversationId: String = conversationIdValue,
                       correlationId: String = correlationId,
+                      maybeBadgeIdentifier: Option[BadgeIdentifier] = Some(TestData.badgeIdentifier),
                       dateTime: DateTime = dateTime): Elem =
       <n1:InventoryLinkingExportsInboundRequest xmlns:n1="http://www.hmrc.gov.uk/cds/inventorylinking/exportmovement"
                                                 xmlns:gw="http://gov.uk/customs/inventoryLinking/gatewayHeader/v1"
                                                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:inv="http://gov.uk/customs/inventoryLinking/v1">
         <n1:requestCommon>
+          <gw:badgeIdentifier>{maybeBadgeIdentifier.get.value}</gw:badgeIdentifier>
           <gw:clientID>{clientId}</gw:clientID>
           <gw:conversationID>{conversationId}</gw:conversationID>
           <gw:correlationID>{correlationId}</gw:correlationID>

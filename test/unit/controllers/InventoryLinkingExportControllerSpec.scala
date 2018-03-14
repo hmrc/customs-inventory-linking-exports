@@ -28,15 +28,17 @@ import uk.gov.hmrc.auth.core.AuthProvider.{GovernmentGateway, PrivilegedApplicat
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.{EmptyRetrieval, Retrievals}
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
+import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.errorBadRequest
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.InventoryLinkingAuthConnector
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.InventoryLinkingExportController
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiDefinitionConfig, CustomsEnrolmentConfig, Eori}
+import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiDefinitionConfig, BadgeIdentifier, CustomsEnrolmentConfig, Eori}
 import uk.gov.hmrc.customs.inventorylinking.export.services.{CustomsConfigService, ExportsBusinessService}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 import util.MockitoPassByNameHelper.PassByNameVerifier
 import util.RequestHeaders
+import util.RequestHeaders.{ValidHeaders, X_BADGE_IDENTIFIER_NAME}
 import util.TestData._
 import util.XMLTestData._
 
@@ -66,6 +68,8 @@ class InventoryLinkingExportControllerSpec extends UnitSpec with Matchers with M
   private val errorResultUnauthorised = ErrorResponse(UNAUTHORIZED, errorCode = "UNAUTHORIZED",
     message = "Unauthorised request").XmlResult
 
+  private val errorResultBadgeIdentifier = errorBadRequest("X-Badge-Identifier header is missing or invalid").XmlResult
+
   private val mockErrorResponse = mock[ErrorResponse]
   private val mockResult = mock[Result]
 
@@ -79,7 +83,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec with Matchers with M
     when(mockCustomsConfigService.apiDefinitionConfig).thenReturn(mockApiDefinitionConfig)
     when(mockCustomsConfigService.customsEnrolmentConfig).thenReturn(customsEnrolmentConfig)
 
-    when(mockBusinessService.authorisedCspSubmission(any[NodeSeq])(any[HeaderCarrier])).thenReturn(Right(conversationId))
+    when(mockBusinessService.authorisedCspSubmission(any[NodeSeq], any[Option[BadgeIdentifier]])(any[HeaderCarrier])).thenReturn(Right(conversationId))
     when(mockBusinessService.authorisedNonCspSubmission(any[NodeSeq])(any[HeaderCarrier])).thenReturn(Right(conversationId))
   }
 
@@ -90,7 +94,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec with Matchers with M
         await(result)
         verifyCspAuthorisationCalled(numberOfTimes = 1)
         verifyNonCspAuthorisationCalled(numberOfTimes = 0)
-        verify(mockBusinessService).authorisedCspSubmission(ameq(ValidInventoryLinkingMovementRequestXML))(any[HeaderCarrier])
+        verify(mockBusinessService).authorisedCspSubmission(ameq(ValidInventoryLinkingMovementRequestXML), ameq(Some(badgeIdentifier)))(any[HeaderCarrier])
         verify(mockBusinessService, never).authorisedNonCspSubmission(any[NodeSeq])(any[HeaderCarrier])
       }
     }
@@ -101,7 +105,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec with Matchers with M
         await(result)
         verifyCspAuthorisationCalled(numberOfTimes = 1)
         verifyNonCspAuthorisationCalled(numberOfTimes = 1)
-        verify(mockBusinessService, never).authorisedCspSubmission(any[NodeSeq])(any[HeaderCarrier])
+        verify(mockBusinessService, never).authorisedCspSubmission(any[NodeSeq], any[Option[BadgeIdentifier]])(any[HeaderCarrier])
         verify(mockBusinessService).authorisedNonCspSubmission(ameq(ValidInventoryLinkingMovementRequestXML))(any[HeaderCarrier])
       }
     }
@@ -111,6 +115,27 @@ class InventoryLinkingExportControllerSpec extends UnitSpec with Matchers with M
       testSubmitResult(ValidRequest) { result =>
         status(result) shouldBe ACCEPTED
         header("X-Conversation-ID", result) shouldBe Some(conversationIdValue)
+      }
+    }
+
+    "respond with status 400 for a CSP request with a missing X-Badge-Identifier" in {
+      authoriseCsp()
+      testSubmitResult(ValidRequest.copyFakeRequest(headers = ValidRequest.headers.remove(X_BADGE_IDENTIFIER_NAME))) { result =>
+        await(result) shouldBe errorResultBadgeIdentifier
+        verifyZeroInteractions(mockBusinessService)
+        PassByNameVerifier(mockExportsLogger, "error")
+          .withByNameParam[String]("Header validation failed because X-Badge-Identifier header is missing or invalid")
+          .withAnyHeaderCarrierParam
+          .verify()
+
+      }
+    }
+
+    "respond with status 400 for a request with an invalid X-Badge-Identifier" in {
+      authoriseCsp()
+      testSubmitResult(ValidRequest.withHeaders((ValidHeaders + (X_BADGE_IDENTIFIER_NAME -> invalidBadgeIdentifierValue)).toSeq: _*)) { result =>
+        await(result) shouldBe errorResultBadgeIdentifier
+        verifyZeroInteractions(mockBusinessService)
       }
     }
 
@@ -154,7 +179,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec with Matchers with M
     }
 
     "respond with status 500 when a CSP request processing fails with a system error" in {
-      when(mockBusinessService.authorisedCspSubmission(any[NodeSeq])(any[HeaderCarrier]))
+      when(mockBusinessService.authorisedCspSubmission(any[NodeSeq], any[Option[BadgeIdentifier]])(any[HeaderCarrier]))
         .thenReturn(Future.failed(emulatedServiceFailure))
 
       authoriseCsp()
@@ -174,7 +199,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec with Matchers with M
     }
 
     "return xml-result of the error response returned from CSP request processing" in {
-      when(mockBusinessService.authorisedCspSubmission(any[NodeSeq])(any[HeaderCarrier]))
+      when(mockBusinessService.authorisedCspSubmission(any[NodeSeq], any[Option[BadgeIdentifier]])(any[HeaderCarrier]))
         .thenReturn(Left(mockErrorResponse))
       when(mockErrorResponse.XmlResult).thenReturn(mockResult)
 

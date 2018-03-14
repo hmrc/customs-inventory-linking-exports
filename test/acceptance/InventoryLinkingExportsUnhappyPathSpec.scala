@@ -82,6 +82,14 @@ class InventoryLinkingExportsUnhappyPathSpec extends AcceptanceTestSpec
       |</errorResponse>
     """.stripMargin
 
+  private val InvalidXBadgeIdentifierHeaderError =
+    """<?xml version="1.0" encoding="UTF-8"?>
+      |<errorResponse>
+      |  <code>BAD_REQUEST</code>
+      |  <message>X-Badge-Identifier header is missing or invalid</message>
+      |</errorResponse>
+    """.stripMargin
+
   private val InternalServerError =
     """<?xml version="1.0" encoding="UTF-8"?>
       |<errorResponse>
@@ -116,7 +124,7 @@ class InventoryLinkingExportsUnhappyPathSpec extends AcceptanceTestSpec
 
       status(resultFuture) shouldBe BAD_REQUEST
 
-      And("the response body is a \"invalid xml\" XML")
+      And("the response body is an \"invalid xml\" XML")
       string2xml(contentAsString(resultFuture)) shouldBe string2xml(BadRequestError)
     }
 
@@ -133,7 +141,7 @@ class InventoryLinkingExportsUnhappyPathSpec extends AcceptanceTestSpec
 
       status(resultFuture) shouldBe BAD_REQUEST
 
-      And("the response body is a \"invalid xml\" XML")
+      And("the response body is an \"invalid xml\" XML")
       string2xml(contentAsString(resultFuture)) shouldBe string2xml(BadRequestErrorWith2Errors)
     }
 
@@ -200,7 +208,7 @@ class InventoryLinkingExportsUnhappyPathSpec extends AcceptanceTestSpec
 
       status(resultFuture) shouldBe NOT_ACCEPTABLE
 
-      And("the response body is a \"invalid Accept header\" XML")
+      And("the response body is an \"invalid Accept header\" XML")
       string2xml(contentAsString(resultFuture)) shouldBe string2xml(InvalidAcceptHeaderError)
     }
 
@@ -217,7 +225,7 @@ class InventoryLinkingExportsUnhappyPathSpec extends AcceptanceTestSpec
 
       status(resultFuture) shouldBe NOT_ACCEPTABLE
 
-      And("the response body is a \"invalid Accept header\" XML")
+      And("the response body is an \"invalid Accept header\" XML")
       string2xml(contentAsString(resultFuture)) shouldBe string2xml(InvalidAcceptHeaderError)
     }
 
@@ -234,8 +242,42 @@ class InventoryLinkingExportsUnhappyPathSpec extends AcceptanceTestSpec
 
       status(resultFuture) shouldBe UNSUPPORTED_MEDIA_TYPE
 
-      And("the response body is a \"invalid Accept header\" XML")
+      And("the response body is an \"invalid Accept header\" XML")
       string2xml(contentAsString(resultFuture)) shouldBe string2xml(InvalidContentTypeHeaderError)
+    }
+
+    scenario("Response status 400 when a CSP user submits a request without an X-Badge-Identifier header") {
+      Given("the API is available")
+      val request = NoXBadgeIdentifierHeaderRequest.copyFakeRequest(method = POST, uri = endpoint).fromCsp
+
+      When("a POST request with data is sent to the API")
+      val result: Option[Future[Result]] = route(app = app, request)
+
+      Then(s"a response with a 400 status is received")
+      result shouldBe 'defined
+      val resultFuture = result.value
+
+      status(resultFuture) shouldBe BAD_REQUEST
+
+      And("the response body is a \"missing X-Badge-Identifier header\" XML")
+      string2xml(contentAsString(resultFuture)) shouldBe string2xml(InvalidXBadgeIdentifierHeaderError)
+    }
+
+    scenario("Response status 400 when a user submits a request with an invalid X-Badge-Identifier header") {
+      Given("the API is available")
+      val request = InvalidXBadgeIdentifierHeaderRequest.copyFakeRequest(method = POST, uri = endpoint)
+
+      When("a POST request with data is sent to the API")
+      val result: Option[Future[Result]] = route(app = app, request)
+
+      Then(s"a response with a 400 status is received")
+      result shouldBe 'defined
+      val resultFuture = result.value
+
+      status(resultFuture) shouldBe BAD_REQUEST
+
+      And("the response body is an \"invalid X-Badge-Identifier header\" XML")
+      string2xml(contentAsString(resultFuture)) shouldBe string2xml(InvalidXBadgeIdentifierHeaderError)
     }
 
     scenario("Response status 500 when user submits a valid request but downstream call to DMS fails with an HTTP error") {
