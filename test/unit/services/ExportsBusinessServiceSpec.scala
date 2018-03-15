@@ -25,7 +25,7 @@ import org.xml.sax.SAXException
 import play.api.test.Helpers._
 import uk.gov.hmrc.customs.api.common.controllers.{ErrorResponse, ResponseContents}
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model.ConversationId
+import uk.gov.hmrc.customs.inventorylinking.export.model.{BadgeIdentifier, ConversationId}
 import uk.gov.hmrc.customs.inventorylinking.export.services.{CommunicationService, ExportsBusinessService, XmlValidationService}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
@@ -57,11 +57,11 @@ class ExportsBusinessServiceSpec extends UnitSpec with Matchers with MockitoSuga
   override protected def beforeEach() {
     reset(mockExportsLogger, mockCommunicationService, mockXmlValidationService)
     when(mockXmlValidationService.validate(any[NodeSeq])(any[ExecutionContext])).thenReturn(())
-    when(mockCommunicationService.prepareAndSend(any[NodeSeq]())(any[HeaderCarrier]())).thenReturn(conversationId)
+    when(mockCommunicationService.prepareAndSend(any[NodeSeq](), any[Option[BadgeIdentifier]])(any[HeaderCarrier]())).thenReturn(conversationId)
   }
 
   val allSubmissionModes = Table(("description", "xml submission thunk with service"),
-    ("CSP", service.authorisedCspSubmission(_: NodeSeq)),
+    ("CSP", service.authorisedCspSubmission(_: NodeSeq, Some(badgeIdentifier))),
     ("non-CSP", service.authorisedNonCspSubmission(_: NodeSeq))
   )
 
@@ -79,7 +79,7 @@ class ExportsBusinessServiceSpec extends UnitSpec with Matchers with MockitoSuga
       "send valid xml to communication service" in {
         testSubmitResult(xmlSubmission(ValidInventoryLinkingMovementRequestXML)) { result =>
           await(result)
-          verify(mockCommunicationService).prepareAndSend(ameq(ValidInventoryLinkingMovementRequestXML))(ameq(mockHeaderCarrier))
+          verify(mockCommunicationService).prepareAndSend(ameq(ValidInventoryLinkingMovementRequestXML), any[Option[BadgeIdentifier]])(ameq(mockHeaderCarrier))
         }
       }
 
@@ -110,7 +110,7 @@ class ExportsBusinessServiceSpec extends UnitSpec with Matchers with MockitoSuga
       }
 
       "propagate the error for a valid request when downstream communication fails" in {
-        when(mockCommunicationService.prepareAndSend(any[NodeSeq]())(any[HeaderCarrier]())).thenReturn(Future.failed(emulatedServiceFailure))
+        when(mockCommunicationService.prepareAndSend(any[NodeSeq](), any[Option[BadgeIdentifier]])(any[HeaderCarrier]())).thenReturn(Future.failed(emulatedServiceFailure))
 
         testSubmitResult(xmlSubmission(ValidInventoryLinkingMovementRequestXML)) { result =>
           intercept[EmulatedServiceFailure](await(result)) shouldBe emulatedServiceFailure

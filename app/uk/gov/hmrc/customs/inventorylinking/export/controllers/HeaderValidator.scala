@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.customs.inventorylinking.export.controllers
 
-import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.{ErrorAcceptHeaderInvalid, ErrorContentTypeHeaderInvalid}
+import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.{ErrorAcceptHeaderInvalid, ErrorContentTypeHeaderInvalid, errorBadRequest}
 import play.api.http.{HeaderNames, MimeTypes}
 import play.api.mvc.{ActionBuilder, Request, Result, Results}
 
@@ -26,11 +26,14 @@ trait HeaderValidator extends Results {
 
   type Validation = Option[String] => Boolean
 
+  lazy val XBadgeIdentifier = "X-Badge-Identifier"
   private lazy val validAcceptHeaders = Seq("application/vnd.hmrc.1.0+xml")
   private lazy val validContentTypeHeaders = Seq(MimeTypes.XML, MimeTypes.XML + "; charset=utf-8")
+  lazy val ErrorResponseBadgeIdentifierHeaderMissing = errorBadRequest("X-Badge-Identifier header is missing or invalid")
 
   val acceptHeaderValidation: Validation = _ exists validAcceptHeaders.contains
   val contentTypeValidation: Validation = _ exists (header => validContentTypeHeaders.contains(header.toLowerCase))
+  val badgeIdentifierValidation: Validation = _.fold(true)(header => "^[0-9A-Z]{6,12}$".r.findFirstIn(header).isDefined)
 
   def validateAccept(rules: Validation): ActionBuilder[Request] = new ActionBuilder[Request] {
     def invokeBlock[A](request: Request[A], block: (Request[A]) => Future[Result]): Future[Result] = {
@@ -43,6 +46,13 @@ trait HeaderValidator extends Results {
     def invokeBlock[A](request: Request[A], block: (Request[A]) => Future[Result]): Future[Result] = {
       val headerIsValid = rules(request.headers.get(HeaderNames.CONTENT_TYPE))
       getResponse(request, block, headerIsValid, ErrorContentTypeHeaderInvalid.XmlResult)
+    }
+  }
+
+  def validateXBadgeIdentifier(rules: Validation): ActionBuilder[Request] = new ActionBuilder[Request] {
+    def invokeBlock[A](request: Request[A], block: (Request[A]) => Future[Result]): Future[Result] = {
+      val headerIsValid = rules(request.headers.get(XBadgeIdentifier))
+      getResponse(request, block, headerIsValid, ErrorResponseBadgeIdentifierHeaderMissing.XmlResult)
     }
   }
 

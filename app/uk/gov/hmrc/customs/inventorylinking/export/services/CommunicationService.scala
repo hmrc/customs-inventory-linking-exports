@@ -23,7 +23,7 @@ import javax.inject.{Inject, Singleton}
 import org.joda.time.DateTime
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.{ApiSubscriptionFieldsConnector, MdgExportsConnector}
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionKey, ConversationId}
+import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionKey, BadgeIdentifier, ConversationId}
 import uk.gov.hmrc.customs.inventorylinking.export.xml.MdgPayloadDecorator
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -47,7 +47,7 @@ class CommunicationService @Inject()(logger: ExportsLogger,
     Future.successful(customsConfigService.overridesConfig.clientId)
   }
 
-  def prepareAndSend(inboundXml: NodeSeq)(implicit hc: HeaderCarrier): Future[ConversationId] = {
+  def prepareAndSend(inboundXml: NodeSeq, maybeBadgeIdentifier: Option[BadgeIdentifier])(implicit hc: HeaderCarrier): Future[ConversationId] = {
     val conversationId = uuidService.uuid()
     val correlationId = uuidService.uuid()
     val dateTime = dateTimeProvider.getUtcNow
@@ -56,7 +56,7 @@ class CommunicationService @Inject()(logger: ExportsLogger,
 
     for {
       clientId <- futureClientId
-      xmlToSend = preparePayload(inboundXml, conversationId, correlationId, clientId, dateTime)
+      xmlToSend = preparePayload(inboundXml, conversationId, correlationId, clientId, maybeBadgeIdentifier, dateTime)
       conversationId <- connector.send(xmlToSend, dateTime, correlationId).map(_ => ConversationId(conversationId.toString))
     } yield conversationId
   }
@@ -81,9 +81,9 @@ class CommunicationService @Inject()(logger: ExportsLogger,
     }
   }
 
-  private def preparePayload(xml: NodeSeq, conversationId: UUID, correlationId: UUID, clientId: String, dateTime: DateTime)(implicit hc: HeaderCarrier): NodeSeq = {
+  private def preparePayload(xml: NodeSeq, conversationId: UUID, correlationId: UUID, clientId: String, maybeBadgeIdentifier: Option[BadgeIdentifier], dateTime: DateTime)(implicit hc: HeaderCarrier): NodeSeq = {
     logger.debug(s"preparePayload called")
-    wrapper.decorate(xml, conversationId.toString, correlationId.toString, clientId, dateTime)
+    wrapper.decorate(xml, conversationId.toString, correlationId.toString, clientId, maybeBadgeIdentifier, dateTime)
   }
 
   private def futureApiSubFieldsId(implicit hc: HeaderCarrier): Future[Option[String]] = {

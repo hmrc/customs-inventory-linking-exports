@@ -19,3 +19,5 @@ package uk.gov.hmrc.customs.inventorylinking.export.model
 case class Eori(value: String) extends AnyVal
 
 case class ConversationId(value: String) extends AnyVal
+
+case class BadgeIdentifier(value: String) extends AnyVal

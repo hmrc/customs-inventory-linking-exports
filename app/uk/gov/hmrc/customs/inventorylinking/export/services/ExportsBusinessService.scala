@@ -20,6 +20,7 @@ import javax.inject.{Inject, Singleton}
 
 import uk.gov.hmrc.customs.api.common.controllers.{ErrorResponse, ResponseContents}
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
+import uk.gov.hmrc.customs.inventorylinking.export.model.BadgeIdentifier
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.collection.Seq
@@ -34,9 +35,9 @@ class ExportsBusinessService @Inject()(logger: ExportsLogger,
 
   type ValidationResult = Either[ErrorResponse, Unit]
 
-  def authorisedCspSubmission(xml: NodeSeq)(implicit hc: HeaderCarrier): Future[ProcessingResult] = {
+  def authorisedCspSubmission(xml: NodeSeq, maybeBadgeIdentifier: Option[BadgeIdentifier])(implicit hc: HeaderCarrier): Future[ProcessingResult] = {
     logger.debug("authorisedCspSubmission", payload = xml.toString())
-    validateXml(xml) thenProcessWith prepareAndSend(xml)
+    validateXml(xml) thenProcessWith prepareAndSend(xml, maybeBadgeIdentifier)
   }
 
   def authorisedNonCspSubmission(xml: NodeSeq)(implicit hc: HeaderCarrier): Future[ProcessingResult] = {
@@ -68,8 +69,8 @@ class ExportsBusinessService @Inject()(logger: ExportsLogger,
     loop(saxe, Nil)
   }
 
-  private def prepareAndSend(xml: NodeSeq)(implicit hc: HeaderCarrier): Future[ProcessingResult] = {
-    communication.prepareAndSend(xml).map(Right(_))
+  private def prepareAndSend(xml: NodeSeq, maybeBadgeIdentifier: Option[BadgeIdentifier] = None)(implicit hc: HeaderCarrier): Future[ProcessingResult] = {
+    communication.prepareAndSend(xml, maybeBadgeIdentifier: Option[BadgeIdentifier]).map(Right(_))
   }
 
   private implicit class ValidationFutureOps(validationFuture: Future[ValidationResult]) {
