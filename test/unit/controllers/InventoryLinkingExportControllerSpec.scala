@@ -32,13 +32,13 @@ import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.errorBadRequest
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.InventoryLinkingAuthConnector
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.InventoryLinkingExportController
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiDefinitionConfig, BadgeIdentifier, CustomsEnrolmentConfig, Eori}
-import uk.gov.hmrc.customs.inventorylinking.export.services.{CustomsConfigService, ExportsBusinessService}
+import uk.gov.hmrc.customs.inventorylinking.export.model._
+import uk.gov.hmrc.customs.inventorylinking.export.services.{CustomsConfigService, ExportsBusinessService, UuidService}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 import util.MockitoPassByNameHelper.PassByNameVerifier
 import util.RequestHeaders
-import util.RequestHeaders.{ValidHeaders, X_BADGE_IDENTIFIER_NAME}
+import util.RequestHeaders.{X_CONVERSATION_ID_HEADER, ValidHeaders, X_BADGE_IDENTIFIER_NAME, X_CONVERSATION_ID_NAME}
 import util.TestData._
 import util.XMLTestData._
 
@@ -50,8 +50,10 @@ class InventoryLinkingExportControllerSpec extends UnitSpec with Matchers with M
   private val mockExportsLogger = mock[ExportsLogger]
   private val mockCustomsConfigService = mock[CustomsConfigService]
   private val mockBusinessService = mock[ExportsBusinessService]
+  private val mockUuidService = mock[UuidService]
 
-  val controller = new InventoryLinkingExportController(mockAuthConnector, mockCustomsConfigService, mockBusinessService, mockExportsLogger)
+  val controller = new InventoryLinkingExportController(mockAuthConnector, mockCustomsConfigService,
+    mockBusinessService, mockUuidService, mockExportsLogger)
 
   private val apiScope = "scope-in-api-definition"
   private val customsEnrolmentName = "HMRC-CUS-ORG"
@@ -60,15 +62,15 @@ class InventoryLinkingExportControllerSpec extends UnitSpec with Matchers with M
   private val customsEnrolmentConfig = CustomsEnrolmentConfig(customsEnrolmentName, eoriIdentifier)
 
   private val errorResultInternalServer = ErrorResponse(INTERNAL_SERVER_ERROR, errorCode = "INTERNAL_SERVER_ERROR",
-    message = "Internal server error").XmlResult
+    message = "Internal server error").XmlResult.withHeaders(X_CONVERSATION_ID_HEADER)
 
   private val errorResultEoriNotFoundInCustomsEnrolment = ErrorResponse(UNAUTHORIZED, errorCode = "UNAUTHORIZED",
-    message = "EORI number not found in Customs Enrolment").XmlResult
+    message = "EORI number not found in Customs Enrolment").XmlResult.withHeaders(X_CONVERSATION_ID_HEADER)
 
   private val errorResultUnauthorised = ErrorResponse(UNAUTHORIZED, errorCode = "UNAUTHORIZED",
-    message = "Unauthorised request").XmlResult
+    message = "Unauthorised request").XmlResult.withHeaders(X_CONVERSATION_ID_HEADER)
 
-  private val errorResultBadgeIdentifier = errorBadRequest("X-Badge-Identifier header is missing or invalid").XmlResult
+  private val errorResultBadgeIdentifier = errorBadRequest("X-Badge-Identifier header is missing or invalid").XmlResult.withHeaders(X_CONVERSATION_ID_HEADER)
 
   private val mockErrorResponse = mock[ErrorResponse]
   private val mockResult = mock[Result]
@@ -77,14 +79,16 @@ class InventoryLinkingExportControllerSpec extends UnitSpec with Matchers with M
   private val nonCspAuthPredicate = Enrolment(customsEnrolmentName) and AuthProviders(GovernmentGateway)
 
   override protected def beforeEach() {
-    reset(mockExportsLogger, mockAuthConnector, mockBusinessService)
+    reset(mockExportsLogger, mockAuthConnector, mockBusinessService, mockUuidService)
 
     when(mockApiDefinitionConfig.apiScope).thenReturn(apiScope)
     when(mockCustomsConfigService.apiDefinitionConfig).thenReturn(mockApiDefinitionConfig)
     when(mockCustomsConfigService.customsEnrolmentConfig).thenReturn(customsEnrolmentConfig)
 
-    when(mockBusinessService.authorisedCspSubmission(any[NodeSeq], any[Option[BadgeIdentifier]])(any[HeaderCarrier])).thenReturn(Right(conversationId))
-    when(mockBusinessService.authorisedNonCspSubmission(any[NodeSeq])(any[HeaderCarrier])).thenReturn(Right(conversationId))
+    when(mockBusinessService.authorisedCspSubmission(any[NodeSeq], any[Ids])(any[HeaderCarrier])).thenReturn(Right(ids))
+    when(mockBusinessService.authorisedNonCspSubmission(any[NodeSeq], any[Ids])(any[HeaderCarrier])).thenReturn(Right(ids))
+
+    when(mockUuidService.uuid()).thenReturn(conversationIdUuid)
   }
 
   "InventoryLinkingExportController" should {
@@ -94,8 +98,8 @@ class InventoryLinkingExportControllerSpec extends UnitSpec with Matchers with M
         await(result)
         verifyCspAuthorisationCalled(numberOfTimes = 1)
         verifyNonCspAuthorisationCalled(numberOfTimes = 0)
-        verify(mockBusinessService).authorisedCspSubmission(ameq(ValidInventoryLinkingMovementRequestXML), ameq(Some(badgeIdentifier)))(any[HeaderCarrier])
-        verify(mockBusinessService, never).authorisedNonCspSubmission(any[NodeSeq])(any[HeaderCarrier])
+        verify(mockBusinessService).authorisedCspSubmission(ameq(ValidInventoryLinkingMovementRequestXML), any[Ids])(any[HeaderCarrier])
+        verify(mockBusinessService, never).authorisedNonCspSubmission(any[NodeSeq], any[Ids])(any[HeaderCarrier])
       }
     }
 
@@ -105,8 +109,8 @@ class InventoryLinkingExportControllerSpec extends UnitSpec with Matchers with M
         await(result)
         verifyCspAuthorisationCalled(numberOfTimes = 1)
         verifyNonCspAuthorisationCalled(numberOfTimes = 1)
-        verify(mockBusinessService, never).authorisedCspSubmission(any[NodeSeq], any[Option[BadgeIdentifier]])(any[HeaderCarrier])
-        verify(mockBusinessService).authorisedNonCspSubmission(ameq(ValidInventoryLinkingMovementRequestXML))(any[HeaderCarrier])
+        verify(mockBusinessService, never).authorisedCspSubmission(any[NodeSeq], any[Ids])(any[HeaderCarrier])
+        verify(mockBusinessService).authorisedNonCspSubmission(ameq(ValidInventoryLinkingMovementRequestXML), any[Ids])(any[HeaderCarrier])
       }
     }
 
@@ -114,7 +118,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec with Matchers with M
       authoriseCsp()
       testSubmitResult(ValidRequest) { result =>
         status(result) shouldBe ACCEPTED
-        header("X-Conversation-ID", result) shouldBe Some(conversationIdValue)
+        header(X_CONVERSATION_ID_NAME, result) shouldBe Some(conversationIdValue)
       }
     }
 
@@ -143,24 +147,26 @@ class InventoryLinkingExportControllerSpec extends UnitSpec with Matchers with M
       authoriseNonCsp(Some(declarantEori))
       testSubmitResult(ValidRequest) { result =>
         status(result) shouldBe ACCEPTED
-        header("X-Conversation-ID", result) shouldBe Some(conversationIdValue)
+        header(X_CONVERSATION_ID_NAME, result) shouldBe Some(conversationIdValue)
       }
     }
 
-    "return result 401 UNAUTHORISED when call is unauthorised for both CSP and non-CSP submissions" in {
+    "return result 401 UNAUTHORISED and conversationId in header when call is unauthorised for both CSP and non-CSP submissions" in {
       unauthoriseCsp()
       unauthoriseNonCspOnly()
       testSubmitResult(ValidRequest) { result =>
         await(result) shouldBe errorResultUnauthorised
+        header(X_CONVERSATION_ID_NAME, result) shouldBe Some(conversationIdValue)
         verifyZeroInteractions(mockBusinessService)
       }
     }
 
-    "return result 401 UNAUTHORISED when there's no Customs enrolment retrieved for an enrolled non-CSP call" in {
+    "return result 401 UNAUTHORISED and conversationId in header when there's no Customs enrolment retrieved for an enrolled non-CSP call" in {
       unauthoriseCsp()
       authoriseNonCspButDontRetrieveCustomsEnrolment()
       testSubmitResult(ValidRequest.fromNonCsp) { result =>
         await(result) shouldBe errorResultEoriNotFoundInCustomsEnrolment
+        header(X_CONVERSATION_ID_NAME, result) shouldBe Some(conversationIdValue)
         verifyZeroInteractions(mockBusinessService)
         PassByNameVerifier(mockExportsLogger, "warn")
           .withByNameParam[String](s"Customs enrolment $customsEnrolmentName not retrieved for authorised non-CSP call")
@@ -169,39 +175,43 @@ class InventoryLinkingExportControllerSpec extends UnitSpec with Matchers with M
       }
     }
 
-    "return result 401 UNAUTHORISED when there's no EORI number in Customs enrolment for a non-CSP call" in {
+    "return result 401 UNAUTHORISED and conversationId in header when there's no EORI number in Customs enrolment for a non-CSP call" in {
       unauthoriseCsp()
       authoriseNonCsp(maybeEori = None)
       testSubmitResult(ValidRequest) { result =>
         await(result) shouldBe errorResultEoriNotFoundInCustomsEnrolment
+        header(X_CONVERSATION_ID_NAME, result) shouldBe Some(conversationIdValue)
         verifyZeroInteractions(mockBusinessService)
       }
     }
 
-    "respond with status 500 when a CSP request processing fails with a system error" in {
-      when(mockBusinessService.authorisedCspSubmission(any[NodeSeq], any[Option[BadgeIdentifier]])(any[HeaderCarrier]))
+    "respond with status 500 and conversationId in header when a CSP request processing fails with a system error" in {
+      when(mockBusinessService.authorisedCspSubmission(any[NodeSeq], any[Ids])(any[HeaderCarrier]))
         .thenReturn(Future.failed(emulatedServiceFailure))
 
       authoriseCsp()
       testSubmitResult(ValidRequest) { result =>
         await(result) shouldBe errorResultInternalServer
+        header(X_CONVERSATION_ID_NAME, result) shouldBe Some(conversationIdValue)
       }
     }
 
-    "respond with status 500 when a non-CSP request processing fails with a system error" in {
-      when(mockBusinessService.authorisedNonCspSubmission(any[NodeSeq])(any[HeaderCarrier]))
+    "respond with status 500 and conversationId in header when a non-CSP request processing fails with a system error" in {
+      when(mockBusinessService.authorisedNonCspSubmission(any[NodeSeq], any[Ids])(any[HeaderCarrier]))
         .thenReturn(Future.failed(emulatedServiceFailure))
 
       authoriseNonCsp(Some(declarantEori))
       testSubmitResult(ValidRequest) { result =>
         await(result) shouldBe errorResultInternalServer
+        header(X_CONVERSATION_ID_NAME, result) shouldBe Some(conversationIdValue)
       }
     }
 
     "return xml-result of the error response returned from CSP request processing" in {
-      when(mockBusinessService.authorisedCspSubmission(any[NodeSeq], any[Option[BadgeIdentifier]])(any[HeaderCarrier]))
+      when(mockBusinessService.authorisedCspSubmission(any[NodeSeq], any[Ids])(any[HeaderCarrier]))
         .thenReturn(Left(mockErrorResponse))
       when(mockErrorResponse.XmlResult).thenReturn(mockResult)
+      when(mockResult.withHeaders(X_CONVERSATION_ID_HEADER)).thenReturn(mockResult)
 
       authoriseCsp()
       testSubmitResult(ValidRequest) { result =>
@@ -210,7 +220,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec with Matchers with M
     }
 
     "return xml-result of the error response returned from non-CSP request processing" in {
-      when(mockBusinessService.authorisedNonCspSubmission(any[NodeSeq])(any[HeaderCarrier]))
+      when(mockBusinessService.authorisedNonCspSubmission(any[NodeSeq], any[Ids])(any[HeaderCarrier]))
         .thenReturn(Left(mockErrorResponse))
       when(mockErrorResponse.XmlResult).thenReturn(mockResult)
 
@@ -221,7 +231,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec with Matchers with M
     }
 
     "return xml-result of the error response if request doesn't contain a well formed xml" in {
-      when(mockBusinessService.authorisedNonCspSubmission(any[NodeSeq])(any[HeaderCarrier]))
+      when(mockBusinessService.authorisedNonCspSubmission(any[NodeSeq], any[Ids])(any[HeaderCarrier]))
         .thenReturn(Left(mockErrorResponse))
       when(mockErrorResponse.XmlResult).thenReturn(mockResult)
       val invalidRequest = FakeRequest()
@@ -232,6 +242,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec with Matchers with M
       authoriseNonCsp(Some(declarantEori))
       testSubmitResult(invalidRequest) { result =>
         status(result) shouldBe BAD_REQUEST
+        header(X_CONVERSATION_ID_NAME, result) shouldBe Some(conversationIdValue)
       }
     }
   }

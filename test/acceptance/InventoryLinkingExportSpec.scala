@@ -21,8 +21,10 @@ import play.api.mvc._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.customs.inventorylinking.export.model.ApiSubscriptionKey
+import util.RequestHeaders.X_CONVERSATION_ID_NAME
 import util.externalservices.{ApiSubscriptionFieldsService, AuthService, InventoryLinkingExportsService}
 import util.TestData._
+
 import scala.concurrent.Future
 
 class InventoryLinkingExportSpec extends AcceptanceTestSpec
@@ -96,6 +98,9 @@ class InventoryLinkingExportSpec extends AcceptanceTestSpec
 
       Then("a response with a 401 (UNAUTHORIZED) status is received")
       status(result) shouldBe UNAUTHORIZED
+
+      And("a conversationId header is defined")
+      headers(result).get(X_CONVERSATION_ID_NAME) shouldBe 'defined
 
       And("the response body is empty")
       string2xml(contentAsString(result)) shouldBe string2xml(UnauthorisedError)

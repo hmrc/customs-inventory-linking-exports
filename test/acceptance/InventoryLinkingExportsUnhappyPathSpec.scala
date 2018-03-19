@@ -21,6 +21,7 @@ import play.api.libs.json.{JsObject, JsString}
 import play.api.mvc._
 import play.api.test.Helpers._
 import util.AuditService
+import util.RequestHeaders.X_CONVERSATION_ID_NAME
 import util.TestData._
 import util.externalservices.{AuthService, InventoryLinkingExportsService}
 
@@ -140,6 +141,7 @@ class InventoryLinkingExportsUnhappyPathSpec extends AcceptanceTestSpec
       val resultFuture = result.value
 
       status(resultFuture) shouldBe BAD_REQUEST
+      headers(resultFuture).get(X_CONVERSATION_ID_NAME) shouldBe 'defined
 
       And("the response body is an \"invalid xml\" XML")
       string2xml(contentAsString(resultFuture)) shouldBe string2xml(BadRequestErrorWith2Errors)
@@ -157,6 +159,7 @@ class InventoryLinkingExportsUnhappyPathSpec extends AcceptanceTestSpec
       val resultFuture = result.value
 
       status(resultFuture) shouldBe BAD_REQUEST
+      headers(resultFuture).get(X_CONVERSATION_ID_NAME) shouldBe 'defined
 
       And("the response body is a \"malformed xml body\" XML")
       string2xml(contentAsString(resultFuture)) shouldBe string2xml(MalformedXmlBodyError)
@@ -176,6 +179,7 @@ class InventoryLinkingExportsUnhappyPathSpec extends AcceptanceTestSpec
       val resultFuture = result.value
 
       status(resultFuture) shouldBe BAD_REQUEST
+      headers(resultFuture).get(X_CONVERSATION_ID_NAME) shouldBe 'defined
 
       And("the response body is a \"malformed xml body\" XML")
       string2xml(contentAsString(resultFuture)) shouldBe string2xml(MalformedXmlBodyError)
@@ -193,6 +197,7 @@ class InventoryLinkingExportsUnhappyPathSpec extends AcceptanceTestSpec
       val resultFuture = result.value
 
       status(resultFuture) shouldBe INTERNAL_SERVER_ERROR
+      headers(resultFuture).get(X_CONVERSATION_ID_NAME) shouldBe 'defined
     }
 
     scenario("Response status 406 when user submits a request without Accept header") {
@@ -207,6 +212,7 @@ class InventoryLinkingExportsUnhappyPathSpec extends AcceptanceTestSpec
       val resultFuture = result.value
 
       status(resultFuture) shouldBe NOT_ACCEPTABLE
+      headers(resultFuture).get(X_CONVERSATION_ID_NAME) shouldBe 'defined
 
       And("the response body is an \"invalid Accept header\" XML")
       string2xml(contentAsString(resultFuture)) shouldBe string2xml(InvalidAcceptHeaderError)
@@ -224,6 +230,7 @@ class InventoryLinkingExportsUnhappyPathSpec extends AcceptanceTestSpec
       val resultFuture = result.value
 
       status(resultFuture) shouldBe NOT_ACCEPTABLE
+      headers(resultFuture).get(X_CONVERSATION_ID_NAME) shouldBe 'defined
 
       And("the response body is an \"invalid Accept header\" XML")
       string2xml(contentAsString(resultFuture)) shouldBe string2xml(InvalidAcceptHeaderError)
@@ -241,6 +248,7 @@ class InventoryLinkingExportsUnhappyPathSpec extends AcceptanceTestSpec
       val resultFuture = result.value
 
       status(resultFuture) shouldBe UNSUPPORTED_MEDIA_TYPE
+      headers(resultFuture).get(X_CONVERSATION_ID_NAME) shouldBe 'defined
 
       And("the response body is an \"invalid Accept header\" XML")
       string2xml(contentAsString(resultFuture)) shouldBe string2xml(InvalidContentTypeHeaderError)
@@ -258,6 +266,7 @@ class InventoryLinkingExportsUnhappyPathSpec extends AcceptanceTestSpec
       val resultFuture = result.value
 
       status(resultFuture) shouldBe BAD_REQUEST
+      headers(resultFuture).get(X_CONVERSATION_ID_NAME) shouldBe 'defined
 
       And("the response body is a \"missing X-Badge-Identifier header\" XML")
       string2xml(contentAsString(resultFuture)) shouldBe string2xml(InvalidXBadgeIdentifierHeaderError)
@@ -275,6 +284,7 @@ class InventoryLinkingExportsUnhappyPathSpec extends AcceptanceTestSpec
       val resultFuture = result.value
 
       status(resultFuture) shouldBe BAD_REQUEST
+      headers(resultFuture).get(X_CONVERSATION_ID_NAME) shouldBe 'defined
 
       And("the response body is an \"invalid X-Badge-Identifier header\" XML")
       string2xml(contentAsString(resultFuture)) shouldBe string2xml(InvalidXBadgeIdentifierHeaderError)
@@ -294,6 +304,7 @@ class InventoryLinkingExportsUnhappyPathSpec extends AcceptanceTestSpec
       val resultFuture = result.value
 
       status(resultFuture) shouldBe INTERNAL_SERVER_ERROR
+      headers(resultFuture).get(X_CONVERSATION_ID_NAME) shouldBe 'defined
 
       And("the response body is an \"Internal server error\" XML")
       string2xml(contentAsString(resultFuture)) shouldBe string2xml(InternalServerError)

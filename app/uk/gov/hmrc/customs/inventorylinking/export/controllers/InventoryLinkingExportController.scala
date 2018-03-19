@@ -17,7 +17,6 @@
 package uk.gov.hmrc.customs.inventorylinking.export.controllers
 
 import javax.inject.{Inject, Singleton}
-
 import play.api.http.MimeTypes
 import play.api.mvc._
 import uk.gov.hmrc.auth.core.AuthProvider.{GovernmentGateway, PrivilegedApplication}
@@ -26,10 +25,9 @@ import uk.gov.hmrc.auth.core.retrieve.Retrievals
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.UnauthorizedCode
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.InventoryLinkingAuthConnector
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames.X_CONVERSATION_ID_HEADER_NAME
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model.{BadgeIdentifier, ConversationId, Eori}
-import uk.gov.hmrc.customs.inventorylinking.export.services.{CustomsConfigService, ExportsBusinessService, ProcessingResult}
+import uk.gov.hmrc.customs.inventorylinking.export.model._
+import uk.gov.hmrc.customs.inventorylinking.export.services.{CustomsConfigService, ExportsBusinessService, ProcessingResult, UuidService}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.play.microservice.controller.BaseController
@@ -43,6 +41,7 @@ import scala.xml.NodeSeq
 class InventoryLinkingExportController @Inject()(override val authConnector: InventoryLinkingAuthConnector,
                                                  customsConfigService: CustomsConfigService,
                                                  exportsBusinessService: ExportsBusinessService,
+                                                 uuidService: UuidService,
                                                  logger: ExportsLogger)
   extends BaseController
     with HeaderValidator with AuthorisedFunctions {
@@ -63,21 +62,6 @@ class InventoryLinkingExportController @Inject()(override val authConnector: Inv
     case _ => Right(AnyContentAsEmpty)
   })
 
-  def post(): Action[AnyContent] = validateHeaders().async(bodyParser = xmlOrEmptyBody) {
-    implicit request =>
-      val maybeBadgeIdentifier: Option[BadgeIdentifier] = extractBadgeIdentifier(request)
-
-      logger.info(s"Inventory linking exports request received")
-      logger.debug("Inventory Linking Exports request", payload = request.body.toString)
-      request.body.asXml match {
-        case Some(xml) => processXmlPayload(xml, maybeBadgeIdentifier)
-        case None =>
-          val errorMessage = "Request body does not contain well-formed XML."
-          logger.error(errorMessage)
-          Future.successful(ErrorResponse.errorBadRequest(errorMessage).XmlResult)
-      }
-  }
-
   private def extractBadgeIdentifier(request: Request[AnyContent]): Option[BadgeIdentifier] = {
     request.headers.get(XBadgeIdentifier) match {
       case Some(id) => Some(BadgeIdentifier(id))
@@ -85,39 +69,73 @@ class InventoryLinkingExportController @Inject()(override val authConnector: Inv
     }
   }
 
-  private def processXmlPayload(xml: NodeSeq, maybeBadgeIdentifier: Option[BadgeIdentifier])(implicit hc: HeaderCarrier): Future[Result] = {
+  private def validateHeaders[A](implicit request: Request[A]): Option[Seq[ErrorResponse]] = {
+    val seq = Seq(validateAccept, validateContentType, validateBadgeIdentifier).filter(_.nonEmpty).map(_.get)
+    if(seq.isEmpty) None else Some(seq)
+  }
+
+  private def conversationIdHeader(wrapper: Ids) = {
+    "X-Conversation-ID" -> wrapper.conversationId.value
+  }
+
+  def post(): Action[AnyContent] = Action.async(bodyParser = xmlOrEmptyBody) {
+    implicit request =>
+
+      val conversationId = uuidService.uuid().toString
+      val correlationId = uuidService.uuid().toString
+
+      val ids = Ids(ConversationId(conversationId), CorrelationId(correlationId), extractBadgeIdentifier(request))
+      logger.debug(s"Request received. Payload = ${request.body.toString} headers = ${request.headers.headers} ids = $ids")
+
+      logger.info(s"Inventory linking exports request received")
+      validateHeaders(request) match {
+        case Some(seq) =>
+          val errors = seq.map(error => error.message + " ").mkString
+          logger.error(s"Header validation with conversationId = ${ids.conversationId.value} failed because $errors")
+          Future.successful(seq.head.XmlResult.withHeaders(conversationIdHeader(ids)))
+        case _ => processRequest(ids)
+      }
+  }
+
+  private def processRequest(ids: Ids)(implicit request: Request[AnyContent]): Future[Result] = {
+    request.body.asXml match {
+      case Some(xml) => processXmlPayload(xml, ids)
+      case None =>
+        val errorMessage = "Request body does not contain well-formed XML."
+        logger.error(errorMessage)
+        Future.successful(ErrorResponse.errorBadRequest(errorMessage).XmlResult.withHeaders(conversationIdHeader(ids)))
+    }
+  }
+
+  private def processXmlPayload(xml: NodeSeq, ids: Ids)(implicit hc: HeaderCarrier): Future[Result] = {
     logger.debug("processXmlPayload")
-    (authoriseCspSubmission(xml, maybeBadgeIdentifier: Option[BadgeIdentifier]) orElseIfInsufficientEnrolments authoriseNonCspSubmission(xml) orElse unauthorised)
+    (authoriseCspSubmission(xml, ids) orElseIfInsufficientEnrolments authoriseNonCspSubmission(xml, ids) orElse unauthorised)
       .map {
-        case Right(conversationId) => Accepted.as(MimeTypes.XML).withHeaders(X_CONVERSATION_ID_HEADER_NAME -> conversationId.value)
-        case Left(errorResponse) => errorResponse.XmlResult
+        case Right(identifiers) => Accepted.as(MimeTypes.XML).withHeaders(conversationIdHeader(identifiers))
+        case Left(errorResponse) => errorResponse.XmlResult.withHeaders(conversationIdHeader(ids))
       }
       .recoverWith {
         case NonFatal(e) =>
           logger.error(s"Inventory linking call failed: ${e.getMessage}", e)
-          Future.successful(ErrorResponse.ErrorInternalServerError.XmlResult)
+          Future.successful(ErrorResponse.ErrorInternalServerError.XmlResult.withHeaders(conversationIdHeader(ids)))
       }
   }
 
-  private def validateHeaders(): ActionBuilder[Request] = {
-    validateAccept(acceptHeaderValidation) andThen validateContentType(contentTypeValidation) andThen validateXBadgeIdentifier(badgeIdentifierValidation)
-  }
-
-  private def authoriseCspSubmission(xml: NodeSeq, maybeBadgeIdentifier: Option[BadgeIdentifier])(implicit hc: HeaderCarrier): Future[ProcessingResult] = {
+  private def authoriseCspSubmission(xml: NodeSeq, ids: Ids)(implicit hc: HeaderCarrier): Future[ProcessingResult] = {
     authorised(Enrolment(apiScopeKey) and AuthProviders(PrivilegedApplication)) {
 
-      maybeBadgeIdentifier match {
+      ids.maybeBadgeIdentifier match {
         case None =>
           logger.error("Header validation failed because X-Badge-Identifier header is missing or invalid")
           Future.successful (Left(ErrorResponseBadgeIdentifierHeaderMissing))
         case Some(_) =>
           logger.info("[authoriseCspSubmission] Processing an authorised CSP submission.")
-          exportsBusinessService.authorisedCspSubmission(xml, maybeBadgeIdentifier)
+          exportsBusinessService.authorisedCspSubmission(xml, ids)
       }
     }
   }
 
-  private def authoriseNonCspSubmission(xml: NodeSeq)(implicit hc: HeaderCarrier): Future[ProcessingResult] = {
+  private def authoriseNonCspSubmission(xml: NodeSeq, ids: Ids)(implicit hc: HeaderCarrier): Future[ProcessingResult] = {
     logger.info("Authorising a non-CSP request.")
     authorised(Enrolment(enrolmentName) and AuthProviders(GovernmentGateway)).retrieve(Retrievals.authorisedEnrolments) {
       enrolments =>
@@ -126,7 +144,7 @@ class InventoryLinkingExportController @Inject()(override val authConnector: Inv
         maybeEori match {
           case Some(_) =>
             logger.info("Processing an authorised non-CSP submission.")
-            exportsBusinessService.authorisedNonCspSubmission(xml)
+            exportsBusinessService.authorisedNonCspSubmission(xml, ids)
 
           case _ => Future.successful(Left(ErrorResponseEoriNotFoundInCustomsEnrolment))
         }
@@ -144,7 +162,7 @@ class InventoryLinkingExportController @Inject()(override val authConnector: Inv
     } yield Eori(eoriIdentifier.value)
   }
 
-  private def unauthorised(authException: AuthorisationException)(implicit hc: HeaderCarrier): Future[Left[ErrorResponse, ConversationId]] = {
+  private def unauthorised(authException: AuthorisationException)(implicit hc: HeaderCarrier): Future[Left[ErrorResponse, Ids]] = {
     logger.error("Unauthorized inventory linking exports call", authException)
     Future.successful(Left(ErrorResponseUnauthorisedGeneral))
   }

@@ -18,19 +18,19 @@ package uk.gov.hmrc.customs.inventorylinking.export.services
 
 import java.net.URLEncoder
 import java.util.UUID
-import javax.inject.{Inject, Singleton}
 
+import javax.inject.{Inject, Singleton}
 import org.joda.time.DateTime
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.{ApiSubscriptionFieldsConnector, MdgExportsConnector}
+import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames._
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionKey, BadgeIdentifier, ConversationId}
+import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionKey, Ids}
 import uk.gov.hmrc.customs.inventorylinking.export.xml.MdgPayloadDecorator
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.xml.NodeSeq
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames._
 
 @Singleton
 class CommunicationService @Inject()(logger: ExportsLogger,
@@ -47,18 +47,16 @@ class CommunicationService @Inject()(logger: ExportsLogger,
     Future.successful(customsConfigService.overridesConfig.clientId)
   }
 
-  def prepareAndSend(inboundXml: NodeSeq, maybeBadgeIdentifier: Option[BadgeIdentifier])(implicit hc: HeaderCarrier): Future[ConversationId] = {
-    val conversationId = uuidService.uuid()
-    val correlationId = uuidService.uuid()
+  def prepareAndSend(inboundXml: NodeSeq, ids: Ids)(implicit hc: HeaderCarrier): Future[Ids] = {
     val dateTime = dateTimeProvider.getUtcNow
 
     logger.info("preparing and sending payload")
 
     for {
       clientId <- futureClientId
-      xmlToSend = preparePayload(inboundXml, conversationId, correlationId, clientId, maybeBadgeIdentifier, dateTime)
-      conversationId <- connector.send(xmlToSend, dateTime, correlationId).map(_ => ConversationId(conversationId.toString))
-    } yield conversationId
+      xmlToSend = preparePayload(inboundXml, ids, clientId, dateTime)
+      _ <- connector.send(xmlToSend, dateTime, UUID.fromString(ids.correlationId.value))
+    } yield ids
   }
 
   private def futureClientId(implicit hc: HeaderCarrier): Future[String] = {
@@ -81,9 +79,9 @@ class CommunicationService @Inject()(logger: ExportsLogger,
     }
   }
 
-  private def preparePayload(xml: NodeSeq, conversationId: UUID, correlationId: UUID, clientId: String, maybeBadgeIdentifier: Option[BadgeIdentifier], dateTime: DateTime)(implicit hc: HeaderCarrier): NodeSeq = {
+  private def preparePayload(xml: NodeSeq, ids: Ids, clientId: String, dateTime: DateTime)(implicit hc: HeaderCarrier): NodeSeq = {
     logger.debug(s"preparePayload called")
-    wrapper.decorate(xml, conversationId.toString, correlationId.toString, clientId, maybeBadgeIdentifier, dateTime)
+    wrapper.decorate(xml, ids, clientId, dateTime)
   }
 
   private def futureApiSubFieldsId(implicit hc: HeaderCarrier): Future[Option[String]] = {

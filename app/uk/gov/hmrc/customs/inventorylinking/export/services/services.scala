@@ -17,8 +17,8 @@
 package uk.gov.hmrc.customs.inventorylinking.export
 
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
-import uk.gov.hmrc.customs.inventorylinking.export.model.ConversationId
+import uk.gov.hmrc.customs.inventorylinking.export.model.Ids
 
 package object services {
-  type ProcessingResult = Either[ErrorResponse, ConversationId]
+  type ProcessingResult = Either[ErrorResponse, Ids]
 }

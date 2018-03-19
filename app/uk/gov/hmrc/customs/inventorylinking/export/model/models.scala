@@ -20,4 +20,10 @@ case class Eori(value: String) extends AnyVal
 
 case class ConversationId(value: String) extends AnyVal
 
+case class CorrelationId(value: String) extends AnyVal
+
 case class BadgeIdentifier(value: String) extends AnyVal
+
+case class Ids(conversationId: ConversationId,
+               correlationId: CorrelationId,
+               maybeBadgeIdentifier: Option[BadgeIdentifier] = None)

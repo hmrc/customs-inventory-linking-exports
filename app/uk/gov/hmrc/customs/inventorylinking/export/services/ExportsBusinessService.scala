@@ -20,7 +20,7 @@ import javax.inject.{Inject, Singleton}
 
 import uk.gov.hmrc.customs.api.common.controllers.{ErrorResponse, ResponseContents}
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model.BadgeIdentifier
+import uk.gov.hmrc.customs.inventorylinking.export.model.Ids
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.collection.Seq
@@ -35,14 +35,14 @@ class ExportsBusinessService @Inject()(logger: ExportsLogger,
 
   type ValidationResult = Either[ErrorResponse, Unit]
 
-  def authorisedCspSubmission(xml: NodeSeq, maybeBadgeIdentifier: Option[BadgeIdentifier])(implicit hc: HeaderCarrier): Future[ProcessingResult] = {
+  def authorisedCspSubmission(xml: NodeSeq, ids: Ids)(implicit hc: HeaderCarrier): Future[ProcessingResult] = {
     logger.debug("authorisedCspSubmission", payload = xml.toString())
-    validateXml(xml) thenProcessWith prepareAndSend(xml, maybeBadgeIdentifier)
+    validateXml(xml) thenProcessWith prepareAndSend(xml, ids)
   }
 
-  def authorisedNonCspSubmission(xml: NodeSeq)(implicit hc: HeaderCarrier): Future[ProcessingResult] = {
+  def authorisedNonCspSubmission(xml: NodeSeq, ids: Ids)(implicit hc: HeaderCarrier): Future[ProcessingResult] = {
     logger.debug("authorisedNonCspSubmission", payload = xml.toString())
-    validateXml(xml) thenProcessWith prepareAndSend(xml)
+    validateXml(xml) thenProcessWith prepareAndSend(xml, ids)
   }
 
   private def validateXml(xml: NodeSeq)(implicit hc: HeaderCarrier): Future[ValidationResult] = {
@@ -69,8 +69,8 @@ class ExportsBusinessService @Inject()(logger: ExportsLogger,
     loop(saxe, Nil)
   }
 
-  private def prepareAndSend(xml: NodeSeq, maybeBadgeIdentifier: Option[BadgeIdentifier] = None)(implicit hc: HeaderCarrier): Future[ProcessingResult] = {
-    communication.prepareAndSend(xml, maybeBadgeIdentifier: Option[BadgeIdentifier]).map(Right(_))
+  private def prepareAndSend(xml: NodeSeq, ids: Ids)(implicit hc: HeaderCarrier): Future[ProcessingResult] = {
+    communication.prepareAndSend(xml, ids).map(Right(_))
   }
 
   private implicit class ValidationFutureOps(validationFuture: Future[ValidationResult]) {

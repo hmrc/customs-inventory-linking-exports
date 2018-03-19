@@ -21,7 +21,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 import util.ApiSubscriptionFieldsTestData._
 import util.RequestHeaders._
-import util.XMLTestData.conversationIdValue
+import util.TestData.conversationIdValue
 
 class LoggingHelperSpec extends UnitSpec {
 

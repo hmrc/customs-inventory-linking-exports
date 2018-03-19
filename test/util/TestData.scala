@@ -19,6 +19,7 @@ package util
 import java.util.UUID
 
 import com.google.inject.AbstractModule
+import org.joda.time.{DateTime, DateTimeZone}
 import org.scalatest.mockito.MockitoSugar
 import play.api.http.HeaderNames._
 import play.api.http.MimeTypes
@@ -26,7 +27,7 @@ import play.api.inject.guice.GuiceableModule
 import play.api.mvc.{AnyContentAsText, AnyContentAsXml}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.POST
-import uk.gov.hmrc.customs.inventorylinking.export.model.{BadgeIdentifier, ConversationId}
+import uk.gov.hmrc.customs.inventorylinking.export.model._
 import uk.gov.hmrc.customs.inventorylinking.export.services.UuidService
 import util.RequestHeaders._
 import util.TestData._
@@ -35,13 +36,25 @@ import util.XMLTestData._
 import scala.util.Random
 
 object TestData {
+
+  val conversationIdValue = "28e5aa87-3f89-4f12-b1b1-60f2b2de66f1"
   val conversationIdUuid: UUID = UUID.fromString(conversationIdValue)
-  val conversationId = ConversationId(conversationIdUuid.toString)
+  val conversationId = ConversationId(conversationIdValue)
+
+  val correlationIdValue = "e61f8eee-812c-4b8f-b193-06aedc60dca2"
+  val correlationIdUuid: UUID = UUID.fromString(correlationIdValue)
+  val correlationId = CorrelationId(correlationIdValue)
 
   val validBadgeIdentifierValue = "BADGEID"
   val invalidBadgeIdentifierValue = "InvalidBadgeId"
   val invalidBadgeIdentifier: BadgeIdentifier = BadgeIdentifier(invalidBadgeIdentifierValue)
   val badgeIdentifier: BadgeIdentifier = BadgeIdentifier(validBadgeIdentifierValue)
+  val ids = Ids(conversationId, correlationId, Some(badgeIdentifier))
+
+  val declarantEoriValue = "ZZ123456789000"
+  val declarantEori = Eori(declarantEoriValue)
+  val dateTime = DateTime.now(DateTimeZone.UTC)
+  val dateTimeFormat = "YYYY-MM-dd'T'HH:mm:ss'Z'"
 
   val validBasicAuthToken = s"Basic ${Random.alphanumeric.take(18).mkString}=="
 
@@ -114,7 +127,8 @@ object RequestHeaders {
 
   val BASIC_AUTH_HEADER: (String, String) = AUTHORIZATION -> validBasicAuthToken
 
-  val CONVERSATION_ID_HEADER: (String, String) = "X-Conversation-ID" -> conversationIdValue
+  val X_CONVERSATION_ID_NAME = "X-Conversation-ID"
+  val X_CONVERSATION_ID_HEADER: (String, String) = X_CONVERSATION_ID_NAME -> conversationIdUuid.toString
 
   val API_SUBSCRIPTION_FIELDS_ID_NAME = "api-subscription-fields-id"
   val API_SUBSCRIPTION_FIELDS_ID_HEADER: (String, String) = API_SUBSCRIPTION_FIELDS_ID_NAME -> ApiSubscriptionFieldsTestData.fieldsId
@@ -140,6 +154,6 @@ object RequestHeaders {
     API_SUBSCRIPTION_FIELDS_ID_HEADER,
     X_BADGE_IDENTIFIER_HEADER)
 
-  val LoggingHeaders = Seq(API_SUBSCRIPTION_FIELDS_ID_HEADER, X_CLIENT_ID_HEADER, CONVERSATION_ID_HEADER)
-  val LoggingHeadersWithAuth = Seq(API_SUBSCRIPTION_FIELDS_ID_HEADER, X_CLIENT_ID_HEADER, CONVERSATION_ID_HEADER, BASIC_AUTH_HEADER)
+  val LoggingHeaders = Seq(API_SUBSCRIPTION_FIELDS_ID_HEADER, X_CLIENT_ID_HEADER, X_CONVERSATION_ID_HEADER)
+  val LoggingHeadersWithAuth = Seq(API_SUBSCRIPTION_FIELDS_ID_HEADER, X_CLIENT_ID_HEADER, X_CONVERSATION_ID_HEADER, BASIC_AUTH_HEADER)
 }

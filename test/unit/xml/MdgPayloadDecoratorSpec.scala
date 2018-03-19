@@ -20,6 +20,7 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.prop.TableDrivenPropertyChecks._
 import uk.gov.hmrc.customs.inventorylinking.export.xml.MdgPayloadDecorator
 import uk.gov.hmrc.play.test.UnitSpec
+import util.ApiSubscriptionFieldsTestData._
 import util.XMLTestData._
 import util.TestData._
 
@@ -35,15 +36,15 @@ class MdgPayloadDecoratorSpec extends UnitSpec with MockitoSugar{
 
   private val decorator = new MdgPayloadDecorator()
 
-  private def wrapPayloadWithBadgeIdentifier(payload: NodeSeq = xmlPayload) = decorator.decorate(payload, conversationIdValue, correlationId, clientId, Some(badgeIdentifier), dateTime)
-  private def wrapPayloadWithoutBadgeIdentifier(payload: NodeSeq = xmlPayload) = decorator.decorate(payload, conversationIdValue, correlationId, clientId, None, dateTime)
+  private def wrapPayloadWithBadgeIdentifier(payload: NodeSeq = xmlPayload) = decorator.decorate(payload, ids, xClientId, dateTime)
+  private def wrapPayloadWithoutBadgeIdentifier(payload: NodeSeq = xmlPayload) = decorator.decorate(payload, ids.copy(maybeBadgeIdentifier = None), xClientId, dateTime)
 
   "MdgPayloadDecorator" should {
 
     "wrap passed complete inventoryLinkingMovementRequest in MDG wrapper" in {
       val result = wrapPayloadWithBadgeIdentifier(ValidInventoryLinkingMovementRequestXML)
 
-       xml.Utility.trim(result.head) shouldBe xml.Utility.trim(wrappedValidXML().head)
+       xml.Utility.trim(result.head) shouldBe xml.Utility.trim(wrappedValidXML.head)
     }
 
     forAll(xmlRequests) { (linkingType, xml) =>
@@ -80,7 +81,7 @@ class MdgPayloadDecoratorSpec extends UnitSpec with MockitoSugar{
 
       val rd = result \ commonLabel \ "correlationID"
 
-      rd.head.text shouldBe correlationId
+      rd.head.text shouldBe correlationIdValue
     }
 
     "set the clientId" in {
@@ -88,7 +89,7 @@ class MdgPayloadDecoratorSpec extends UnitSpec with MockitoSugar{
 
       val rd = result \ commonLabel \ "clientID"
 
-      rd.head.text shouldBe clientId
+      rd.head.text shouldBe xClientId
     }
 
     "set the badgeIdentifier when present" in {
