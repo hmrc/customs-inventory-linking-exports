@@ -28,11 +28,12 @@ import play.mvc.Http.MimeTypes
 import uk.gov.hmrc.customs.api.common.config.{ServiceConfig, ServiceConfigProvider}
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.MdgExportsConnector
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.services.{UuidService, WSHttp}
+import uk.gov.hmrc.customs.inventorylinking.export.services.WSHttp
 import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse, NotFoundException}
 import uk.gov.hmrc.play.test.UnitSpec
 import util.MockitoPassByNameHelper.PassByNameVerifier
-import util.{RequestHeaders, TestData}
+import util.RequestHeaders
+import util.TestData._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -60,8 +61,6 @@ class MdgExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndA
   val date: DateTime = new DateTime(2017, 7, 4, 13, 45, DateTimeZone.UTC)
 
   val httpFormattedDate = "Tue, 04 Jul 2017 13:45:00 UTC"
-
-  val correlationId = new UuidService().uuid()
 
   "MdgExportsConnector" can {
 
@@ -137,18 +136,18 @@ class MdgExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndA
         val headersCaptor: ArgumentCaptor[HeaderCarrier] = ArgumentCaptor.forClass(classOf[HeaderCarrier])
         verify(mockWsPost).POSTString(anyString, anyString, any[Seq[(String, String)]])(
           any[HttpReads[HttpResponse]](), headersCaptor.capture(), any[ExecutionContext])
-        headersCaptor.getValue.extraHeaders should contain("X-Correlation-ID" -> correlationId.toString)
+        headersCaptor.getValue.extraHeaders should contain("X-Correlation-ID" -> correlationIdValue)
       }
     }
 
     "when making an failing request" should {
       "propagate an underlying error when MDG call fails with a non-http exception" in {
-        returnResponseForRequest(Future.failed(TestData.emulatedServiceFailure))
+        returnResponseForRequest(Future.failed(emulatedServiceFailure))
 
-        val caught = intercept[TestData.EmulatedServiceFailure] {
+        val caught = intercept[EmulatedServiceFailure] {
           awaitSubscriptionFields
         }
-        caught shouldBe TestData.emulatedServiceFailure
+        caught shouldBe emulatedServiceFailure
 
         verifyErrorLogged(caught)
       }
@@ -177,7 +176,7 @@ class MdgExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndA
   }
 
   private def awaitSubscriptionFields = {
-    await(connector.send(xml, date, correlationId))
+    await(connector.send(xml, date, correlationIdUuid))
   }
 
   private def returnResponseForRequest(eventualResponse: Future[HttpResponse]) = {

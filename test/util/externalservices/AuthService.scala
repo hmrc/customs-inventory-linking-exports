@@ -26,7 +26,7 @@ import uk.gov.hmrc.auth.core.authorise.Predicate
 import uk.gov.hmrc.auth.core.retrieve._
 import uk.gov.hmrc.customs.inventorylinking.export.model.Eori
 import util.TestData
-import util.XMLTestData.declarantEori
+import util.TestData.declarantEori
 
 trait AuthService {
 

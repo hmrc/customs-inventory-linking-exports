@@ -16,23 +16,13 @@
 
 package util
 
-import java.util.UUID
-
-import org.joda.time.{DateTime, DateTimeZone}
-import uk.gov.hmrc.customs.inventorylinking.export.model.{BadgeIdentifier, Eori}
 import org.scalatest.prop.TableDrivenPropertyChecks.Table
+import util.ApiSubscriptionFieldsTestData._
+import util.TestData._
 
 import scala.xml.Elem
 
 object XMLTestData {
-
-  val declarantEoriValue = "ZZ123456789000"
-  val declarantEori = Eori(declarantEoriValue)
-  val conversationIdValue = UUID.randomUUID().toString
-  val correlationId = UUID.randomUUID().toString
-  val clientId = UUID.randomUUID().toString
-  val dateTime = DateTime.now(DateTimeZone.UTC)
-  val dateTimeFormat = "YYYY-MM-dd'T'HH:mm:ss'Z'"
 
   val InvalidXML: Elem =
     <inventoryLinkingMovementRequest foo="bar" xmlns="http://gov.uk/customs/inventoryLinking/v1">
@@ -97,19 +87,15 @@ object XMLTestData {
     </agentDetails>
   </inventoryLinkingQueryRequest>
 
-  def wrappedValidXML(clientId: String = clientId,
-                      conversationId: String = conversationIdValue,
-                      correlationId: String = correlationId,
-                      maybeBadgeIdentifier: Option[BadgeIdentifier] = Some(TestData.badgeIdentifier),
-                      dateTime: DateTime = dateTime): Elem =
+  def wrappedValidXML: Elem =
       <n1:InventoryLinkingExportsInboundRequest xmlns:n1="http://www.hmrc.gov.uk/cds/inventorylinking/exportmovement"
                                                 xmlns:gw="http://gov.uk/customs/inventoryLinking/gatewayHeader/v1"
                                                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:inv="http://gov.uk/customs/inventoryLinking/v1">
         <n1:requestCommon>
-          <gw:badgeIdentifier>{maybeBadgeIdentifier.get.value}</gw:badgeIdentifier>
-          <gw:clientID>{clientId}</gw:clientID>
-          <gw:conversationID>{conversationId}</gw:conversationID>
-          <gw:correlationID>{correlationId}</gw:correlationID>
+          <gw:badgeIdentifier>{validBadgeIdentifierValue}</gw:badgeIdentifier>
+          <gw:clientID>{xClientId}</gw:clientID>
+          <gw:conversationID>{conversationIdValue}</gw:conversationID>
+          <gw:correlationID>{correlationIdValue}</gw:correlationID>
           <gw:dateTimeStamp>{dateTime.toString(dateTimeFormat)}</gw:dateTimeStamp>
         </n1:requestCommon>
         <n1:requestDetail>
@@ -126,8 +112,6 @@ object XMLTestData {
           </inventoryLinkingMovementRequest>
       </n1:requestDetail>
       </n1:InventoryLinkingExportsInboundRequest>
-
-  val WrappedValidXML: Elem = wrappedValidXML()
 
   val xmlRequests = Table(
     ("linkingType", "xml"),

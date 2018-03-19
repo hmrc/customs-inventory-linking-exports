@@ -50,7 +50,6 @@ class CommunicationServiceSpec extends UnitSpec with MockitoSugar with BeforeAnd
   private val mockOverridesConfig = mock[OverridesConfig]
   private val mockHttpResponse = mock[HttpResponse]
 
-  private val correlationId = UUID.randomUUID()
   private val dateTime = new DateTime()
   private val clientIdOverride = s"OVERRIDE_$xClientId"
 
@@ -67,13 +66,13 @@ class CommunicationServiceSpec extends UnitSpec with MockitoSugar with BeforeAnd
   override protected def beforeEach(): Unit = {
     reset(mockLogger, mockMdgExportsConnector, mockApiSubscriptionFieldsConnector, mockPayloadDecorator,
       mockUuidService, mockDateTimeProvider, mockCustomsConfigService, mockApiDefinitionConfig, mockOverridesConfig)
-    when(mockUuidService.uuid()).thenReturn(conversationIdUuid).thenReturn(correlationId)
+    when(mockUuidService.uuid()).thenReturn(UUID.randomUUID())
     when(mockDateTimeProvider.getUtcNow).thenReturn(dateTime)
     when(mockOverridesConfig.clientId).thenReturn(None)
     when(mockApiDefinitionConfig.apiContext).thenReturn("customs/inventory-linking/exports")
     when(mockCustomsConfigService.apiDefinitionConfig).thenReturn(mockApiDefinitionConfig)
     when(mockCustomsConfigService.overridesConfig).thenReturn(mockOverridesConfig)
-    when(mockMdgExportsConnector.send(any[NodeSeq], any[DateTime], any[UUID])).thenReturn(mockHttpResponse)
+    when(mockMdgExportsConnector.send(any[NodeSeq], meq(dateTime), any[UUID])).thenReturn(mockHttpResponse)
   }
 
   "CommunicationService" should {
@@ -81,14 +80,7 @@ class CommunicationServiceSpec extends UnitSpec with MockitoSugar with BeforeAnd
       service =>
         setupMockXmlWrapper
         prepareAndSendValidXml(service)
-        verify(mockMdgExportsConnector).send(meq(WrappedValidXML), any[DateTime], any[UUID])
-    }
-
-    "generate correlationId and pass to connector" in testService {
-      service =>
-        setupMockXmlWrapper
-        prepareAndSendValidXml(service)
-        verify(mockMdgExportsConnector).send(any[NodeSeq], any[DateTime], meq(correlationId))
+        verify(mockMdgExportsConnector).send(meq(wrappedValidXML), any[DateTime], any[UUID])
     }
 
     "get utc date time and pass to connector" in testService {
@@ -98,23 +90,16 @@ class CommunicationServiceSpec extends UnitSpec with MockitoSugar with BeforeAnd
         verify(mockMdgExportsConnector).send(any[NodeSeq], meq(dateTime), any[UUID])
     }
 
-    "return a generated conversationId" in testService {
-      service =>
-        setupMockXmlWrapper
-        val generatedConversationId = await(prepareAndSendValidXml(service))
-        generatedConversationId shouldBe conversationId
-    }
-
     "call payload decorator passing incoming xml" in testService {
       service =>
         prepareAndSendValidXml(service)
-        verify(mockPayloadDecorator).decorate(meq(ValidInventoryLinkingMovementRequestXML), anyString, anyString, anyString, any[Option[BadgeIdentifier]], any[DateTime])
+        verify(mockPayloadDecorator).decorate(meq(ValidInventoryLinkingMovementRequestXML), any[Ids], anyString, any[DateTime])
     }
 
     "call payload decorator passing api-subscription-fields-id header as clientId" in testService{
       service =>
         prepareAndSendValidXml(service)
-        verify(mockPayloadDecorator).decorate(any[NodeSeq], anyString, anyString, meq(fieldsId), any[Option[BadgeIdentifier]], any[DateTime])
+        verify(mockPayloadDecorator).decorate(any[NodeSeq], meq(ids), meq(fieldsId), any[DateTime])
         verifyZeroInteractions(mockApiSubscriptionFieldsConnector)
     }
 
@@ -125,7 +110,7 @@ class CommunicationServiceSpec extends UnitSpec with MockitoSugar with BeforeAnd
         prepareAndSendValidXml(service)
         verify(mockCustomsConfigService).overridesConfig
         verify(mockOverridesConfig).clientId
-        verify(mockPayloadDecorator).decorate(any[NodeSeq], anyString, anyString, meq(clientIdOverride), any[Option[BadgeIdentifier]], any[DateTime])
+        verify(mockPayloadDecorator).decorate(any[NodeSeq], meq(ids), meq(clientIdOverride), any[DateTime])
         verifyZeroInteractions(mockApiSubscriptionFieldsConnector)
     }
 
@@ -137,7 +122,7 @@ class CommunicationServiceSpec extends UnitSpec with MockitoSugar with BeforeAnd
         prepareAndSendValidXml(service, hc)
         verify(mockCustomsConfigService).apiDefinitionConfig
         verify(mockApiDefinitionConfig).apiContext
-        verify(mockPayloadDecorator).decorate(any[NodeSeq], anyString, anyString, meq(fieldsId), any[Option[BadgeIdentifier]], any[DateTime])
+        verify(mockPayloadDecorator).decorate(any[NodeSeq], meq(ids), meq(fieldsId), any[DateTime])
         verify(mockApiSubscriptionFieldsConnector).getSubscriptionFields(meq(expectedApiSubscriptionKey))(any[HeaderCarrier])
     }
 
@@ -147,7 +132,7 @@ class CommunicationServiceSpec extends UnitSpec with MockitoSugar with BeforeAnd
         when(mockApiSubscriptionFieldsConnector.getSubscriptionFields(any[ApiSubscriptionKey])(any[HeaderCarrier])).thenReturn(Future.successful(apiSubscriptionFieldsResponse))
 
         prepareAndSendValidXml(service, hc)
-        verify(mockPayloadDecorator).decorate(any[NodeSeq], anyString, anyString, meq(fieldsId), any[Option[BadgeIdentifier]], any[DateTime])
+        verify(mockPayloadDecorator).decorate(any[NodeSeq], meq(ids), meq(fieldsId), any[DateTime])
         verifyZeroInteractions(mockApiSubscriptionFieldsConnector)
     }
 
@@ -172,21 +157,21 @@ class CommunicationServiceSpec extends UnitSpec with MockitoSugar with BeforeAnd
     "call payload decorator passing conversationId and correlationId" in testService {
       service =>
         prepareAndSendValidXml(service)
-        verify(mockPayloadDecorator).decorate(any[NodeSeq], meq(conversationIdUuid.toString), meq(correlationId.toString), anyString, any[Option[BadgeIdentifier]], any[DateTime])
+        verify(mockPayloadDecorator).decorate(any[NodeSeq], any[Ids], anyString, any[DateTime])
     }
 
     "call payload decorator passing dateTime" in testService {
       service =>
         prepareAndSendValidXml(service)
-        verify(mockPayloadDecorator).decorate(any[NodeSeq], anyString, anyString, anyString, any[Option[BadgeIdentifier]], meq(dateTime))
+        verify(mockPayloadDecorator).decorate(any[NodeSeq], any[Ids], anyString, meq(dateTime))
     }
   }
 
   private def setupMockXmlWrapper = {
-    when(mockPayloadDecorator.decorate(meq(ValidInventoryLinkingMovementRequestXML), anyString, anyString, anyString, any[Option[BadgeIdentifier]], any[DateTime])).thenReturn(WrappedValidXML)
+    when(mockPayloadDecorator.decorate(meq(ValidInventoryLinkingMovementRequestXML), any[Ids], anyString, any[DateTime])).thenReturn(wrappedValidXML)
   }
 
-  private def prepareAndSendValidXml(service: CommunicationService, hc: HeaderCarrier = headerCarrier): ConversationId = {
-    await(service.prepareAndSend(ValidInventoryLinkingMovementRequestXML, Some(badgeIdentifier))(hc))
+  private def prepareAndSendValidXml(service: CommunicationService, hc: HeaderCarrier = headerCarrier): Ids = {
+    await(service.prepareAndSend(ValidInventoryLinkingMovementRequestXML, ids)(hc))
   }
 }
