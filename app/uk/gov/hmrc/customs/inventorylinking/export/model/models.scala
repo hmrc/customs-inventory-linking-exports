@@ -24,6 +24,8 @@ case class CorrelationId(value: String) extends AnyVal
 
 case class BadgeIdentifier(value: String) extends AnyVal
 
+// TODO: remove this class
+@deprecated(message = "Use a wrapped request instead")
 case class Ids(conversationId: ConversationId,
                correlationId: CorrelationId,
                maybeBadgeIdentifier: Option[BadgeIdentifier] = None)

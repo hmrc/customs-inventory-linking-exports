@@ -18,17 +18,14 @@ package util
 
 import java.util.UUID
 
-import com.google.inject.AbstractModule
 import org.joda.time.{DateTime, DateTimeZone}
-import org.scalatest.mockito.MockitoSugar
 import play.api.http.HeaderNames._
 import play.api.http.MimeTypes
-import play.api.inject.guice.GuiceableModule
 import play.api.mvc.{AnyContentAsText, AnyContentAsXml}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.POST
 import uk.gov.hmrc.customs.inventorylinking.export.model._
-import uk.gov.hmrc.customs.inventorylinking.export.services.UuidService
+import uk.gov.hmrc.customs.inventorylinking.export.services.CorrelationIdsService
 import util.RequestHeaders._
 import util.TestData._
 import util.XMLTestData._
@@ -53,7 +50,7 @@ object TestData {
 
   val declarantEoriValue = "ZZ123456789000"
   val declarantEori = Eori(declarantEoriValue)
-  val dateTime = DateTime.now(DateTimeZone.UTC)
+  val dateTime: DateTime = DateTime.now(DateTimeZone.UTC)
   val dateTimeFormat = "YYYY-MM-dd'T'HH:mm:ss'Z'"
 
   val validBasicAuthToken = s"Basic ${Random.alphanumeric.take(18).mkString}=="
@@ -66,14 +63,6 @@ object TestData {
 
   val xsdLocations = List(
     "/api/conf/1.0/schemas/exports/request/inventoryLinkingRequestExternal.xsd")
-
-  object TestModule extends AbstractModule {
-    def configure(): Unit = {
-      bind(classOf[UuidService]) toInstance MockitoSugar.mock[UuidService]
-    }
-
-    def asGuiceableModule: GuiceableModule = GuiceableModule.guiceable(this)
-  }
 
   lazy val ValidRequest: FakeRequest[AnyContentAsXml] = FakeRequest()
     .withHeaders(RequestHeaders.ACCEPT_HMRC_XML_HEADER,
@@ -119,6 +108,12 @@ object TestData {
     def fromNonCsp: FakeRequest[R] = fakeRequest.withHeaders(AUTHORIZATION -> s"Bearer $nonCspBearerToken")
 
     def postTo(endpoint: String): FakeRequest[R] = fakeRequest.copyFakeRequest(method = POST, uri = endpoint)
+  }
+
+  // note we can not mock service methods that return value classes - however IMHO it results in cleaner code (less mocking noise)
+  val stubCorrelationIdsService = new CorrelationIdsService() {
+    override def conversation: ConversationId = conversationId
+    override def correlation: CorrelationId = correlationId
   }
 
 }

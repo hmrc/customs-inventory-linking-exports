@@ -52,7 +52,7 @@ class ApiSubscriptionFieldsConnectorSpec extends IntegrationTestSpec with GuiceO
   }
 
   override implicit lazy val app: Application =
-    GuiceApplicationBuilder(overrides = Seq(TestModule.asGuiceableModule)).configure(Map(
+    GuiceApplicationBuilder().configure(Map(
       "microservice.services.api-subscription-fields.host" -> Host,
       "microservice.services.api-subscription-fields.port" -> Port,
       "microservice.services.api-subscription-fields.context" -> ExportsExternalServicesConfig.ApiSubscriptionFieldsContext
