@@ -17,6 +17,7 @@
 package uk.gov.hmrc.customs.inventorylinking.export.controllers
 
 import javax.inject.{Inject, Singleton}
+
 import play.api.http.MimeTypes
 import play.api.mvc._
 import uk.gov.hmrc.auth.core.AuthProvider.{GovernmentGateway, PrivilegedApplication}
@@ -25,9 +26,11 @@ import uk.gov.hmrc.auth.core.retrieve.Retrievals
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.UnauthorizedCode
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.InventoryLinkingAuthConnector
+import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders.CorrelationIdsAction
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model._
-import uk.gov.hmrc.customs.inventorylinking.export.services.{CustomsConfigService, ExportsBusinessService, ProcessingResult, UuidService}
+import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.CorrelationIdsRequest
+import uk.gov.hmrc.customs.inventorylinking.export.services.{CustomsConfigService, ExportsBusinessService, ProcessingResult}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.play.microservice.controller.BaseController
@@ -41,7 +44,7 @@ import scala.xml.NodeSeq
 class InventoryLinkingExportController @Inject()(override val authConnector: InventoryLinkingAuthConnector,
                                                  customsConfigService: CustomsConfigService,
                                                  exportsBusinessService: ExportsBusinessService,
-                                                 uuidService: UuidService,
+                                                 correlationIdsAction: CorrelationIdsAction,
                                                  logger: ExportsLogger)
   extends BaseController
     with HeaderValidator with AuthorisedFunctions {
@@ -62,7 +65,7 @@ class InventoryLinkingExportController @Inject()(override val authConnector: Inv
     case _ => Right(AnyContentAsEmpty)
   })
 
-  private def extractBadgeIdentifier(request: Request[AnyContent]): Option[BadgeIdentifier] = {
+  private def extractBadgeIdentifier(request: CorrelationIdsRequest[_]): Option[BadgeIdentifier] = {
     request.headers.get(XBadgeIdentifier) match {
       case Some(id) => Some(BadgeIdentifier(id))
       case _ => None
@@ -78,13 +81,10 @@ class InventoryLinkingExportController @Inject()(override val authConnector: Inv
     "X-Conversation-ID" -> wrapper.conversationId.value
   }
 
-  def post(): Action[AnyContent] = Action.async(bodyParser = xmlOrEmptyBody) {
-    implicit request =>
+  def post(): Action[AnyContent] = (Action andThen correlationIdsAction).async(bodyParser = xmlOrEmptyBody) {
+    implicit request: CorrelationIdsRequest[_] =>
 
-      val conversationId = uuidService.uuid().toString
-      val correlationId = uuidService.uuid().toString
-
-      val ids = Ids(ConversationId(conversationId), CorrelationId(correlationId), extractBadgeIdentifier(request))
+      val ids = Ids(request.conversationId, request.correlationId, extractBadgeIdentifier(request))
       logger.debug(s"Request received. Payload = ${request.body.toString} headers = ${request.headers.headers} ids = $ids")
 
       logger.info(s"Inventory linking exports request received")
@@ -93,10 +93,17 @@ class InventoryLinkingExportController @Inject()(override val authConnector: Inv
           val errors = seq.map(error => error.message + " ").mkString
           logger.error(s"Header validation with conversationId = ${ids.conversationId.value} failed because $errors")
           Future.successful(seq.head.XmlResult.withHeaders(conversationIdHeader(ids)))
-        case _ => processRequest(ids)
+        case _ =>
+          processRequest(ids)(request.request.asInstanceOf[Request[AnyContent]])
       }
   }
 
+  /*
+  calls processXmlPayload
+  which calls authoriseCspSubmission/authoriseNonCspSubmission
+  which in turn call exportsBusinessService
+  which in turn calls xmlValidationService.validate and sends submission
+   */
   private def processRequest(ids: Ids)(implicit request: Request[AnyContent]): Future[Result] = {
     request.body.asXml match {
       case Some(xml) => processXmlPayload(xml, ids)

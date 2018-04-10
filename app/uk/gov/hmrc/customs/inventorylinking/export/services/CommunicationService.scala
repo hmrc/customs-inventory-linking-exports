@@ -37,7 +37,6 @@ class CommunicationService @Inject()(logger: ExportsLogger,
                                      connector: MdgExportsConnector,
                                      apiSubFieldsConnector: ApiSubscriptionFieldsConnector,
                                      wrapper: MdgPayloadDecorator,
-                                     uuidService: UuidService,
                                      dateTimeProvider: DateTimeService,
                                      customsConfigService: CustomsConfigService) {
 

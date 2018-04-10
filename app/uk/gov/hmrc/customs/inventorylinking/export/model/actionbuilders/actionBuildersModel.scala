@@ -14,23 +14,19 @@
  * limitations under the License.
  */
 
-package unit.services
+package uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders
 
-import uk.gov.hmrc.customs.inventorylinking.export.services.UuidService
-import uk.gov.hmrc.play.test.UnitSpec
+import play.api.mvc.{Request, WrappedRequest}
+import uk.gov.hmrc.customs.inventorylinking.export.model.{ConversationId, CorrelationId}
 
-class UuidServiceSpec extends UnitSpec {
-
-  val uuidService = new UuidService
-
-  "UuidService" should {
-    "provide different value on each call" in {
-      val uuid1 = uuidService.uuid()
-      val uuid2 = uuidService.uuid()
-
-      uuid1 should not be uuid2
-      uuid1.toString should not be uuid2.toString
-    }
-  }
-
+trait HasCorrelationIds {
+  val conversationId: ConversationId
+  val correlationId: CorrelationId
 }
+
+// Available after CorrelationIdsAction action builder
+case class CorrelationIdsRequest[A](
+  conversationId: ConversationId,
+  correlationId: CorrelationId,
+  request: Request[A]
+) extends WrappedRequest[A](request) with HasCorrelationIds

@@ -19,10 +19,14 @@ package uk.gov.hmrc.customs.inventorylinking.export.services
 import java.util.UUID
 
 import com.google.inject.Singleton
+import uk.gov.hmrc.customs.inventorylinking.export.model.{ConversationId, CorrelationId}
+
 
 @Singleton
-class UuidService {
+class CorrelationIdsService {
 
-  def uuid(): UUID = UUID.randomUUID()
+  def conversation: ConversationId = ConversationId(UUID.randomUUID().toString)
+
+  def correlation: CorrelationId = CorrelationId(UUID.randomUUID().toString)
 
 }

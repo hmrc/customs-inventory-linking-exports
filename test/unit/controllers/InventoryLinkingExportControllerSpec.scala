@@ -31,14 +31,15 @@ import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.errorBadRequest
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.InventoryLinkingAuthConnector
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.InventoryLinkingExportController
+import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders.CorrelationIdsAction
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model._
-import uk.gov.hmrc.customs.inventorylinking.export.services.{CustomsConfigService, ExportsBusinessService, UuidService}
+import uk.gov.hmrc.customs.inventorylinking.export.services.{CustomsConfigService, ExportsBusinessService}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 import util.MockitoPassByNameHelper.PassByNameVerifier
 import util.RequestHeaders
-import util.RequestHeaders.{X_CONVERSATION_ID_HEADER, ValidHeaders, X_BADGE_IDENTIFIER_NAME, X_CONVERSATION_ID_NAME}
+import util.RequestHeaders.{ValidHeaders, X_BADGE_IDENTIFIER_NAME, X_CONVERSATION_ID_HEADER, X_CONVERSATION_ID_NAME}
 import util.TestData._
 import util.XMLTestData._
 
@@ -50,10 +51,11 @@ class InventoryLinkingExportControllerSpec extends UnitSpec with Matchers with M
   private val mockExportsLogger = mock[ExportsLogger]
   private val mockCustomsConfigService = mock[CustomsConfigService]
   private val mockBusinessService = mock[ExportsBusinessService]
-  private val mockUuidService = mock[UuidService]
+
+  private val stubCorrelationIdsAction = new CorrelationIdsAction(stubCorrelationIdsService)
 
   val controller = new InventoryLinkingExportController(mockAuthConnector, mockCustomsConfigService,
-    mockBusinessService, mockUuidService, mockExportsLogger)
+    mockBusinessService, stubCorrelationIdsAction, mockExportsLogger)
 
   private val apiScope = "scope-in-api-definition"
   private val customsEnrolmentName = "HMRC-CUS-ORG"
@@ -79,7 +81,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec with Matchers with M
   private val nonCspAuthPredicate = Enrolment(customsEnrolmentName) and AuthProviders(GovernmentGateway)
 
   override protected def beforeEach() {
-    reset(mockExportsLogger, mockAuthConnector, mockBusinessService, mockUuidService)
+    reset(mockExportsLogger, mockAuthConnector, mockBusinessService)
 
     when(mockApiDefinitionConfig.apiScope).thenReturn(apiScope)
     when(mockCustomsConfigService.apiDefinitionConfig).thenReturn(mockApiDefinitionConfig)
@@ -87,8 +89,6 @@ class InventoryLinkingExportControllerSpec extends UnitSpec with Matchers with M
 
     when(mockBusinessService.authorisedCspSubmission(any[NodeSeq], any[Ids])(any[HeaderCarrier])).thenReturn(Right(ids))
     when(mockBusinessService.authorisedNonCspSubmission(any[NodeSeq], any[Ids])(any[HeaderCarrier])).thenReturn(Right(ids))
-
-    when(mockUuidService.uuid()).thenReturn(conversationIdUuid)
   }
 
   "InventoryLinkingExportController" should {

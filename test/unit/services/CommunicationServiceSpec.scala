@@ -26,7 +26,7 @@ import org.scalatest.mockito.MockitoSugar
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.{ApiSubscriptionFieldsConnector, MdgExportsConnector}
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model._
-import uk.gov.hmrc.customs.inventorylinking.export.services.{CommunicationService, CustomsConfigService, DateTimeService, UuidService}
+import uk.gov.hmrc.customs.inventorylinking.export.services.{CommunicationService, CustomsConfigService, DateTimeService}
 import uk.gov.hmrc.customs.inventorylinking.export.xml.MdgPayloadDecorator
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.test.UnitSpec
@@ -43,7 +43,6 @@ class CommunicationServiceSpec extends UnitSpec with MockitoSugar with BeforeAnd
   private val mockMdgExportsConnector = mock[MdgExportsConnector]
   private val mockApiSubscriptionFieldsConnector = mock[ApiSubscriptionFieldsConnector]
   private val mockPayloadDecorator = mock[MdgPayloadDecorator]
-  private val mockUuidService = mock[UuidService]
   private val mockDateTimeProvider = mock[DateTimeService]
   private val mockCustomsConfigService = mock[CustomsConfigService]
   private val mockApiDefinitionConfig = mock[ApiDefinitionConfig]
@@ -60,13 +59,12 @@ class CommunicationServiceSpec extends UnitSpec with MockitoSugar with BeforeAnd
 
   private def testService(test: CommunicationService => Unit) {
     test(new CommunicationService(mockLogger, mockMdgExportsConnector, mockApiSubscriptionFieldsConnector,
-      mockPayloadDecorator, mockUuidService, mockDateTimeProvider, mockCustomsConfigService))
+      mockPayloadDecorator, mockDateTimeProvider, mockCustomsConfigService))
   }
 
   override protected def beforeEach(): Unit = {
     reset(mockLogger, mockMdgExportsConnector, mockApiSubscriptionFieldsConnector, mockPayloadDecorator,
-      mockUuidService, mockDateTimeProvider, mockCustomsConfigService, mockApiDefinitionConfig, mockOverridesConfig)
-    when(mockUuidService.uuid()).thenReturn(UUID.randomUUID())
+      mockDateTimeProvider, mockCustomsConfigService, mockApiDefinitionConfig, mockOverridesConfig)
     when(mockDateTimeProvider.getUtcNow).thenReturn(dateTime)
     when(mockOverridesConfig.clientId).thenReturn(None)
     when(mockApiDefinitionConfig.apiContext).thenReturn("customs/inventory-linking/exports")
