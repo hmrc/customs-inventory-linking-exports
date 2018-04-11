@@ -50,12 +50,12 @@ class CommunicationServiceSpec extends UnitSpec with MockitoSugar with BeforeAnd
   private val mockHttpResponse = mock[HttpResponse]
 
   private val dateTime = new DateTime()
-  private val clientIdOverride = s"OVERRIDE_$xClientId"
+  private val clientIdOverride = s"OVERRIDE_$xClientIdValue"
 
   private val headerCarrier: HeaderCarrier = HeaderCarrier()
     .withExtraHeaders(RequestHeaders.API_SUBSCRIPTION_FIELDS_ID_HEADER)
 
-  private val expectedApiSubscriptionKey = ApiSubscriptionKey(xClientId, "customs%2Finventory-linking%2Fexports", "1.0")
+  private val expectedApiSubscriptionKey = ApiSubscriptionKey(xClientIdValue, "customs%2Finventory-linking%2Fexports", "1.0")
 
   private def testService(test: CommunicationService => Unit) {
     test(new CommunicationService(mockLogger, mockMdgExportsConnector, mockApiSubscriptionFieldsConnector,

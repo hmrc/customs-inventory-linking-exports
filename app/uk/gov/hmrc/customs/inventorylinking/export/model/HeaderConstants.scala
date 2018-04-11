@@ -16,25 +16,13 @@
 
 package uk.gov.hmrc.customs.inventorylinking.export.model
 
-case class Eori(value: String) extends AnyVal
+object HeaderConstants {
 
-case class ConversationId(value: String) extends AnyVal
+  val XClientIdHeaderName: String = "X-Client-ID"
+  val XConversationIdHeaderName: String = "X-Conversation-ID"
+  val XForwardedHostHeaderName: String = "X-Forwarded-Host"
+  val XCorrelationIdHeaderName: String = "X-Correlation-ID"
+  val XBadgeIdentifierHeaderName: String = "X-Badge-Identifier"
 
-case class CorrelationId(value: String) extends AnyVal
-
-case class BadgeIdentifier(value: String) extends AnyVal
-
-case class ClientId(value: String)
-
-sealed trait ApiVersion {
-  val value: String
+  val Version1AcceptHeaderValue = "application/vnd.hmrc.1.0+xml"
 }
-object VersionOne extends ApiVersion{
-  override val value: String = "1.0"
-}
-
-// TODO: remove this class
-@deprecated(message = "Use a wrapped request instead")
-case class Ids(conversationId: ConversationId,
-               correlationId: CorrelationId,
-               maybeBadgeIdentifier: Option[BadgeIdentifier] = None)

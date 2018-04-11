@@ -39,7 +39,7 @@ class InventoryLinkingExportSpec extends AcceptanceTestSpec
   private val endpoint = "/"
 
   private val apiSubscriptionKeyForXClientId =
-    ApiSubscriptionKey(clientId = xClientId, context = "customs%2Finventory-linking%2Fexports", version = "1.0")
+    ApiSubscriptionKey(clientId = xClientIdValue, context = "customs%2Finventory-linking%2Fexports", version = "1.0")
 
   private val UnauthorisedError =
     """<?xml version="1.0" encoding="UTF-8"?>

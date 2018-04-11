@@ -29,10 +29,11 @@ import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.{EmptyRetrieval, Retrievals}
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.errorBadRequest
+import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.InventoryLinkingAuthConnector
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.InventoryLinkingExportController
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders.CorrelationIdsAction
-import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
+import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders.{CorrelationIdsAction, ValidateAndExtractHeadersAction}
+import uk.gov.hmrc.customs.inventorylinking.export.controllers.{HeaderValidator, InventoryLinkingExportController}
+import uk.gov.hmrc.customs.inventorylinking.export.logging.{ExportsLogger, ExportsLogger2}
 import uk.gov.hmrc.customs.inventorylinking.export.model._
 import uk.gov.hmrc.customs.inventorylinking.export.services.{CustomsConfigService, ExportsBusinessService}
 import uk.gov.hmrc.http.HeaderCarrier
@@ -49,13 +50,16 @@ class InventoryLinkingExportControllerSpec extends UnitSpec with Matchers with M
 
   private val mockAuthConnector = mock[InventoryLinkingAuthConnector]
   private val mockExportsLogger = mock[ExportsLogger]
+  private val mockExportsLogger2 = mock[ExportsLogger2]
+  private val mockCdsLogger = mock[CdsLogger]
   private val mockCustomsConfigService = mock[CustomsConfigService]
   private val mockBusinessService = mock[ExportsBusinessService]
 
-  private val stubCorrelationIdsAction = new CorrelationIdsAction(stubCorrelationIdsService)
+  private val stubCorrelationIdsAction = new CorrelationIdsAction(stubCorrelationIdsService, mockExportsLogger2)
+  private val stubValidateAndExtractHeadersAction = new ValidateAndExtractHeadersAction(new HeaderValidator(mockCdsLogger), mockExportsLogger2)
 
   val controller = new InventoryLinkingExportController(mockAuthConnector, mockCustomsConfigService,
-    mockBusinessService, stubCorrelationIdsAction, mockExportsLogger)
+    mockBusinessService, stubCorrelationIdsAction, stubValidateAndExtractHeadersAction, mockExportsLogger)
 
   private val apiScope = "scope-in-api-definition"
   private val customsEnrolmentName = "HMRC-CUS-ORG"
@@ -138,7 +142,8 @@ class InventoryLinkingExportControllerSpec extends UnitSpec with Matchers with M
     "respond with status 400 for a request with an invalid X-Badge-Identifier" in {
       authoriseCsp()
       testSubmitResult(ValidRequest.withHeaders((ValidHeaders + (X_BADGE_IDENTIFIER_NAME -> invalidBadgeIdentifierValue)).toSeq: _*)) { result =>
-        await(result) shouldBe errorResultBadgeIdentifier
+        val actual = await(result)
+        actual shouldBe errorResultBadgeIdentifier
         verifyZeroInteractions(mockBusinessService)
       }
     }
@@ -235,9 +240,12 @@ class InventoryLinkingExportControllerSpec extends UnitSpec with Matchers with M
         .thenReturn(Left(mockErrorResponse))
       when(mockErrorResponse.XmlResult).thenReturn(mockResult)
       val invalidRequest = FakeRequest()
-        .withHeaders(RequestHeaders.ACCEPT_HMRC_XML_HEADER,
+        .withHeaders(
+          RequestHeaders.X_CLIENT_ID_HEADER,
+          RequestHeaders.ACCEPT_HMRC_XML_HEADER,
           RequestHeaders.CONTENT_TYPE_HEADER,
-          RequestHeaders.API_SUBSCRIPTION_FIELDS_ID_HEADER)
+          RequestHeaders.API_SUBSCRIPTION_FIELDS_ID_HEADER
+        )
         .withJsonBody(Json.parse("{}"))
       authoriseNonCsp(Some(declarantEori))
       testSubmitResult(invalidRequest) { result =>
@@ -287,6 +295,8 @@ class InventoryLinkingExportControllerSpec extends UnitSpec with Matchers with M
       .authorise(ameq(nonCspAuthPredicate), ameq(Retrievals.authorisedEnrolments))(any[HeaderCarrier], any[ExecutionContext])
   }
 
+  // TODO: simplify so that it returns a Future[Result] - client test can then have synchronous code after calling await(), making debugging easier
+  // also this would enable tests to be laid out in a more standard GIVEN / WHEN / THEN block style
   private def testSubmitResult(request: Request[AnyContent])(test: Future[Result] => Unit) {
     val result = controller.post().apply(request)
     test(result)

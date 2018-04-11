@@ -36,8 +36,8 @@ class MdgPayloadDecoratorSpec extends UnitSpec with MockitoSugar{
 
   private val decorator = new MdgPayloadDecorator()
 
-  private def wrapPayloadWithBadgeIdentifier(payload: NodeSeq = xmlPayload) = decorator.decorate(payload, ids, xClientId, dateTime)
-  private def wrapPayloadWithoutBadgeIdentifier(payload: NodeSeq = xmlPayload) = decorator.decorate(payload, ids.copy(maybeBadgeIdentifier = None), xClientId, dateTime)
+  private def wrapPayloadWithBadgeIdentifier(payload: NodeSeq = xmlPayload) = decorator.decorate(payload, ids, xClientIdValue, dateTime)
+  private def wrapPayloadWithoutBadgeIdentifier(payload: NodeSeq = xmlPayload) = decorator.decorate(payload, ids.copy(maybeBadgeIdentifier = None), xClientIdValue, dateTime)
 
   "MdgPayloadDecorator" should {
 
@@ -89,7 +89,7 @@ class MdgPayloadDecoratorSpec extends UnitSpec with MockitoSugar{
 
       val rd = result \ commonLabel \ "clientID"
 
-      rd.head.text shouldBe xClientId
+      rd.head.text shouldBe xClientIdValue
     }
 
     "set the badgeIdentifier when present" in {

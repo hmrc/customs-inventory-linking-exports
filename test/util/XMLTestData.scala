@@ -93,7 +93,7 @@ object XMLTestData {
                                                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:inv="http://gov.uk/customs/inventoryLinking/v1">
         <n1:requestCommon>
           <gw:badgeIdentifier>{validBadgeIdentifierValue}</gw:badgeIdentifier>
-          <gw:clientID>{xClientId}</gw:clientID>
+          <gw:clientID>{xClientIdValue}</gw:clientID>
           <gw:conversationID>{conversationIdValue}</gw:conversationID>
           <gw:correlationID>{correlationIdValue}</gw:correlationID>
           <gw:dateTimeStamp>{dateTime.toString(dateTimeFormat)}</gw:dateTimeStamp>

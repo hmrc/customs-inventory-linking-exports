@@ -17,16 +17,39 @@
 package uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders
 
 import play.api.mvc.{Request, WrappedRequest}
-import uk.gov.hmrc.customs.inventorylinking.export.model.{ConversationId, CorrelationId}
+import uk.gov.hmrc.customs.inventorylinking.export.model._
 
-trait HasCorrelationIds {
+// TODO: rename to HasConversationId later on when convenient
+trait CorrelationIds {
   val conversationId: ConversationId
-  val correlationId: CorrelationId
+  val correlationId: CorrelationId // TODO: remove later on when convenient and cascade changes
 }
+
+trait ExtractedHeaders {
+  val maybeBadgeIdentifier: Option[BadgeIdentifier]
+  val requestedApiVersion: ApiVersion
+  val clientId: ClientId
+}
+
+case class ExtractedHeadersImpl(
+  maybeBadgeIdentifier: Option[BadgeIdentifier],
+  requestedApiVersion: ApiVersion,
+  clientId: ClientId
+) extends ExtractedHeaders
 
 // Available after CorrelationIdsAction action builder
 case class CorrelationIdsRequest[A](
   conversationId: ConversationId,
   correlationId: CorrelationId,
   request: Request[A]
-) extends WrappedRequest[A](request) with HasCorrelationIds
+) extends WrappedRequest[A](request) with CorrelationIds
+
+// Available after ValidatedHeadersAction builder
+case class ValidatedHeadersRequest[A](
+  conversationId: ConversationId,
+  correlationId: CorrelationId,
+  maybeBadgeIdentifier: Option[BadgeIdentifier],
+  requestedApiVersion: ApiVersion,
+  clientId: ClientId,
+  request: Request[A]
+) extends WrappedRequest[A](request) with CorrelationIds with ExtractedHeaders

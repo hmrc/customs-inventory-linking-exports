@@ -30,8 +30,8 @@ class LoggingHelperSpec extends UnitSpec {
   private val infoMsg = "INFO"
   private val debugMsg = "DEBUG"
   private val url = "http://some-url"
-  private val expectedFormattedSignificantHeaders = s"[clientId=$xClientId][fieldsId=$fieldsId][conversationId=$conversationIdValue]"
-  private def expectedHeaders(requestChain: String) = s"headers=List((X-Request-Chain,$requestChain), ($API_SUBSCRIPTION_FIELDS_ID_NAME,$fieldsId), ($X_CLIENT_ID_NAME,$xClientId), (X-Conversation-ID,$conversationIdValue))"
+  private val expectedFormattedSignificantHeaders = s"[clientId=$xClientIdValue][fieldsId=$fieldsId][conversationId=$conversationIdValue]"
+  private def expectedHeaders(requestChain: String) = s"headers=List((X-Request-Chain,$requestChain), ($API_SUBSCRIPTION_FIELDS_ID_NAME,$fieldsId), ($X_CLIENT_ID_NAME,$xClientIdValue), (X-Conversation-ID,$conversationIdValue))"
   private implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = LoggingHeaders)
   private val miniXmlPayload: String =
         """<xml>
@@ -87,7 +87,7 @@ class LoggingHelperSpec extends UnitSpec {
 
     "format DEBUG with headers including single overwritten header" in {
       LoggingHelper.formatDebug(debugMsg, LoggingHeadersWithAuth) shouldBe
-        s"$expectedFormattedSignificantHeaders $debugMsg \nheaders=List((api-subscription-fields-id,$fieldsId), (X-Client-ID,$xClientId), (X-Conversation-ID,$conversationIdValue), (Authorization,value-not-logged))"
+        s"$expectedFormattedSignificantHeaders $debugMsg \nheaders=List((api-subscription-fields-id,$fieldsId), (X-Client-ID,$xClientIdValue), (X-Conversation-ID,$conversationIdValue), (Authorization,value-not-logged))"
     }
   }
 }
