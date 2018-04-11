@@ -19,16 +19,22 @@ package uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders
 import javax.inject.{Inject, Singleton}
 
 import play.api.mvc.{ActionTransformer, Request}
+import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger2
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.CorrelationIdsRequest
 import uk.gov.hmrc.customs.inventorylinking.export.services.CorrelationIdsService
 
 import scala.concurrent.Future
 
+//TODO: after we have extracted AuthAction and PayloadValidationAction, rename CorrelationIdsAction to ConversationIdsAction and remove correlationId from action builder models
 @Singleton
-class CorrelationIdsAction @Inject() (correlationIdService: CorrelationIdsService) extends ActionTransformer[Request, CorrelationIdsRequest] {
+class CorrelationIdsAction @Inject() (correlationIdService: CorrelationIdsService, logger: ExportsLogger2) extends ActionTransformer[Request, CorrelationIdsRequest] {
 
   override def transform[A](request: Request[A]): Future[CorrelationIdsRequest[A]] = {
 
-    Future.successful(CorrelationIdsRequest(correlationIdService.conversation, correlationIdService.correlation, request))
+
+    val r = CorrelationIdsRequest(correlationIdService.conversation, correlationIdService.correlation, request)
+    logger.debugFull("In CorrelationIdsAction.")(r)
+
+    Future.successful(r)
   }
 }

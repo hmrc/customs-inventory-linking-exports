@@ -24,12 +24,12 @@ import uk.gov.hmrc.auth.core.AuthProvider.{GovernmentGateway, PrivilegedApplicat
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.Retrievals
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
-import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.UnauthorizedCode
+import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.{UnauthorizedCode, errorBadRequest}
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.InventoryLinkingAuthConnector
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders.CorrelationIdsAction
+import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders.{CorrelationIdsAction, ValidateAndExtractHeadersAction}
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model._
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.CorrelationIdsRequest
+import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedHeadersRequest
 import uk.gov.hmrc.customs.inventorylinking.export.services.{CustomsConfigService, ExportsBusinessService, ProcessingResult}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.logging.Authorization
@@ -41,13 +41,18 @@ import scala.util.control.NonFatal
 import scala.xml.NodeSeq
 
 @Singleton
-class InventoryLinkingExportController @Inject()(override val authConnector: InventoryLinkingAuthConnector,
-                                                 customsConfigService: CustomsConfigService,
-                                                 exportsBusinessService: ExportsBusinessService,
-                                                 correlationIdsAction: CorrelationIdsAction,
-                                                 logger: ExportsLogger)
+class InventoryLinkingExportController @Inject()(
+  override val authConnector: InventoryLinkingAuthConnector,
+  customsConfigService: CustomsConfigService,
+  exportsBusinessService: ExportsBusinessService,
+  correlationIdsAction: CorrelationIdsAction,
+  validateAndExtractHeadersAction: ValidateAndExtractHeadersAction,
+  logger: ExportsLogger)
   extends BaseController
-    with HeaderValidator with AuthorisedFunctions {
+    with AuthorisedFunctions {
+
+  private val XBadgeIdentifier = "X-Badge-Identifier"
+  private val ErrorResponseBadgeIdentifierHeaderMissing = errorBadRequest(s"$XBadgeIdentifier header is missing or invalid")
 
   private lazy val apiScopeKey = customsConfigService.apiDefinitionConfig.apiScope
 
@@ -65,37 +70,29 @@ class InventoryLinkingExportController @Inject()(override val authConnector: Inv
     case _ => Right(AnyContentAsEmpty)
   })
 
-  private def extractBadgeIdentifier(request: CorrelationIdsRequest[_]): Option[BadgeIdentifier] = {
+  private def extractBadgeIdentifier(request: ValidatedHeadersRequest[_]): Option[BadgeIdentifier] = {
     request.headers.get(XBadgeIdentifier) match {
       case Some(id) => Some(BadgeIdentifier(id))
       case _ => None
     }
   }
 
-  private def validateHeaders[A](implicit request: Request[A]): Option[Seq[ErrorResponse]] = {
-    val seq = Seq(validateAccept, validateContentType, validateBadgeIdentifier).filter(_.nonEmpty).map(_.get)
-    if(seq.isEmpty) None else Some(seq)
-  }
-
   private def conversationIdHeader(wrapper: Ids) = {
     "X-Conversation-ID" -> wrapper.conversationId.value
   }
 
-  def post(): Action[AnyContent] = (Action andThen correlationIdsAction).async(bodyParser = xmlOrEmptyBody) {
-    implicit request: CorrelationIdsRequest[_] =>
+  def post(): Action[AnyContent] = (
+    Action andThen
+    correlationIdsAction andThen validateAndExtractHeadersAction
+    ).async(bodyParser = xmlOrEmptyBody) {
+    implicit request: ValidatedHeadersRequest[_] =>
 
       val ids = Ids(request.conversationId, request.correlationId, extractBadgeIdentifier(request))
-      logger.debug(s"Request received. Payload = ${request.body.toString} headers = ${request.headers.headers} ids = $ids")
 
+      logger.debug(s"Request received. Payload = ${request.body.toString} headers = ${request.headers.headers} ids = $ids")
       logger.info(s"Inventory linking exports request received")
-      validateHeaders(request) match {
-        case Some(seq) =>
-          val errors = seq.map(error => error.message + " ").mkString
-          logger.error(s"Header validation with conversationId = ${ids.conversationId.value} failed because $errors")
-          Future.successful(seq.head.XmlResult.withHeaders(conversationIdHeader(ids)))
-        case _ =>
-          processRequest(ids)(request.request.asInstanceOf[Request[AnyContent]])
-      }
+
+      processRequest(ids)(request.request.asInstanceOf[Request[AnyContent]])
   }
 
   /*

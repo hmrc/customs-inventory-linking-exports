@@ -16,64 +16,55 @@
 
 package unit.controllers
 
-import play.api.http.HeaderNames.{ACCEPT, CONTENT_TYPE}
-import play.api.http.MimeTypes
+import org.scalatest.mockito.MockitoSugar
+import org.scalatest.prop.TableDrivenPropertyChecks
+import play.api.http.HeaderNames._
 import play.api.test.FakeRequest
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse._
+import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.HeaderValidator
+import uk.gov.hmrc.customs.inventorylinking.export.model.HeaderConstants._
+import uk.gov.hmrc.customs.inventorylinking.export.model.VersionOne
+import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{CorrelationIdsRequest, ExtractedHeadersImpl}
 import uk.gov.hmrc.play.test.UnitSpec
 import util.RequestHeaders._
+import util.TestData.badgeIdentifier
+import util.{ApiSubscriptionFieldsTestData, RequestHeaders, TestData}
 
-class HeaderValidatorSpec extends UnitSpec {
+class HeaderValidatorSpec extends UnitSpec with TableDrivenPropertyChecks with MockitoSugar {
 
-  private val validator = new HeaderValidator {}
+  private val extractedHeadersWithBadgeIdentifier = ExtractedHeadersImpl(Some(badgeIdentifier), VersionOne, ApiSubscriptionFieldsTestData.clientId)
+  private val extractedHeadersWithoutBadgeIdentifier = extractedHeadersWithBadgeIdentifier.copy(maybeBadgeIdentifier = None)
+  private val errorResponseBadgeIdentifierHeaderMissing = errorBadRequest(s"${RequestHeaders.X_BADGE_IDENTIFIER_NAME} header is missing or invalid")
 
-  private def requestWithHeaders(headers: Map[String, String]) =
-    FakeRequest().withHeaders(headers.toSeq: _*)
+  trait SetUp {
+    val loggerMock: CdsLogger = mock[CdsLogger]
+    val validator = new HeaderValidator(loggerMock)
+  }
+
+  val headersTable =
+    Table(
+      ("description", "Headers", "Expected response"),
+      ("Valid Headers", ValidHeaders, Right(extractedHeadersWithBadgeIdentifier)),
+      ("Valid content type XML with no space header", ValidHeaders + (CONTENT_TYPE -> "application/xml;charset=utf-8"), Right(extractedHeadersWithBadgeIdentifier)),
+      ("Missing accept header", ValidHeaders - ACCEPT, Left(ErrorAcceptHeaderInvalid)),
+      ("Missing content type header", ValidHeaders - CONTENT_TYPE, Left(ErrorContentTypeHeaderInvalid)),
+      ("Missing X-Client-ID header", ValidHeaders - XClientIdHeaderName, Left(ErrorInternalServerError)),
+      ("Missing X-Badge-Identifier header", ValidHeaders - XBadgeIdentifierHeaderName, Right(extractedHeadersWithoutBadgeIdentifier)),
+      ("Invalid accept header", ValidHeaders + ACCEPT_HEADER_INVALID, Left(ErrorAcceptHeaderInvalid)),
+      ("Invalid content type header JSON header", ValidHeaders + CONTENT_TYPE_HEADER_INVALID, Left(ErrorContentTypeHeaderInvalid)),
+      ("Invalid content type XML without UTF-8 header", ValidHeaders + (CONTENT_TYPE -> "application/xml"), Left(ErrorContentTypeHeaderInvalid)),
+      ("Invalid X-Client-ID header", ValidHeaders + X_CLIENT_ID_HEADER_INVALID, Left(ErrorInternalServerError)),
+      ("Invalid X-Badge-Identifier header", ValidHeaders + X_BADGE_IDENTIFIER_HEADER_INVALID, Left(errorResponseBadgeIdentifierHeaderMissing))
+    )
 
   "HeaderValidatorAction" should {
-    "return processing result when request headers contain valid values" in {
-      await(validator.validateAccept()(requestWithHeaders(ValidHeaders))) shouldBe None
-    }
+    forAll(headersTable) { (description, headers, response) =>
+      s"$description" in new SetUp {
+        private val correlationIdsRequest: CorrelationIdsRequest[_] = CorrelationIdsRequest(TestData.conversationId, TestData.correlationId, FakeRequest().withHeaders(headers.toSeq: _*))
 
-    "return processing result when Content-Type header contains charset" in {
-      await(validator.validateContentType()(requestWithHeaders(ValidHeaders - CONTENT_TYPE + (CONTENT_TYPE -> (MimeTypes.XML + "; charset=UTF-8"))))) shouldBe None
-    }
-
-    "return Error result when the Accept header does not exist" in {
-      await(validator.validateAccept()(requestWithHeaders(ValidHeaders - ACCEPT))) shouldBe Some(ErrorAcceptHeaderInvalid)
-    }
-
-    "return Error result when Accept header does not contain expected value" in {
-      await(validator.validateAccept()(requestWithHeaders(ValidHeaders + ACCEPT_HEADER_INVALID))) shouldBe Some(ErrorAcceptHeaderInvalid)
-    }
-
-    "return Error result when the Content-Type header does not exist" in {
-      await(validator.validateContentType()(requestWithHeaders(ValidHeaders - CONTENT_TYPE))) shouldBe Some(ErrorContentTypeHeaderInvalid)
-    }
-
-    "return Error result when Content-Type header does not contain expected value" in {
-      await(validator.validateContentType()(requestWithHeaders(ValidHeaders + CONTENT_TYPE_HEADER_INVALID))) shouldBe Some(ErrorContentTypeHeaderInvalid)
-    }
-
-    "return Error result when BadgeIdentifier header value length is too long" in {
-      await(validator.validateBadgeIdentifier()(requestWithHeaders(ValidHeaders + (X_BADGE_IDENTIFIER_NAME -> "INVALIDBADGEID123456789")))) shouldBe Some(errorBadRequest("X-Badge-Identifier header is missing or invalid"))
-    }
-
-    "return Error result when BadgeIdentifier header value length is too short" in {
-      await(validator.validateBadgeIdentifier()(requestWithHeaders(ValidHeaders + (X_BADGE_IDENTIFIER_NAME -> "12345")))) shouldBe Some(errorBadRequest("X-Badge-Identifier header is missing or invalid"))
-    }
-
-    "return Error result when BadgeIdentifier header contains invalid characters" in {
-      await(validator.validateBadgeIdentifier()(requestWithHeaders(ValidHeaders + (X_BADGE_IDENTIFIER_NAME -> "Invalid^&&(")))) shouldBe Some(errorBadRequest("X-Badge-Identifier header is missing or invalid"))
-    }
-
-    "return Error result when BadgeIdentifier header contains lowercase characters" in {
-      await(validator.validateBadgeIdentifier()(requestWithHeaders(ValidHeaders + (X_BADGE_IDENTIFIER_NAME -> "BadgeId123")))) shouldBe Some(errorBadRequest("X-Badge-Identifier header is missing or invalid"))
-    }
-
-    "return processing result when BadgeIdentifier header is not present" in {
-      await(validator.validateBadgeIdentifier()(requestWithHeaders(ValidHeaders - X_BADGE_IDENTIFIER_NAME))) shouldBe None
+        validator.validateHeaders(correlationIdsRequest) shouldBe response
+      }
     }
   }
 }

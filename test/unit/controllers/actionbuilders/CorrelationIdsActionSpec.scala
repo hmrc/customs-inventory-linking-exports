@@ -19,6 +19,7 @@ package unit.controllers.actionbuilders
 import org.scalatest.mockito.MockitoSugar
 import play.api.test.FakeRequest
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders.CorrelationIdsAction
+import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger2
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.CorrelationIdsRequest
 import uk.gov.hmrc.play.test.UnitSpec
 import util.TestData
@@ -27,8 +28,9 @@ import util.TestData.{conversationId, correlationId}
 class CorrelationIdsActionSpec extends UnitSpec with MockitoSugar {
 
   trait SetUp {
+    private val mockExportsLogger2 = mock[ExportsLogger2]
     val request = FakeRequest()
-    val correlationIdsAction = new CorrelationIdsAction(TestData.stubCorrelationIdsService)
+    val correlationIdsAction = new CorrelationIdsAction(TestData.stubCorrelationIdsService, mockExportsLogger2)
     val expected = CorrelationIdsRequest(conversationId, correlationId, request)
   }
 

@@ -65,7 +65,9 @@ object TestData {
     "/api/conf/1.0/schemas/exports/request/inventoryLinkingRequestExternal.xsd")
 
   lazy val ValidRequest: FakeRequest[AnyContentAsXml] = FakeRequest()
-    .withHeaders(RequestHeaders.ACCEPT_HMRC_XML_HEADER,
+    .withHeaders(
+      RequestHeaders.X_CLIENT_ID_HEADER,
+      RequestHeaders.ACCEPT_HMRC_XML_HEADER,
       RequestHeaders.CONTENT_TYPE_HEADER,
       RequestHeaders.API_SUBSCRIPTION_FIELDS_ID_HEADER,
       RequestHeaders.X_BADGE_IDENTIFIER_HEADER)
@@ -129,13 +131,14 @@ object RequestHeaders {
   val API_SUBSCRIPTION_FIELDS_ID_HEADER: (String, String) = API_SUBSCRIPTION_FIELDS_ID_NAME -> ApiSubscriptionFieldsTestData.fieldsId
 
   val X_CLIENT_ID_NAME = "X-Client-ID"
-  val X_CLIENT_ID_HEADER: (String, String) = X_CLIENT_ID_NAME -> ApiSubscriptionFieldsTestData.xClientId
+  val X_CLIENT_ID_HEADER: (String, String) = X_CLIENT_ID_NAME -> ApiSubscriptionFieldsTestData.xClientIdValue
+  val X_CLIENT_ID_HEADER_INVALID: (String, String) = X_CLIENT_ID_NAME -> "This is not a UUID"
 
   val X_BADGE_IDENTIFIER_NAME = "X-Badge-Identifier"
   val X_BADGE_IDENTIFIER_HEADER: (String, String) = X_BADGE_IDENTIFIER_NAME -> validBadgeIdentifierValue
   val X_BADGE_IDENTIFIER_HEADER_INVALID: (String, String) = X_BADGE_IDENTIFIER_NAME -> "SHORT"
 
-  val CONTENT_TYPE_HEADER: (String, String) = CONTENT_TYPE -> MimeTypes.XML
+  val CONTENT_TYPE_HEADER: (String, String) = CONTENT_TYPE -> (MimeTypes.XML + "; charset=utf-8")
 
   val CONTENT_TYPE_HEADER_INVALID: (String, String) = CONTENT_TYPE -> "somethinginvalid"
 
@@ -144,6 +147,7 @@ object RequestHeaders {
   val ACCEPT_HEADER_INVALID: (String, String) = ACCEPT -> MimeTypes.XML
 
   val ValidHeaders = Map(
+    X_CLIENT_ID_HEADER,
     CONTENT_TYPE_HEADER,
     ACCEPT_HMRC_XML_HEADER,
     API_SUBSCRIPTION_FIELDS_ID_HEADER,

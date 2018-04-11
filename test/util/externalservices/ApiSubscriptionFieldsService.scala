@@ -29,7 +29,7 @@ trait ApiSubscriptionFieldsService extends WireMockRunner with ApiSubscriptionFi
   }
 
   def startApiSubscriptionFieldsService(): Unit =
-    setupGetSubscriptionFieldsToReturn(apiSubsKey = ApiSubscriptionKey(xClientId, "customs%2Finventory-linking%2Fexports", "1.0"))
+    setupGetSubscriptionFieldsToReturn(apiSubsKey = ApiSubscriptionKey(xClientIdValue, "customs%2Finventory-linking%2Fexports", "1.0"))
 
   def setupGetSubscriptionFieldsToReturn(status: Int = OK, apiSubsKey: ApiSubscriptionKey = apiSubscriptionKey): Unit = {
 
