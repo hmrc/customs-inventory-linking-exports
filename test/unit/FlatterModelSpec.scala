@@ -25,7 +25,6 @@ import scala.xml.NodeSeq
 
 /*
  * A little bit of upfront experiment/design to see what makes sense for the action builder pipeline model
- *
  * 
  */
 class FlatterModelSpec extends UnitSpec with MockitoSugar {
