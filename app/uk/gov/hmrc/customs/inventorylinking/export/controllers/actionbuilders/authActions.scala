@@ -73,7 +73,7 @@ class CspAuthAction @Inject()(
   private val errorResponseBadgeIdentifierHeaderMissing = errorBadRequest(s"${HeaderConstants.XBadgeIdentifierHeaderName} header is missing or invalid")
 
   override def refine[A](vr: ValidatedHeadersRequest[A]): Future[EitherResultOrAuthRequest[A]] = {
-    implicit val todoRemove = vr
+    implicit val implicitVr = vr
 
     logger.debug("in CSP authorisation")
     authoriseAsCsp[A]
@@ -132,7 +132,7 @@ class NonCspAuthAction @Inject()(
 
 
   override def refine[A](ar: AuthorisedRequest[A]): Future[EitherResultOrAuthRequest[A]] = {
-    implicit val todoRemove = ar
+    implicit val implicitAr = ar
 
     logger.debug("in Non CSP authorisation.")
 

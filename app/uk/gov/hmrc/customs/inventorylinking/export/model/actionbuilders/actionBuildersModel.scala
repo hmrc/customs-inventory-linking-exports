@@ -30,10 +30,10 @@ object ActionBuilderModelHelper {
 
   implicit class AuthRequestAsNonCsp[A](ar: AuthorisedRequest[A]) {
 
-    // we can not use normal case class copy on a wrapped request as it is overridden
+    // we can not use normal case class copy on a wrapped request as it is overridden by RequestHeader
     def asNonCsp: AuthorisedRequest[A] = authorisedRequest(Some(AuthorisedAs.NonCsp))
 
-    // we can not use normal case class copy on a wrapped request as it is overridden
+    // we can not use normal case class copy on a wrapped request as it is overridden by RequestHeader
     def asCsp: AuthorisedRequest[A] = authorisedRequest(Some(AuthorisedAs.Csp))
 
     def authorisedRequest(maybeAuthorised: Option[AuthorisedAs]): AuthorisedRequest[A] = {
