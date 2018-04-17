@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.customs.inventorylinking.export.model
 
+//TODO: merge with CustomHeaderNames
 object HeaderConstants {
 
   val XClientIdHeaderName: String = "X-Client-ID"

@@ -34,7 +34,6 @@ trait AuthService {
   private val authUrlMatcher = urlEqualTo(authUrl)
 
   private val customsEnrolmentName = "HMRC-CUS-ORG"
-
   private val cspAuthorisationPredicate = Enrolment("write:customs-inventory-linking-exports") and AuthProviders(PrivilegedApplication)
   private val nonCspAuthorisationPredicate = Enrolment(customsEnrolmentName) and AuthProviders(GovernmentGateway)
   private val nonCspRetrieval = Retrievals.authorisedEnrolments

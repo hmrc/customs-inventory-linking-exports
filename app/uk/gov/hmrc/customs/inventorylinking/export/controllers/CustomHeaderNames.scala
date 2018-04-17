@@ -18,6 +18,6 @@ package uk.gov.hmrc.customs.inventorylinking.export.controllers
 
 object CustomHeaderNames {
   val X_CONVERSATION_ID_HEADER_NAME: String = "X-Conversation-ID"
-  val API_SUBSCRIPTION_FIELDS_ID_HEADER_NAME: String = "api-subscription-fields-id" //TODO: remove
+  val API_SUBSCRIPTION_FIELDS_ID_HEADER_NAME: String = "api-subscription-fields-id" //TODO: remove after ValidatePayloadAction is wired in
   val X_CLIENT_ID_HEADER_NAME = "X-Client-ID"
 }

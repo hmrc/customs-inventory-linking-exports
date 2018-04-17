@@ -27,9 +27,15 @@ import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{Correla
 class ExportsLogger2 @Inject()(logger: CdsLogger) {
 
   def debug(s: => String)(implicit r: CorrelationIds with ExtractedHeaders): Unit = logger.debug(formatDebug(s, r))
+
   def debug(s: => String, e: => Throwable)(implicit r: CorrelationIds with ExtractedHeaders): Unit = logger.debug(formatDebug(s, r), e)
+
+  //called once at the start of the request processing pipeline
   def debugFull(s: => String)(implicit r: CorrelationIdsRequest[_]): Unit = logger.debug(formatDebugFull(s, r))
+
   def info(s: => String)(implicit r: CorrelationIds with ExtractedHeaders): Unit = logger.info(formatInfo(s, r))
+
   def warn(s: => String)(implicit r: CorrelationIds with ExtractedHeaders): Unit = logger.warn(formatWarn(s, r))
+
   def error(s: => String)(implicit r: CorrelationIds with ExtractedHeaders): Unit = logger.error(formatError(s, r))
 }
