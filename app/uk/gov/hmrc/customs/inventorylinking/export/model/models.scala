@@ -33,8 +33,12 @@ object VersionOne extends ApiVersion{
   override val value: String = "1.0"
 }
 
-// TODO: remove this class
-@deprecated(message = "Use a wrapped request instead")
+object AuthorisedAs extends Enumeration {
+  type AuthorisedAs = Value
+  val Csp, NonCsp = Value
+}
+
+// TODO: remove this class after PayloadValidationAction is wired in
 case class Ids(conversationId: ConversationId,
                correlationId: CorrelationId,
                maybeBadgeIdentifier: Option[BadgeIdentifier] = None)

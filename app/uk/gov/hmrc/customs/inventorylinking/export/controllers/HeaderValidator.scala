@@ -56,10 +56,10 @@ class HeaderValidator @Inject()(logger: CdsLogger) {
       maybeXBadgeIdentifierValue <- maybeHasXBadgeIdentifier.right
     } yield {
       logger.debug(
-        s"$ACCEPT header passed validation: $acceptValue\n"
-      + s"$CONTENT_TYPE header passed validation: $contentTypeValue\n"
-      + s"$XClientIdHeaderName header passed validation: $xClientIdValue\n"
-      + s"$XBadgeIdentifierHeaderName header passed validation: $maybeXBadgeIdentifierValue")
+        s"\n$ACCEPT header passed validation: $acceptValue"
+      + s"\n$CONTENT_TYPE header passed validation: $contentTypeValue"
+      + s"\n$XClientIdHeaderName header passed validation: $xClientIdValue"
+      + s"\n$XBadgeIdentifierHeaderName header passed validation: $maybeXBadgeIdentifierValue")
       ExtractedHeadersImpl(maybeXBadgeIdentifierValue.map(s => BadgeIdentifier(s)), VersionOne, ClientId(xClientIdValue))
     }
     theResult

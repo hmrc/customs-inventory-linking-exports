@@ -24,7 +24,9 @@ import play.api.http.MimeTypes
 import play.api.mvc.{AnyContentAsText, AnyContentAsXml}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.POST
+import uk.gov.hmrc.customs.inventorylinking.export.model.AuthorisedAs.AuthorisedAs
 import uk.gov.hmrc.customs.inventorylinking.export.model._
+import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{AuthorisedRequest, ValidatedHeadersRequest}
 import uk.gov.hmrc.customs.inventorylinking.export.services.CorrelationIdsService
 import util.RequestHeaders._
 import util.TestData._
@@ -118,6 +120,22 @@ object TestData {
     override def correlation: CorrelationId = correlationId
   }
 
+  val TestFakeRequest = FakeRequest()
+  def vhr(maybeBadgeIdentifier: Option[BadgeIdentifier] = None): ValidatedHeadersRequest[_] = ValidatedHeadersRequest(
+    conversationId,
+    correlationId,
+    maybeBadgeIdentifier,
+    VersionOne,
+    ApiSubscriptionFieldsTestData.clientId,
+    TestFakeRequest)
+  def ar(vhr: ValidatedHeadersRequest[_], maybeAuthorised: Option[AuthorisedAs] = None): AuthorisedRequest[_] = AuthorisedRequest(
+    vhr.conversationId,
+    vhr.correlationId,
+    vhr.maybeBadgeIdentifier,
+    vhr.requestedApiVersion,
+    vhr.clientId,
+    maybeAuthorised,
+    TestFakeRequest)
 }
 
 object RequestHeaders {

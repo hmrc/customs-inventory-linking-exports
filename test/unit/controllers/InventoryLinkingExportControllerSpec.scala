@@ -31,14 +31,13 @@ import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.errorBadRequest
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.InventoryLinkingAuthConnector
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders.{CorrelationIdsAction, ValidateAndExtractHeadersAction}
+import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders._
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.{HeaderValidator, InventoryLinkingExportController}
 import uk.gov.hmrc.customs.inventorylinking.export.logging.{ExportsLogger, ExportsLogger2}
 import uk.gov.hmrc.customs.inventorylinking.export.model._
 import uk.gov.hmrc.customs.inventorylinking.export.services.{CustomsConfigService, ExportsBusinessService}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
-import util.MockitoPassByNameHelper.PassByNameVerifier
 import util.RequestHeaders
 import util.RequestHeaders.{ValidHeaders, X_BADGE_IDENTIFIER_NAME, X_CONVERSATION_ID_HEADER, X_CONVERSATION_ID_NAME}
 import util.TestData._
@@ -58,10 +57,14 @@ class InventoryLinkingExportControllerSpec extends UnitSpec with Matchers with M
   private val stubCorrelationIdsAction = new CorrelationIdsAction(stubCorrelationIdsService, mockExportsLogger2)
   private val stubValidateAndExtractHeadersAction = new ValidateAndExtractHeadersAction(new HeaderValidator(mockCdsLogger), mockExportsLogger2)
 
-  val controller = new InventoryLinkingExportController(mockAuthConnector, mockCustomsConfigService,
+  private val stubCspAuthAction = new CspAuthAction(mockAuthConnector, mockExportsLogger2)
+  private val stubNonCspAuthAction = new NonCspAuthAction(mockAuthConnector, mockExportsLogger2)
+  private val stubAuthAction = new CspAndThenNonCspAuthAction(stubCspAuthAction, stubNonCspAuthAction)
+
+  val controller = new InventoryLinkingExportController(stubAuthAction, mockCustomsConfigService,
     mockBusinessService, stubCorrelationIdsAction, stubValidateAndExtractHeadersAction, mockExportsLogger)
 
-  private val apiScope = "scope-in-api-definition"
+  private val apiScope = "write:customs-inventory-linking-exports" // "scope-in-api-definition"
   private val customsEnrolmentName = "HMRC-CUS-ORG"
   private val eoriIdentifier = "EORINumber"
   private val mockApiDefinitionConfig = mock[ApiDefinitionConfig]
@@ -131,11 +134,6 @@ class InventoryLinkingExportControllerSpec extends UnitSpec with Matchers with M
       testSubmitResult(ValidRequest.copyFakeRequest(headers = ValidRequest.headers.remove(X_BADGE_IDENTIFIER_NAME))) { result =>
         await(result) shouldBe errorResultBadgeIdentifier
         verifyZeroInteractions(mockBusinessService)
-        PassByNameVerifier(mockExportsLogger, "error")
-          .withByNameParam[String]("Header validation failed because X-Badge-Identifier header is missing or invalid")
-          .withAnyHeaderCarrierParam
-          .verify()
-
       }
     }
 
@@ -173,10 +171,6 @@ class InventoryLinkingExportControllerSpec extends UnitSpec with Matchers with M
         await(result) shouldBe errorResultEoriNotFoundInCustomsEnrolment
         header(X_CONVERSATION_ID_NAME, result) shouldBe Some(conversationIdValue)
         verifyZeroInteractions(mockBusinessService)
-        PassByNameVerifier(mockExportsLogger, "warn")
-          .withByNameParam[String](s"Customs enrolment $customsEnrolmentName not retrieved for authorised non-CSP call")
-          .withAnyHeaderCarrierParam
-          .verify()
       }
     }
 

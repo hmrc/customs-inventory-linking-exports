@@ -26,11 +26,13 @@ import uk.gov.hmrc.customs.inventorylinking.export.services.CorrelationIdsServic
 import scala.concurrent.Future
 
 //TODO: after we have extracted AuthAction and PayloadValidationAction, rename CorrelationIdsAction to ConversationIdsAction and remove correlationId from action builder models
+/** Action builder that transforms a `Request` to a `CorrelationIdsRequest`
+  *
+  */
 @Singleton
 class CorrelationIdsAction @Inject() (correlationIdService: CorrelationIdsService, logger: ExportsLogger2) extends ActionTransformer[Request, CorrelationIdsRequest] {
 
   override def transform[A](request: Request[A]): Future[CorrelationIdsRequest[A]] = {
-
 
     val r = CorrelationIdsRequest(correlationIdService.conversation, correlationIdService.correlation, request)
     logger.debugFull("In CorrelationIdsAction.")(r)
