@@ -21,7 +21,7 @@ import javax.inject.{Inject, Singleton}
 import play.api.mvc.{ActionTransformer, Request}
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ConversationIdRequest
-import uk.gov.hmrc.customs.inventorylinking.export.services.CorrelationIdsService
+import uk.gov.hmrc.customs.inventorylinking.export.services.UniqueIdsService
 
 import scala.concurrent.Future
 
@@ -29,7 +29,7 @@ import scala.concurrent.Future
   *
   */
 @Singleton
-class ConversationIdAction @Inject()(correlationIdService: CorrelationIdsService, logger: ExportsLogger) extends ActionTransformer[Request, ConversationIdRequest] {
+class ConversationIdAction @Inject()(correlationIdService: UniqueIdsService, logger: ExportsLogger) extends ActionTransformer[Request, ConversationIdRequest] {
 
   override def transform[A](request: Request[A]): Future[ConversationIdRequest[A]] = {
 

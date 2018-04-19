@@ -62,7 +62,7 @@ class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfter
     protected val mockHttpResponse: HttpResponse = mock[HttpResponse]
 
     protected lazy val service: BusinessService = new BusinessService(mockLogger, mockMdgExportsConnector, mockApiSubscriptionFieldsConnector,
-      mockPayloadDecorator, mockDateTimeProvider, stubCorrelationIdsService, mockCustomsConfigService)
+      mockPayloadDecorator, mockDateTimeProvider, stubUniqueIdsService, mockCustomsConfigService)
 
     protected def send(vpr: ValidatedPayloadRequest[AnyContentAsXml] = TestCspValidatedPayloadRequest, hc: HeaderCarrier = headerCarrier): Either[Result, Unit] = {
       await(service.send(vpr, hc))

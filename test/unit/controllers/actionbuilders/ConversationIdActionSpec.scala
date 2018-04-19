@@ -30,7 +30,7 @@ class ConversationIdActionSpec extends UnitSpec with MockitoSugar {
   trait SetUp {
     private val mockExportsLogger2 = mock[ExportsLogger]
     val request = FakeRequest()
-    val conversationIdAction = new ConversationIdAction(TestData.stubCorrelationIdsService, mockExportsLogger2)
+    val conversationIdAction = new ConversationIdAction(TestData.stubUniqueIdsService, mockExportsLogger2)
     val expected = ConversationIdRequest(conversationId, request)
   }
 

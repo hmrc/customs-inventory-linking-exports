@@ -44,7 +44,7 @@ class BusinessService @Inject()(logger: ExportsLogger,
                                 apiSubFieldsConnector: ApiSubscriptionFieldsConnector,
                                 wrapper: MdgPayloadDecorator,
                                 dateTimeProvider: DateTimeService,
-                                correlationIdsService: CorrelationIdsService,
+                                uniqueIdsService: UniqueIdsService,
                                 customsConfigService: CustomsConfigService) {
 
   private val apiContextEncoded = URLEncoder.encode(customsConfigService.apiDefinitionConfig.apiContext, "UTF-8")
@@ -74,7 +74,7 @@ class BusinessService @Inject()(logger: ExportsLogger,
   private def callBackend[A](subscriptionFieldsId: SubscriptionFieldsId)
                             (implicit vpr: ValidatedPayloadRequest[A], hc: HeaderCarrier): Future[Either[Result, Unit]] = {
     val dateTime = dateTimeProvider.getUtcNow
-    val correlationId = correlationIdsService.correlation
+    val correlationId = uniqueIdsService.correlation
     val xmlToSend = preparePayload(vpr.xmlBody, subscriptionFieldsId, correlationId, dateTime)
 
     connector.send(xmlToSend, dateTime, UUID.fromString(correlationId.value)).map(_ => Right(())).recover{

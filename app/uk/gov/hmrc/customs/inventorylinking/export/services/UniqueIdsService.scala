@@ -23,7 +23,7 @@ import uk.gov.hmrc.customs.inventorylinking.export.model.{ConversationId, Correl
 
 
 @Singleton
-class CorrelationIdsService {
+class UniqueIdsService {
 
   def conversation: ConversationId = ConversationId(UUID.randomUUID().toString)
 

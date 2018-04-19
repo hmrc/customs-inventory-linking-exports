@@ -27,7 +27,7 @@ import play.api.test.Helpers.POST
 import uk.gov.hmrc.customs.inventorylinking.export.model._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders._
-import uk.gov.hmrc.customs.inventorylinking.export.services.CorrelationIdsService
+import uk.gov.hmrc.customs.inventorylinking.export.services.UniqueIdsService
 import util.RequestHeaders._
 import util.TestData._
 import util.XMLTestData._
@@ -114,7 +114,7 @@ object TestData {
   }
 
   // note we can not mock service methods that return value classes - however IMHO it results in cleaner code (less mocking noise)
-  val stubCorrelationIdsService = new CorrelationIdsService() {
+  val stubUniqueIdsService = new UniqueIdsService() {
     override def conversation: ConversationId = conversationId
     override def correlation: CorrelationId = correlationId
   }

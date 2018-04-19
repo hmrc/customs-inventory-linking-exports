@@ -55,7 +55,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
     protected val mockResult: Result = mock[Result]
     protected val mockXmlValidationService: XmlValidationService = mock[XmlValidationService]
 
-    protected val stubCorrelationIdsAction: ConversationIdAction = new ConversationIdAction(stubCorrelationIdsService, mockExportsLogger2)
+    protected val stubConversationIdAction: ConversationIdAction = new ConversationIdAction(stubUniqueIdsService, mockExportsLogger2)
     protected val stubCspAuthAction: CspAuthAction = new CspAuthAction(mockAuthConnector, mockExportsLogger2)
     protected val stubNonCspAuthAction: NonCspAuthAction = new NonCspAuthAction(mockAuthConnector, mockExportsLogger2)
     protected val stubAuthAction: CspAndThenNonCspAuthAction = new CspAndThenNonCspAuthAction(stubCspAuthAction, stubNonCspAuthAction)
@@ -63,7 +63,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
     protected val stubPayloadValidationAction: PayloadValidationAction = new PayloadValidationAction(mockXmlValidationService, mockExportsLogger2)
 
     protected val controller: InventoryLinkingExportController = new InventoryLinkingExportController(
-      stubCorrelationIdsAction, stubAuthAction, stubValidateAndExtractHeadersAction, stubPayloadValidationAction,
+      stubConversationIdAction, stubAuthAction, stubValidateAndExtractHeadersAction, stubPayloadValidationAction,
       mockBusinessService, mockExportsLogger2)
 
     protected def awaitSubmit(request: Request[AnyContent]): Result = {
