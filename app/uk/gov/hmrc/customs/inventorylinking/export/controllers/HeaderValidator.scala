@@ -31,7 +31,7 @@ import uk.gov.hmrc.customs.inventorylinking.export.model.{BadgeIdentifier, Clien
 @Singleton
 class HeaderValidator @Inject()(logger: CdsLogger) {
 
-  private lazy val validAcceptHeaders = Seq(Version1AcceptHeaderValue)
+  private lazy val validAcceptHeaders = Seq("application/vnd.hmrc.1.0+xml")
   private lazy val validContentTypeHeaders = Seq(MimeTypes.XML + ";charset=utf-8", MimeTypes.XML + "; charset=utf-8")
   private lazy val xClientIdRegex = "^\\S+$".r
   private lazy val xBadgeIdentifierRegex = "^[0-9A-Z]{6,12}$".r

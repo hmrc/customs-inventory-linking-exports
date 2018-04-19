@@ -20,5 +20,4 @@ object CustomHeaderNames {
   val XConversationIdHeaderName: String = "X-Conversation-ID"
   val XClientIdHeaderName = "X-Client-ID"
   val XBadgeIdentifierHeaderName: String = "X-Badge-Identifier"
-  val Version1AcceptHeaderValue = "application/vnd.hmrc.1.0+xml"
 }
