@@ -67,12 +67,16 @@ class PayloadValidationAction @Inject() (xmlValidationService: XmlValidationServ
       }
       .recover {
         case saxe: SAXException =>
-          logger.error("Payload did not pass validation against the schema.", saxe)
+          val msg = "Payload did not pass validation against the schema."
+          logger.debug(msg, saxe)
+          logger.error(msg)
           Left(ErrorResponse
             .errorBadRequest("Payload is not valid according to schema")
             .withErrors(xmlValidationErrors(saxe): _*).XmlResult.withConversationId)
         case NonFatal(e) =>
-          logger.error("Error validating payload.", e)
+          val msg = "Error validating payload."
+          logger.debug(msg, e)
+          logger.error(msg)
           Left(ErrorResponse.ErrorInternalServerError.XmlResult.withConversationId)
       }
 

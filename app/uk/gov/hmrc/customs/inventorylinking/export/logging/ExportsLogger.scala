@@ -28,6 +28,8 @@ class ExportsLogger @Inject()(logger: CdsLogger) {
 
   def debug(s: => String)(implicit r: HasConversationId with ExtractedHeaders): Unit = logger.debug(formatDebug(s, r))
 
+  def debug(s: => String, e: => Throwable)(implicit r: HasConversationId with ExtractedHeaders): Unit = logger.debug(formatDebug(s, r), e)
+
   //called once at the start of the request processing pipeline
   def debugFull(s: => String)(implicit r: ConversationIdRequest[_]): Unit = logger.debug(formatDebugFull(s, r))
 
@@ -36,6 +38,8 @@ class ExportsLogger @Inject()(logger: CdsLogger) {
   def warn(s: => String)(implicit r: HasConversationId with ExtractedHeaders): Unit = logger.warn(formatWarn(s, r))
 
   def error(s: => String, e: => Throwable)(implicit r: HasConversationId with ExtractedHeaders): Unit = logger.error(formatError(s, r), e)
+
+  def error(s: => String)(implicit r: HasConversationId with ExtractedHeaders): Unit = logger.error(formatError(s, r))
 
   def errorWithoutRequestContext(s: => String): Unit = logger.error(s)
 
