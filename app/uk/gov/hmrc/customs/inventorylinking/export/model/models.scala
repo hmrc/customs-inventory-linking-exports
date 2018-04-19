@@ -24,7 +24,9 @@ case class CorrelationId(value: String) extends AnyVal
 
 case class BadgeIdentifier(value: String) extends AnyVal
 
-case class ClientId(value: String)
+case class ClientId(value: String) extends AnyVal
+
+case class SubscriptionFieldsId(value: String) extends AnyVal
 
 sealed trait ApiVersion {
   val value: String
@@ -37,8 +39,3 @@ object AuthorisedAs extends Enumeration {
   type AuthorisedAs = Value
   val Csp, NonCsp = Value
 }
-
-// TODO: remove this class after PayloadValidationAction is wired in
-case class Ids(conversationId: ConversationId,
-               correlationId: CorrelationId,
-               maybeBadgeIdentifier: Option[BadgeIdentifier] = None)

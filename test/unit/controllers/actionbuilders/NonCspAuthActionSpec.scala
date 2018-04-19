@@ -23,27 +23,22 @@ import play.api.mvc.Result
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.UnauthorizedCode
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders.NonCspAuthAction
-import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger2
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
+import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.AuthorisedRequest
 import uk.gov.hmrc.play.test.UnitSpec
 import util.TestData._
-import util.{AuthConnectorStubbing, RequestHeaders, TestData}
+import util.{AuthConnectorStubbing, RequestHeaders}
 class NonCspAuthActionSpec extends UnitSpec with MockitoSugar {
 
   private type EitherResultOrAuthRequest[A] = Either[Result, AuthorisedRequest[A]]
 
-  private val vhrWithoutBadge = vhr(maybeBadgeIdentifier = None)
-  private val unAuthorisedRequest = ar(vhrWithoutBadge, maybeAuthorised = None)
-  private val cspAuthorisedRequest = unAuthorisedRequest.asCsp
-  private val expectedNonCspAuthorisedRequest = unAuthorisedRequest.asNonCsp
   private val errorResponseUnauthorisedGeneral =
     ErrorResponse(Status.UNAUTHORIZED, UnauthorizedCode, "Unauthorised request")
   private lazy val errorResponseEoriNotFoundInCustomsEnrolment =
     ErrorResponse(UNAUTHORIZED, UnauthorizedCode, "EORI number not found in Customs Enrolment")
 
   trait SetUp extends AuthConnectorStubbing {
-    val mockExportsLogger = mock[ExportsLogger2]
+    val mockExportsLogger = mock[ExportsLogger]
     val nonCspAuthAction = new NonCspAuthAction(mockAuthConnector, mockExportsLogger)
   }
 
@@ -51,23 +46,23 @@ class NonCspAuthActionSpec extends UnitSpec with MockitoSugar {
     "Authorise Non CSP when authorised by auth API " in new SetUp {
       authoriseNonCsp(Some(declarantEori))
 
-      val actual = await(nonCspAuthAction.refine(unAuthorisedRequest))
+      val actual = await(nonCspAuthAction.refine(TestUnAuthorisedRequestNoBadge))
 
-      actual shouldBe Right(expectedNonCspAuthorisedRequest)
+      actual shouldBe Right(TestNonCspAuthorisedRequest)
     }
 
     "pass through request when already authorised" in new SetUp {
       authoriseNonCsp(Some(declarantEori))
 
-      val actual = await(nonCspAuthAction.refine(cspAuthorisedRequest))
+      val actual = await(nonCspAuthAction.refine(TestCspAuthorisedRequest))
 
-      actual shouldBe Right(cspAuthorisedRequest)
+      actual shouldBe Right(TestCspAuthorisedRequest)
     }
 
     "Return 401 when authorised by auth API but Eori not exists" in new SetUp {
       authoriseNonCsp(maybeEori = None)
 
-      val actual = await(nonCspAuthAction.refine(unAuthorisedRequest))
+      val actual = await(nonCspAuthAction.refine(TestUnAuthorisedRequestNoBadge))
 
       actual shouldBe Left(errorResponseEoriNotFoundInCustomsEnrolment.XmlResult.withHeaders(RequestHeaders.X_CONVERSATION_ID_NAME -> conversationId.value))
     }
@@ -75,7 +70,7 @@ class NonCspAuthActionSpec extends UnitSpec with MockitoSugar {
     "Return 401 when not authorised as NonCsp" in new SetUp {
       unauthoriseNonCspOnly()
 
-      val actual = await(nonCspAuthAction.refine(unAuthorisedRequest))
+      val actual = await(nonCspAuthAction.refine(TestUnAuthorisedRequestNoBadge))
 
       actual shouldBe Left(errorResponseUnauthorisedGeneral.XmlResult.withHeaders(RequestHeaders.X_CONVERSATION_ID_NAME -> conversationId.value))
     }
@@ -83,7 +78,7 @@ class NonCspAuthActionSpec extends UnitSpec with MockitoSugar {
     "propagate exceptional errors in auth API" in new SetUp {
       authoriseNonCspOnlyError()
 
-      val caught = intercept[Throwable](await(nonCspAuthAction.refine(unAuthorisedRequest)))
+      val caught = intercept[Throwable](await(nonCspAuthAction.refine(TestUnAuthorisedRequestNoBadge)))
 
       caught shouldBe emulatedServiceFailure
     }

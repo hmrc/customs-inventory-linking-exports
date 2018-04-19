@@ -20,28 +20,23 @@ import org.mockito.ArgumentMatchers.{eq => ameq}
 import org.scalatest.mockito.MockitoSugar
 import play.api.mvc.Result
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.errorBadRequest
+import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders.CspAuthAction
-import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger2
+import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.AuthorisedRequest
-import uk.gov.hmrc.customs.inventorylinking.export.model.{AuthorisedAs, _}
 import uk.gov.hmrc.play.test.UnitSpec
 import util.TestData._
 import util.{AuthConnectorStubbing, RequestHeaders}
 
-//TODO extract classes
 class CspAuthActionSpec extends UnitSpec with MockitoSugar {
 
   private type EitherResultOrAuthRequest[A] = Either[Result, AuthorisedRequest[A]]
 
-  private val vhrWithBadge = vhr(Some(badgeIdentifier))
-  private val vhrWithoutBadge = vhr(None)
-  private val expectedCspAuthorisedRequestWithBadge = ar(vhrWithBadge, maybeAuthorised = Some(AuthorisedAs.Csp))
-  private val expectedUnAuthorisedRequest = ar(vhrWithoutBadge, maybeAuthorised = None)
   private val errorResponseBadgeIdentifierHeaderMissing =
-    errorBadRequest(s"${HeaderConstants.XBadgeIdentifierHeaderName} header is missing or invalid")
+    errorBadRequest(s"${CustomHeaderNames.XBadgeIdentifierHeaderName} header is missing or invalid")
 
   trait SetUp extends AuthConnectorStubbing {
-    val mockExportsLogger = mock[ExportsLogger2]
+    val mockExportsLogger = mock[ExportsLogger]
     val cspAuthAction = new CspAuthAction(mockAuthConnector, mockExportsLogger)
   }
 
@@ -49,15 +44,15 @@ class CspAuthActionSpec extends UnitSpec with MockitoSugar {
     "Return Right of AuthorisedRequest with maybeAuthorised as CSP when authorised by auth API and badge identifier exists" in new SetUp {
       authoriseCsp()
 
-      val actual = await(cspAuthAction.refine(vhrWithBadge))
+      val actual = await(cspAuthAction.refine(TestValidatedHeadersRequest))
 
-      actual shouldBe Right(expectedCspAuthorisedRequestWithBadge)
+      actual shouldBe Right(TestCspAuthorisedRequest)
     }
 
     "Return Left of 401 Result when authorised by auth API but badge identifier does not exists" in new SetUp {
       authoriseCsp()
 
-      val actual = await(cspAuthAction.refine(vhrWithoutBadge))
+      val actual = await(cspAuthAction.refine(TestValidatedHeadersRequestNoBadge))
 
       actual shouldBe Left(errorResponseBadgeIdentifierHeaderMissing.XmlResult.withHeaders(RequestHeaders.X_CONVERSATION_ID_NAME -> conversationId.value))
     }
@@ -65,19 +60,17 @@ class CspAuthActionSpec extends UnitSpec with MockitoSugar {
     "Return Right of AuthorisedRequest with maybeAuthorised as None when not authorised" in new SetUp {
       unauthoriseCsp()
 
-      val actual = await(cspAuthAction.refine(vhrWithoutBadge))
+      val actual = await(cspAuthAction.refine(TestValidatedHeadersRequestNoBadge))
 
-      actual shouldBe Right(expectedUnAuthorisedRequest)
+      actual shouldBe Right(TestUnAuthorisedRequestNoBadge)
     }
 
     "propagate exceptional errors in auth API" in new SetUp {
       authoriseCspError()
 
-      val caught = intercept[Throwable](await(cspAuthAction.refine(vhrWithoutBadge)))
+      val caught = intercept[Throwable](await(cspAuthAction.refine(TestValidatedHeadersRequestNoBadge)))
 
       caught shouldBe emulatedServiceFailure
     }
   }
 }
-
-

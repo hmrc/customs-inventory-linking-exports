@@ -21,24 +21,22 @@ import javax.inject.Singleton
 import com.google.inject.Inject
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.logging.LoggingHelper._
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{HasConversationId, ConversationIdRequest, ExtractedHeaders}
 
 @Singleton
 class ExportsLogger @Inject()(logger: CdsLogger) {
 
-  def debug(msg: => String, url: => String, payload: => String)(implicit hc: HeaderCarrier): Unit = logger.debug(formatDebug(msg, Some(url), Some(payload)))
+  def debug(s: => String)(implicit r: HasConversationId with ExtractedHeaders): Unit = logger.debug(formatDebug(s, r))
 
-  def debug(msg: => String, payload: => String)(implicit hc: HeaderCarrier): Unit = logger.debug(formatDebug(msg, None, Some(payload)))
+  //called once at the start of the request processing pipeline
+  def debugFull(s: => String)(implicit r: ConversationIdRequest[_]): Unit = logger.debug(formatDebugFull(s, r))
 
-  def debug(msg: => String)(implicit hc: HeaderCarrier): Unit = logger.debug(formatDebug(msg))
+  def info(s: => String)(implicit r: HasConversationId with ExtractedHeaders): Unit = logger.info(formatInfo(s, r))
 
-  def info(msg: => String)(implicit hc: HeaderCarrier): Unit = logger.info(formatInfo(msg))
+  def warn(s: => String)(implicit r: HasConversationId with ExtractedHeaders): Unit = logger.warn(formatWarn(s, r))
 
-  def warn(msg: => String)(implicit hc: HeaderCarrier): Unit = logger.warn(formatWarn(msg))
+  def error(s: => String, e: => Throwable)(implicit r: HasConversationId with ExtractedHeaders): Unit = logger.error(formatError(s, r), e)
 
-  def error(msg: => String, e: => Throwable)(implicit hc: HeaderCarrier): Unit = logger.error(formatError(msg), e)
+  def errorWithoutRequestContext(s: => String): Unit = logger.error(s)
 
-  def error(msg: => String)(implicit hc: HeaderCarrier): Unit = logger.error(formatError(msg))
-
-  def errorWithoutHeaderCarrier(msg: => String): Unit = logger.error(msg)
 }

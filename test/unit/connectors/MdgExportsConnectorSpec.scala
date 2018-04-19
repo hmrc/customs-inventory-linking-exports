@@ -28,10 +28,10 @@ import play.mvc.Http.MimeTypes
 import uk.gov.hmrc.customs.api.common.config.{ServiceConfig, ServiceConfigProvider}
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.MdgExportsConnector
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
+import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
 import uk.gov.hmrc.customs.inventorylinking.export.services.WSHttp
 import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse, NotFoundException}
 import uk.gov.hmrc.play.test.UnitSpec
-import util.MockitoPassByNameHelper.PassByNameVerifier
 import util.RequestHeaders
 import util.TestData._
 
@@ -39,16 +39,16 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class MdgExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach with Eventually {
 
-  val mockWsPost = mock[WSHttp]
-  val mockExportsLogger = mock[ExportsLogger]
-  val mockServiceConfigProvider = mock[ServiceConfigProvider]
+  private val mockWsPost = mock[WSHttp]
+  private val mockExportsLogger = mock[ExportsLogger]
+  private val mockServiceConfigProvider = mock[ServiceConfigProvider]
 
-  val connector = new MdgExportsConnector(mockWsPost, mockExportsLogger, mockServiceConfigProvider)
+  private val connector = new MdgExportsConnector(mockWsPost, mockExportsLogger, mockServiceConfigProvider)
 
-  val serviceConfig = ServiceConfig("the-url", Some("bearerToken"), "default")
+  private val serviceConfig = ServiceConfig("the-url", Some("bearerToken"), "default")
 
-  val xml = <xml></xml>
-  implicit val hc = HeaderCarrier().withExtraHeaders(RequestHeaders.API_SUBSCRIPTION_FIELDS_ID_HEADER)
+  private val xml = <xml></xml>
+  private implicit val hc = HeaderCarrier().withExtraHeaders(RequestHeaders.API_SUBSCRIPTION_FIELDS_ID_HEADER)
 
   private val httpException = new NotFoundException("Emulated 404 response from a web call")
 
@@ -58,9 +58,11 @@ class MdgExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndA
     when(mockServiceConfigProvider.getConfig("mdg-exports")).thenReturn(serviceConfig)
   }
 
-  val date: DateTime = new DateTime(2017, 7, 4, 13, 45, DateTimeZone.UTC)
+  private val date: DateTime = new DateTime(2017, 7, 4, 13, 45, DateTimeZone.UTC)
 
-  val httpFormattedDate = "Tue, 04 Jul 2017 13:45:00 UTC"
+  private val httpFormattedDate = "Tue, 04 Jul 2017 13:45:00 UTC"
+
+  private implicit val vpr = TestCspValidatedPayloadRequest
 
   "MdgExportsConnector" can {
 
@@ -147,9 +149,8 @@ class MdgExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndA
         val caught = intercept[EmulatedServiceFailure] {
           awaitSubscriptionFields
         }
-        caught shouldBe emulatedServiceFailure
 
-        verifyErrorLogged(caught)
+        caught shouldBe emulatedServiceFailure
       }
 
       "wrap an underlying error when MDG call fails with an http exception" in {
@@ -158,24 +159,13 @@ class MdgExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndA
         val caught = intercept[RuntimeException] {
           awaitSubscriptionFields
         }
-        caught.getCause shouldBe httpException
 
-        verifyErrorLogged(caught)
+        caught.getCause shouldBe httpException
       }
     }
   }
 
-  private def verifyErrorLogged(caught: Throwable) = {
-    eventually {
-      PassByNameVerifier(mockExportsLogger, "error")
-        .withByNameParam[String](s"Call to inventory linking exports failed. url = ${serviceConfig.url}")
-        .withByNameParam[Throwable](caught)
-        .withAnyHeaderCarrierParam
-        .verify()
-    }
-  }
-
-  private def awaitSubscriptionFields = {
+  private def awaitSubscriptionFields[A](implicit vpr: ValidatedPayloadRequest[A]) = {
     await(connector.send(xml, date, correlationIdUuid))
   }
 

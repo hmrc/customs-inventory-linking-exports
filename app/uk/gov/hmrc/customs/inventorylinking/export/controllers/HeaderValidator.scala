@@ -24,9 +24,9 @@ import play.api.mvc.Headers
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse._
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model.HeaderConstants._
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{CorrelationIdsRequest, ExtractedHeadersImpl}
-import uk.gov.hmrc.customs.inventorylinking.export.model.{BadgeIdentifier, ClientId, HeaderConstants, VersionOne}
+import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames._
+import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ConversationIdRequest, ExtractedHeadersImpl}
+import uk.gov.hmrc.customs.inventorylinking.export.model.{BadgeIdentifier, ClientId, VersionOne}
 
 @Singleton
 class HeaderValidator @Inject()(logger: CdsLogger) {
@@ -35,11 +35,11 @@ class HeaderValidator @Inject()(logger: CdsLogger) {
   private lazy val validContentTypeHeaders = Seq(MimeTypes.XML + ";charset=utf-8", MimeTypes.XML + "; charset=utf-8")
   private lazy val xClientIdRegex = "^\\S+$".r
   private lazy val xBadgeIdentifierRegex = "^[0-9A-Z]{6,12}$".r
-  private val errorResponseBadgeIdentifierHeaderMissing = errorBadRequest(s"${HeaderConstants.XBadgeIdentifierHeaderName} header is missing or invalid")
+  private val errorResponseBadgeIdentifierHeaderMissing = errorBadRequest(s"${CustomHeaderNames.XBadgeIdentifierHeaderName} header is missing or invalid")
 
 
-  def validateHeaders[A](implicit correlationIdsRequest: CorrelationIdsRequest[A]): Either[ErrorResponse, ExtractedHeadersImpl] = {
-    implicit val headers = correlationIdsRequest.headers
+  def validateHeaders[A](implicit conversationIdRequest: ConversationIdRequest[A]): Either[ErrorResponse, ExtractedHeadersImpl] = {
+    implicit val headers = conversationIdRequest.headers
 
     def hasAccept = validateHeader(ACCEPT, validAcceptHeaders.contains(_), ErrorAcceptHeaderInvalid)
 

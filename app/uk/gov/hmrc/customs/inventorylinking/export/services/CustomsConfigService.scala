@@ -55,7 +55,7 @@ class CustomsConfigService @Inject()(configuration: Configuration,
     ) (CustomsConfigHolder.apply) fold(
     fail = { nel =>
       val errorMsg = nel.toList.mkString("\n", "\n", "")
-      logger.errorWithoutHeaderCarrier(errorMsg)
+      logger.errorWithoutRequestContext(errorMsg)
       throw new IllegalStateException(errorMsg)
     },
     succ = identity

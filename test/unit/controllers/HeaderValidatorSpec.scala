@@ -22,10 +22,10 @@ import play.api.http.HeaderNames._
 import play.api.test.FakeRequest
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse._
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
+import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames._
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.HeaderValidator
-import uk.gov.hmrc.customs.inventorylinking.export.model.HeaderConstants._
 import uk.gov.hmrc.customs.inventorylinking.export.model.VersionOne
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{CorrelationIdsRequest, ExtractedHeadersImpl}
+import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ConversationIdRequest, ExtractedHeadersImpl}
 import uk.gov.hmrc.play.test.UnitSpec
 import util.RequestHeaders._
 import util.TestData.badgeIdentifier
@@ -61,9 +61,9 @@ class HeaderValidatorSpec extends UnitSpec with TableDrivenPropertyChecks with M
   "HeaderValidatorAction" should {
     forAll(headersTable) { (description, headers, response) =>
       s"$description" in new SetUp {
-        private val correlationIdsRequest: CorrelationIdsRequest[_] = CorrelationIdsRequest(TestData.conversationId, TestData.correlationId, FakeRequest().withHeaders(headers.toSeq: _*))
+        private val conversationIdRequest: ConversationIdRequest[_] = ConversationIdRequest(TestData.conversationId, FakeRequest().withHeaders(headers.toSeq: _*))
 
-        validator.validateHeaders(correlationIdsRequest) shouldBe response
+        validator.validateHeaders(conversationIdRequest) shouldBe response
       }
     }
   }

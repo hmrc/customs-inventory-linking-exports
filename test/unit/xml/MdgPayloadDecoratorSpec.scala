@@ -21,8 +21,8 @@ import org.scalatest.prop.TableDrivenPropertyChecks._
 import uk.gov.hmrc.customs.inventorylinking.export.xml.MdgPayloadDecorator
 import uk.gov.hmrc.play.test.UnitSpec
 import util.ApiSubscriptionFieldsTestData._
-import util.XMLTestData._
 import util.TestData._
+import util.XMLTestData._
 
 import scala.xml.NodeSeq
 
@@ -36,8 +36,10 @@ class MdgPayloadDecoratorSpec extends UnitSpec with MockitoSugar{
 
   private val decorator = new MdgPayloadDecorator()
 
-  private def wrapPayloadWithBadgeIdentifier(payload: NodeSeq = xmlPayload) = decorator.decorate(payload, ids, xClientIdValue, dateTime)
-  private def wrapPayloadWithoutBadgeIdentifier(payload: NodeSeq = xmlPayload) = decorator.decorate(payload, ids.copy(maybeBadgeIdentifier = None), xClientIdValue, dateTime)
+  private implicit val vpr = TestCspValidatedPayloadRequest
+
+  private def wrapPayloadWithBadgeIdentifier(payload: NodeSeq = xmlPayload) = decorator.decorate(payload, xClientIdValue, correlationId.value, dateTime)
+  private def wrapPayloadWithoutBadgeIdentifier(payload: NodeSeq = xmlPayload) = decorator.decorate(payload, xClientIdValue, correlationId.value, dateTime)
 
   "MdgPayloadDecorator" should {
 

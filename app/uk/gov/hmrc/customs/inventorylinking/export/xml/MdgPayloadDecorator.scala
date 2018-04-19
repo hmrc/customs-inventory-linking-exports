@@ -16,25 +16,28 @@
 
 package uk.gov.hmrc.customs.inventorylinking.export.xml
 
+import javax.inject.Singleton
+
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
-import uk.gov.hmrc.customs.inventorylinking.export.model.Ids
+import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
 
 import scala.xml.NodeSeq
 
+@Singleton
 class MdgPayloadDecorator() {
 
-  def decorate(xml: NodeSeq, ids: Ids, clientId: String, dateTime: DateTime): NodeSeq = {
+  def decorate[A](xml: NodeSeq, clientId: String, correlationId: String, dateTime: DateTime)(implicit vpr: ValidatedPayloadRequest[A]): NodeSeq = {
 
     <n1:InventoryLinkingExportsInboundRequest xmlns:inv="http://gov.uk/customs/inventoryLinking/v1"
                                               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                                               xmlns:gw="http://gov.uk/customs/inventoryLinking/gatewayHeader/v1"
                                               xmlns:n1="http://www.hmrc.gov.uk/cds/inventorylinking/exportmovement">
       <n1:requestCommon>
-        { if(ids.maybeBadgeIdentifier.isDefined) <gw:badgeIdentifier>{ids.maybeBadgeIdentifier.get.value}</gw:badgeIdentifier> }
+        { if(vpr.maybeBadgeIdentifier.isDefined) <gw:badgeIdentifier>{vpr.maybeBadgeIdentifier.get.value}</gw:badgeIdentifier> }
         <gw:clientID>{clientId}</gw:clientID>
-        <gw:conversationID>{ids.conversationId.value}</gw:conversationID>
-        <gw:correlationID>{ids.correlationId.value}</gw:correlationID>
+        <gw:conversationID>{vpr.conversationId.value}</gw:conversationID>
+        <gw:correlationID>{correlationId}</gw:correlationID>
         <gw:dateTimeStamp>{dateTime.toString(ISODateTimeFormat.dateTimeNoMillis)}</gw:dateTimeStamp>
       </n1:requestCommon>
       <n1:requestDetail>
@@ -43,4 +46,3 @@ class MdgPayloadDecorator() {
     </n1:InventoryLinkingExportsInboundRequest>
   }
 }
-
