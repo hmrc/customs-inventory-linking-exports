@@ -24,6 +24,7 @@ import play.api.http.HeaderNames.{ACCEPT, CONTENT_TYPE, DATE, X_FORWARDED_HOST}
 import play.api.http.MimeTypes
 import uk.gov.hmrc.customs.api.common.config.ServiceConfigProvider
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
+import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
 import uk.gov.hmrc.customs.inventorylinking.export.services.WSHttp
 import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.http.{HeaderCarrier, HttpException, HttpResponse}
@@ -37,7 +38,7 @@ class MdgExportsConnector @Inject()(http: WSHttp,
                                     logger: ExportsLogger,
                                     serviceConfigProvider: ServiceConfigProvider) {
 
-  def send(xml: NodeSeq, date: DateTime, correlationId: UUID): Future[HttpResponse] = {
+  def send[A](xml: NodeSeq, date: DateTime, correlationId: UUID)(implicit vpr: ValidatedPayloadRequest[A]): Future[HttpResponse] = {
     val config = Option(serviceConfigProvider.getConfig("mdg-exports")).getOrElse(throw new IllegalArgumentException("config not found"))
     val bearerToken = "Bearer " + config.bearerToken.getOrElse(throw new IllegalStateException("no bearer token was found in config"))
     implicit val hc = HeaderCarrier(extraHeaders = getHeaders(date, correlationId), authorization = Some(Authorization(bearerToken)))
@@ -53,8 +54,8 @@ class MdgExportsConnector @Inject()(http: WSHttp,
       ("X-Correlation-ID", correlationId.toString))
   }
 
-  private def post(xml: NodeSeq, url: String)(implicit hc: HeaderCarrier) = {
-    logger.debug("Posting inventory linking exports.", url, payload = xml.toString())
+  private def post[A](xml: NodeSeq, url: String)(implicit vpr: ValidatedPayloadRequest[A], hc: HeaderCarrier) = {
+    logger.debug(s"Posting inventory linking exports.\nurl = $url\npayload = \n${xml.toString}")
 
     http.POSTString[HttpResponse](url, xml.toString())
       .recoverWith {

@@ -18,26 +18,26 @@ package unit.controllers.actionbuilders
 
 import org.scalatest.mockito.MockitoSugar
 import play.api.test.FakeRequest
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders.CorrelationIdsAction
-import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger2
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.CorrelationIdsRequest
+import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders.ConversationIdAction
+import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
+import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ConversationIdRequest
 import uk.gov.hmrc.play.test.UnitSpec
 import util.TestData
-import util.TestData.{conversationId, correlationId}
+import util.TestData.conversationId
 
-class CorrelationIdsActionSpec extends UnitSpec with MockitoSugar {
+class ConversationIdActionSpec extends UnitSpec with MockitoSugar {
 
   trait SetUp {
-    private val mockExportsLogger2 = mock[ExportsLogger2]
+    private val mockExportsLogger2 = mock[ExportsLogger]
     val request = FakeRequest()
-    val correlationIdsAction = new CorrelationIdsAction(TestData.stubCorrelationIdsService, mockExportsLogger2)
-    val expected = CorrelationIdsRequest(conversationId, correlationId, request)
+    val conversationIdAction = new ConversationIdAction(TestData.stubUniqueIdsService, mockExportsLogger2)
+    val expected = ConversationIdRequest(conversationId, request)
   }
 
-  "CorrelationIdsAction" should {
+  "ConversationIdAction" should {
     "transform Request to CorrelationIdsRequest" in new SetUp {
 
-      private val actual = await(correlationIdsAction.transform(request))
+      private val actual = await(conversationIdAction.transform(request))
 
       actual shouldBe expected
     }

@@ -20,12 +20,13 @@ import java.util.UUID
 
 import com.typesafe.config.{Config, ConfigFactory}
 import model.ApiSubscriptionFieldsResponse
-import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionKey, ClientId}
+import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionKey, ClientId, SubscriptionFieldsId}
 import util.ExternalServicesConfig.{Host, Port}
 import util.ExportsExternalServicesConfig._
 
 trait ApiSubscriptionFieldsTestData {
   val fieldsId = "327d9145-4965-4d28-a2c5-39dedee50334"
+  val TestSubscriptionFieldsId = SubscriptionFieldsId(fieldsId)
   val xClientIdValue = "SOME_X_CLIENT_ID"
   val clientId = ClientId(xClientIdValue)
   val apiContext = "some/api/context"

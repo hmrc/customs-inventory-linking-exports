@@ -27,10 +27,11 @@ import uk.gov.hmrc.auth.core.retrieve.Retrievals
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.{UnauthorizedCode, errorBadRequest}
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.InventoryLinkingAuthConnector
-import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger2
+import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames
+import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
+import uk.gov.hmrc.customs.inventorylinking.export.model.Eori
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{AuthorisedRequest, CorrelationIds, ValidatedHeadersRequest}
-import uk.gov.hmrc.customs.inventorylinking.export.model.{AuthorisedAs, Eori, HeaderConstants}
+import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{AuthorisedRequest, ValidatedHeadersRequest}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.play.HeaderCarrierConverter
@@ -67,10 +68,10 @@ class CspAndThenNonCspAuthAction @Inject()(cspAuthAction: CspAuthAction, nonCspA
 @Singleton
 class CspAuthAction @Inject()(
   override val authConnector: InventoryLinkingAuthConnector,
-  logger: ExportsLogger2
+  logger: ExportsLogger
   ) extends ActionRefiner[ValidatedHeadersRequest, AuthorisedRequest] with AuthorisedFunctions with AuthAction {
 
-  private val errorResponseBadgeIdentifierHeaderMissing = errorBadRequest(s"${HeaderConstants.XBadgeIdentifierHeaderName} header is missing or invalid")
+  private val errorResponseBadgeIdentifierHeaderMissing = errorBadRequest(s"${CustomHeaderNames.XBadgeIdentifierHeaderName} header is missing or invalid")
 
   override def refine[A](vr: ValidatedHeadersRequest[A]): Future[EitherResultOrAuthRequest[A]] = {
     implicit val implicitVr = vr
@@ -82,14 +83,14 @@ class CspAuthAction @Inject()(
   // pure function that tames exceptions throw by HMRC auth api into an Either
   // this enables calling function to not worry about recover blocks
   // returns a Future of Left(Result) on error or a Right(AuthorisedRequest) on success
-  private def authoriseAsCsp[A](implicit vr: ValidatedHeadersRequest[A]): Future[EitherResultOrAuthRequest[A]] = {
+  private def authoriseAsCsp[A](implicit vhr: ValidatedHeadersRequest[A]): Future[EitherResultOrAuthRequest[A]] = {
     implicit def hc(implicit rh: RequestHeader): HeaderCarrier = HeaderCarrierConverter.fromHeadersAndSession(rh.headers)
 
     authorised(Enrolment("write:customs-inventory-linking-exports") and AuthProviders(PrivilegedApplication)) {
       Future.successful{
-        if (vr.maybeBadgeIdentifier.isDefined) {
+        if (vhr.maybeBadgeIdentifier.isDefined) {
           logger.debug("found badge identifier for CSP")
-          Right(authorisedRequest(vr, Some(AuthorisedAs.Csp)))
+          Right(vhr.toAuthorisedRequest().asCsp)
         } else {
           logger.debug("badge identifier not present for CSP")
           Left(errorResponseBadgeIdentifierHeaderMissing.XmlResult.withConversationId)
@@ -98,11 +99,9 @@ class CspAuthAction @Inject()(
     }.recover{
       case NonFatal(_: AuthorisationException) =>
         logger.debug("Not authorised as CSP")
-        Right(authorisedRequest(vr))
+        Right(vhr.toAuthorisedRequest(maybeAuthorised = None))
       case NonFatal(e) =>
-        val msg = "Error authorising CSP"
-        logger.debug(msg, e)
-        logger.error(msg) //TODO: confirm if we are showing stack trace for errors these days
+        logger.error("Error authorising CSP", e)
         throw e
     }
   }
@@ -124,7 +123,7 @@ class CspAuthAction @Inject()(
 @Singleton
 class NonCspAuthAction @Inject()(
                                override val authConnector: InventoryLinkingAuthConnector,
-                               logger: ExportsLogger2
+                               logger: ExportsLogger
                              ) extends ActionRefiner[AuthorisedRequest, AuthorisedRequest] with AuthorisedFunctions with AuthAction {
 
   private lazy val errorResponseEoriNotFoundInCustomsEnrolment =
@@ -166,9 +165,7 @@ class NonCspAuthAction @Inject()(
       case NonFatal(_: AuthorisationException) =>
         Left(errorResponseUnauthorisedGeneral.XmlResult.withConversationId)
       case NonFatal(e) =>
-        val msg = "Error authorising Non CSP"
-        logger.debug(msg, e)
-        logger.error(msg) //TODO: confirm if we are showing stack trace for errors these days
+        logger.error("Error authorising Non CSP", e)
         throw e
     }
   }

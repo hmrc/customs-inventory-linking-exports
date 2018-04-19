@@ -16,78 +16,56 @@
 
 package unit.logging
 
+import org.scalatest.mockito.MockitoSugar
+import play.api.http.HeaderNames._
+import play.api.mvc.Request
+import play.api.test.FakeRequest
+import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames
 import uk.gov.hmrc.customs.inventorylinking.export.logging.LoggingHelper
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ConversationIdRequest, ValidatedHeadersRequest}
+import uk.gov.hmrc.customs.inventorylinking.export.model.{ClientId, ConversationId, VersionOne}
 import uk.gov.hmrc.play.test.UnitSpec
-import util.ApiSubscriptionFieldsTestData._
-import util.RequestHeaders._
-import util.TestData.conversationIdValue
 
-class LoggingHelperSpec extends UnitSpec {
+class LoggingHelperSpec extends UnitSpec with MockitoSugar {
 
-  private val errorMsg = "ERROR"
-  private val warnMsg = "WARN"
-  private val infoMsg = "INFO"
-  private val debugMsg = "DEBUG"
-  private val url = "http://some-url"
-  private val expectedFormattedSignificantHeaders = s"[clientId=$xClientIdValue][fieldsId=$fieldsId][conversationId=$conversationIdValue]"
-  private def expectedHeaders(requestChain: String) = s"headers=List((X-Request-Chain,$requestChain), ($API_SUBSCRIPTION_FIELDS_ID_NAME,$fieldsId), ($X_CLIENT_ID_NAME,$xClientIdValue), (X-Conversation-ID,$conversationIdValue))"
-  private implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = LoggingHeaders)
-  private val miniXmlPayload: String =
-        """<xml>
-          | <content>This is a well-formed XML</content>
-          |</xml>""".stripMargin
+  private def expectedMessage(message: String) = "[conversationId=conversation-id]" +
+    "[clientId=some-client-id]" +
+    s"[requestedApiVersion=1.0] $message"
+  private val requestMock = mock[Request[_]]
+  private val conversationIdRequest =
+    ConversationIdRequest(
+      ConversationId("conversation-id"),
+      FakeRequest().withHeaders(
+        CONTENT_TYPE -> "A",
+        ACCEPT -> "B",
+        CustomHeaderNames.XConversationIdHeaderName -> "C",
+        CustomHeaderNames.XClientIdHeaderName -> "D",
+        "IGNORE" -> "IGNORE"
+      )
+    )
+  private val validatedHeadersRequest = ValidatedHeadersRequest(ConversationId("conversation-id"), None, VersionOne, ClientId("some-client-id"), requestMock)
 
   "LoggingHelper" should {
 
-    "format ERROR" in {
-      LoggingHelper.formatError(errorMsg) shouldBe s"$expectedFormattedSignificantHeaders $errorMsg"
+
+    "testFormatInfo" in {
+      LoggingHelper.formatInfo("Info message", validatedHeadersRequest) shouldBe expectedMessage("Info message")
     }
 
-    "format WARN"  in {
-      LoggingHelper.formatWarn(warnMsg) shouldBe s"$expectedFormattedSignificantHeaders $warnMsg"
+    "testFormatError" in {
+      LoggingHelper.formatError("Error message", validatedHeadersRequest) shouldBe expectedMessage("Error message")
     }
 
-    "format INFO with HeaderCarrier" in {
-      LoggingHelper.formatInfo(infoMsg) shouldBe s"$expectedFormattedSignificantHeaders $infoMsg"
+    "testFormatWarn" in {
+      LoggingHelper.formatWarn("Warn message", validatedHeadersRequest) shouldBe expectedMessage("Warn message")
     }
 
-    "format INFO with headers" in {
-      LoggingHelper.formatInfo(infoMsg, LoggingHeaders) shouldBe s"$expectedFormattedSignificantHeaders $infoMsg"
+    "testFormatDebug" in {
+      LoggingHelper.formatDebug("Debug message", validatedHeadersRequest) shouldBe expectedMessage("Debug message")
     }
 
-    "format DEBUG with HeaderCarrier" in {
-      val requestChain = hc.requestChain.value
-      LoggingHelper.formatDebug(debugMsg) shouldBe
-        s"$expectedFormattedSignificantHeaders $debugMsg \n${expectedHeaders(requestChain)}"
-    }
-
-    "format DEBUG with headers" in {
-      LoggingHelper.formatDebug(debugMsg, LoggingHeaders) shouldBe
-        s"$expectedFormattedSignificantHeaders $debugMsg \nheaders=List((api-subscription-fields-id,327d9145-4965-4d28-a2c5-39dedee50334), (X-Client-ID,SOME_X_CLIENT_ID), (X-Conversation-ID,$conversationIdValue))"
-    }
-
-    "format DEBUG with url and payload" in {
-      val requestChain = hc.requestChain.value
-      LoggingHelper.formatDebug(debugMsg, Some(url), Some(miniXmlPayload.toString)) shouldBe
-        s"$expectedFormattedSignificantHeaders $debugMsg url=http://some-url\n${expectedHeaders(requestChain)}\npayload=\n<xml>\n <content>This is a well-formed XML</content>\n</xml>"
-    }
-
-    "format DEBUG with url and no payload" in {
-      val requestChain = hc.requestChain.value
-      LoggingHelper.formatDebug(debugMsg, Some(url)) shouldBe
-        s"$expectedFormattedSignificantHeaders $debugMsg url=http://some-url\n${expectedHeaders(requestChain)}"
-    }
-
-    "format DEBUG with payload and no url" in {
-      val requestChain = hc.requestChain.value
-      LoggingHelper.formatDebug(debugMsg, None, Some(miniXmlPayload.toString)) shouldBe
-        s"$expectedFormattedSignificantHeaders $debugMsg \n${expectedHeaders(requestChain)}\npayload=\n<xml>\n <content>This is a well-formed XML</content>\n</xml>"
-    }
-
-    "format DEBUG with headers including single overwritten header" in {
-      LoggingHelper.formatDebug(debugMsg, LoggingHeadersWithAuth) shouldBe
-        s"$expectedFormattedSignificantHeaders $debugMsg \nheaders=List((api-subscription-fields-id,$fieldsId), (X-Client-ID,$xClientIdValue), (X-Conversation-ID,$conversationIdValue), (Authorization,value-not-logged))"
+    "testFormatDebugFull" in {
+      LoggingHelper.formatDebugFull("Debug message.", conversationIdRequest) shouldBe s"[conversationId=conversation-id] Debug message. headers=Map(Accept -> B, X-Client-ID -> D, Content-Type -> A, X-Conversation-ID -> C)"
     }
   }
 }

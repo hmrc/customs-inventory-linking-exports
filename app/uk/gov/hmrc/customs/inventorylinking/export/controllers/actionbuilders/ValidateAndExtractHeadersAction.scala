@@ -20,9 +20,9 @@ import javax.inject.{Inject, Singleton}
 
 import play.api.mvc.{ActionRefiner, _}
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.HeaderValidator
-import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger2
+import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{CorrelationIdsRequest, ValidatedHeadersRequest}
+import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ConversationIdRequest, ValidatedHeadersRequest}
 
 import scala.concurrent.Future
 
@@ -32,16 +32,16 @@ import scala.concurrent.Future
   * <li/>ERROR - 4XX Result if is a header validation error. This terminates the action builder pipeline.
   */
 @Singleton
-class ValidateAndExtractHeadersAction @Inject()(validator: HeaderValidator, logger: ExportsLogger2) extends ActionRefiner[CorrelationIdsRequest, ValidatedHeadersRequest] {
+class ValidateAndExtractHeadersAction @Inject()(validator: HeaderValidator, logger: ExportsLogger) extends ActionRefiner[ConversationIdRequest, ValidatedHeadersRequest] {
 
-  override def refine[A](cr: CorrelationIdsRequest[A]): Future[Either[Result, ValidatedHeadersRequest[A]]] = Future.successful {
+  override def refine[A](cr: ConversationIdRequest[A]): Future[Either[Result, ValidatedHeadersRequest[A]]] = Future.successful {
     implicit val id = cr
 
     validator.validateHeaders(cr) match {
       case Left(result) =>
         Left(result.XmlResult.withConversationId)
       case Right(extracted) =>
-        val vhr = ValidatedHeadersRequest(cr.conversationId, cr.correlationId, extracted.maybeBadgeIdentifier, extracted.requestedApiVersion, extracted.clientId, cr.request)
+        val vhr = ValidatedHeadersRequest(cr.conversationId, extracted.maybeBadgeIdentifier, extracted.requestedApiVersion, extracted.clientId, cr.request)
         Right(vhr)
     }
   }

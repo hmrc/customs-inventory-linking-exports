@@ -26,13 +26,13 @@ import org.scalatest.mockito.MockitoSugar
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.ApiSubscriptionFieldsConnector
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
+import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
 import uk.gov.hmrc.customs.inventorylinking.export.services.WSHttp
 import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, NotFoundException}
 import uk.gov.hmrc.play.config.inject.ServicesConfig
 import uk.gov.hmrc.play.test.UnitSpec
 import util.ExportsExternalServicesConfig._
 import util.ExternalServicesConfig._
-import util.MockitoPassByNameHelper.PassByNameVerifier
 import util.{ApiSubscriptionFieldsTestData, TestData}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -51,6 +51,8 @@ class ApiSubscriptionFieldsConnectorSpec extends UnitSpec
 
   private val httpException = new NotFoundException("Emulated 404 response from a web call")
   private val expectedUrl = s"http://$Host:$Port$ApiSubscriptionFieldsContext/application/SOME_X_CLIENT_ID/context/some/api/context/version/1.0"
+
+  private implicit val vpr = TestData.TestCspValidatedPayloadRequest
 
   override protected def beforeEach() {
     reset(mockExportsLogger, mockWSGetImpl)
@@ -91,7 +93,6 @@ class ApiSubscriptionFieldsConnectorSpec extends UnitSpec
         }
 
         caught shouldBe TestData.emulatedServiceFailure
-        verifyErrorLogged(caught)
       }
 
       "wrap an underlying error when api subscription fields call fails with an http exception" in {
@@ -102,28 +103,17 @@ class ApiSubscriptionFieldsConnectorSpec extends UnitSpec
         }
 
         caught.getCause shouldBe httpException
-        verifyErrorLogged(caught)
       }
     }
   }
 
-  private def awaitSubscriptionFields = {
+  private def awaitSubscriptionFields[A](implicit vpr: ValidatedPayloadRequest[A]) = {
     await(connector.getSubscriptionFields(apiSubscriptionKey))
   }
 
   private def returnResponseForRequest(eventualResponse: Future[ApiSubscriptionFieldsResponse], url: String = expectedUrl) = {
     when(mockWSGetImpl.GET[ApiSubscriptionFieldsResponse](ameq(url))
       (any[HttpReads[ApiSubscriptionFieldsResponse]](), any[HeaderCarrier](), any[ExecutionContext])).thenReturn(eventualResponse)
-  }
-
-  private def verifyErrorLogged(caught: Throwable) = {
-    eventually {
-      PassByNameVerifier(mockExportsLogger, "error")
-        .withByNameParam[String](s"Call to get api subscription fields failed. url = $expectedUrl")
-        .withByNameParam[Throwable](caught)
-        .withAnyHeaderCarrierParam
-        .verify()
-    }
   }
 
   private def testServicesConfig(configuration: Config) = new ServicesConfig {

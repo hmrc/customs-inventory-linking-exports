@@ -17,18 +17,53 @@
 package uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders
 
 import play.api.mvc.{Request, Result, WrappedRequest}
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames.X_CONVERSATION_ID_HEADER_NAME
+import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames.XConversationIdHeaderName
 import uk.gov.hmrc.customs.inventorylinking.export.model.AuthorisedAs.AuthorisedAs
 import uk.gov.hmrc.customs.inventorylinking.export.model.{AuthorisedAs, _}
 
+import scala.xml.NodeSeq
+
 object ActionBuilderModelHelper {
   implicit class AddConversationId(result: Result) {
-    def withConversationId(implicit c: CorrelationIds): Result = {
-      result.withHeaders(X_CONVERSATION_ID_HEADER_NAME -> c.conversationId.value)
+    def withConversationId(implicit c: HasConversationId): Result = {
+      result.withHeaders(XConversationIdHeaderName -> c.conversationId.value)
     }
   }
 
-  implicit class AuthRequestAsNonCsp[A](ar: AuthorisedRequest[A]) {
+  implicit class CorrelationIdsRequestOps[A](cir: ConversationIdRequest[A]) {
+    def toValidatedHeadersRequest(eh: ExtractedHeaders): ValidatedHeadersRequest[A] = ValidatedHeadersRequest(
+      cir.conversationId,
+      eh.maybeBadgeIdentifier,
+      eh.requestedApiVersion,
+      eh.clientId,
+      cir.request
+    )
+  }
+
+  implicit class ValidatedHeadersRequestOps[A](vhr: ValidatedHeadersRequest[A]) {
+    def toAuthorisedRequest(maybeAuthorised: Option[AuthorisedAs] = None): AuthorisedRequest[A] = AuthorisedRequest(
+        vhr.conversationId,
+        vhr.maybeBadgeIdentifier,
+        vhr.requestedApiVersion,
+        vhr.clientId,
+        maybeAuthorised,
+        vhr.request
+      )
+  }
+
+  implicit class AuthorisedRequestOps[A](ar: AuthorisedRequest[A]) {
+    def toValidatedPayloadRequest(xmlBody: NodeSeq): ValidatedPayloadRequest[A] = ValidatedPayloadRequest(
+        ar.conversationId,
+        ar.maybeBadgeIdentifier,
+        ar.requestedApiVersion,
+        ar.clientId,
+        ar.maybeAuthorised,
+        xmlBody,
+        ar.request
+      )
+  }
+
+  implicit class AuthorisedRequestTransformationOp[A](ar: AuthorisedRequest[A]) {
 
     // we can not use normal case class copy on a wrapped request as it is overridden by RequestHeader
     def asNonCsp: AuthorisedRequest[A] = authorisedRequest(Some(AuthorisedAs.NonCsp))
@@ -39,7 +74,6 @@ object ActionBuilderModelHelper {
     def authorisedRequest(maybeAuthorised: Option[AuthorisedAs]): AuthorisedRequest[A] = {
       AuthorisedRequest(
         ar.conversationId,
-        ar.correlationId,
         ar.maybeBadgeIdentifier,
         ar.requestedApiVersion,
         ar.clientId,
@@ -49,24 +83,10 @@ object ActionBuilderModelHelper {
     }
   }
 
-  def authorisedRequest[A](vr: ValidatedHeadersRequest[A], maybeAuthorised: Option[AuthorisedAs] = None): AuthorisedRequest[A] = {
-    AuthorisedRequest(
-      vr.conversationId,
-      vr.correlationId,
-      vr.maybeBadgeIdentifier,
-      vr.requestedApiVersion,
-      vr.clientId,
-      maybeAuthorised,
-      vr.request
-    )
-  }
-
 }
 
-// TODO: rename to HasConversationId later on when convenient
-trait CorrelationIds {
+trait HasConversationId {
   val conversationId: ConversationId
-  val correlationId: CorrelationId // TODO: remove later on when convenient and cascade changes
 }
 
 trait ExtractedHeaders {
@@ -79,36 +99,48 @@ trait HasAuthorisedAs {
   val maybeAuthorised: Option[AuthorisedAs]
 }
 
+trait HasXmlBody {
+  val xmlBody: NodeSeq
+}
+
 case class ExtractedHeadersImpl(
   maybeBadgeIdentifier: Option[BadgeIdentifier],
   requestedApiVersion: ApiVersion,
   clientId: ClientId
 ) extends ExtractedHeaders
 
-// Available after CorrelationIdsAction action builder
-case class CorrelationIdsRequest[A](
+// Available after ConversationIdAction action builder
+case class ConversationIdRequest[A](
   conversationId: ConversationId,
-  correlationId: CorrelationId,
   request: Request[A]
-) extends WrappedRequest[A](request) with CorrelationIds
+) extends WrappedRequest[A](request) with HasConversationId
 
 // Available after ValidatedHeadersAction builder
 case class ValidatedHeadersRequest[A](
   conversationId: ConversationId,
-  correlationId: CorrelationId,
   maybeBadgeIdentifier: Option[BadgeIdentifier],
   requestedApiVersion: ApiVersion,
   clientId: ClientId,
   request: Request[A]
-) extends WrappedRequest[A](request) with CorrelationIds with ExtractedHeaders
+) extends WrappedRequest[A](request) with HasConversationId with ExtractedHeaders
 
 // Available after ValidatedHeadersAction builder
 case class AuthorisedRequest[A](
   conversationId: ConversationId,
-  correlationId: CorrelationId,
   maybeBadgeIdentifier: Option[BadgeIdentifier],
   requestedApiVersion: ApiVersion,
   clientId: ClientId,
   maybeAuthorised: Option[AuthorisedAs] = None,
   request: Request[A]
-) extends WrappedRequest[A](request) with CorrelationIds with ExtractedHeaders with HasAuthorisedAs
+) extends WrappedRequest[A](request) with HasConversationId with ExtractedHeaders with HasAuthorisedAs
+
+// Available after ValidatedPayloadAction builder
+case class ValidatedPayloadRequest[A](
+  conversationId: ConversationId,
+  maybeBadgeIdentifier: Option[BadgeIdentifier],
+  requestedApiVersion: ApiVersion,
+  clientId: ClientId,
+  maybeAuthorised: Option[AuthorisedAs] = None,
+  xmlBody: NodeSeq,
+  request: Request[A]
+) extends WrappedRequest[A](request) with HasConversationId with ExtractedHeaders with HasAuthorisedAs with HasXmlBody
