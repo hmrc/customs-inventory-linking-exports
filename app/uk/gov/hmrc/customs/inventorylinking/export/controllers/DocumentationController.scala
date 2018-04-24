@@ -20,11 +20,11 @@ import javax.inject.{Inject, Singleton}
 
 import play.api.http.HttpErrorHandler
 import play.api.mvc.{Action, AnyContent}
-import uk.gov.hmrc.customs.inventorylinking.export.services.CustomsConfigService
+import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
 import uk.gov.hmrc.customs.inventorylinking.export.views._
 
 @Singleton
-class DocumentationController @Inject()(httpErrorHandler: HttpErrorHandler, configService: CustomsConfigService)
+class DocumentationController @Inject()(httpErrorHandler: HttpErrorHandler, configService: ExportsConfigService)
   extends uk.gov.hmrc.api.controllers.DocumentationController(httpErrorHandler) {
 
   override def definition(): Action[AnyContent] = Action {

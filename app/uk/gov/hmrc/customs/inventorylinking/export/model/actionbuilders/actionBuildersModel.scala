@@ -24,6 +24,7 @@ import uk.gov.hmrc.customs.inventorylinking.export.model.{AuthorisedAs, _}
 import scala.xml.NodeSeq
 
 object ActionBuilderModelHelper {
+
   implicit class AddConversationId(result: Result) {
     def withConversationId(implicit c: HasConversationId): Result = {
       result.withHeaders(XConversationIdHeaderName -> c.conversationId.value)
@@ -108,6 +109,14 @@ case class ExtractedHeadersImpl(
   requestedApiVersion: ApiVersion,
   clientId: ClientId
 ) extends ExtractedHeaders
+
+/*
+ * We need multiple WrappedRequest classes to reflect additions to context during the request processing pipeline.
+ *
+ * There is some repetition in the WrappedRequest classes, but the benefit is we get a flat structure for our data
+ * items, reducing the number of case classes and making their use much more convenient, rather than deeply nested stuff
+ * eg `r.badgeIdentifier` vs `r.requestData.badgeIdentifier`
+ */
 
 // Available after ConversationIdAction action builder
 case class ConversationIdRequest[A](

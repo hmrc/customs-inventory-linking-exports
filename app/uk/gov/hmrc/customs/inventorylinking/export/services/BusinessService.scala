@@ -45,7 +45,7 @@ class BusinessService @Inject()(logger: ExportsLogger,
                                 wrapper: MdgPayloadDecorator,
                                 dateTimeProvider: DateTimeService,
                                 uniqueIdsService: UniqueIdsService,
-                                customsConfigService: CustomsConfigService) {
+                                customsConfigService: ExportsConfigService) {
 
   private val apiContextEncoded = URLEncoder.encode(customsConfigService.apiDefinitionConfig.apiContext, "UTF-8")
 

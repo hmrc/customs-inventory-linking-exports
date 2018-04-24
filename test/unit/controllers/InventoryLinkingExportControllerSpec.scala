@@ -31,7 +31,7 @@ import uk.gov.hmrc.customs.inventorylinking.export.controllers.{HeaderValidator,
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
-import uk.gov.hmrc.customs.inventorylinking.export.services.{BusinessService, CustomsConfigService, XmlValidationService}
+import uk.gov.hmrc.customs.inventorylinking.export.services.{BusinessService, ExportsConfigService, XmlValidationService}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 import util.AuthConnectorStubbing
@@ -49,7 +49,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
 
     protected val mockExportsLogger2: ExportsLogger = mock[ExportsLogger]
     protected val mockCdsLogger: CdsLogger = mock[CdsLogger]
-    protected val mockCustomsConfigService: CustomsConfigService = mock[CustomsConfigService]
+    protected val mockCustomsConfigService: ExportsConfigService = mock[ExportsConfigService]
     protected val mockBusinessService: BusinessService = mock[BusinessService]
     protected val mockErrorResponse: ErrorResponse = mock[ErrorResponse]
     protected val mockResult: Result = mock[Result]
@@ -76,7 +76,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
 
     when(mockApiDefinitionConfig.apiScope).thenReturn(apiScope)
     when(mockCustomsConfigService.apiDefinitionConfig).thenReturn(mockApiDefinitionConfig)
-    when(mockCustomsConfigService.customsEnrolmentConfig).thenReturn(customsEnrolmentConfig)
+    when(mockCustomsConfigService.exportsEnrolmentConfig).thenReturn(exportsEnrolmentConfig)
     when(mockXmlValidationService.validate(any[NodeSeq])(any[ExecutionContext])).thenReturn(Future.successful(()))
     when(mockBusinessService.send(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])).thenReturn(Future.successful(Right(())))
   }
@@ -87,7 +87,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
   private val customsEnrolmentName = "HMRC-CUS-ORG"
   private val eoriIdentifier = "EORINumber"
   private val mockApiDefinitionConfig = mock[ApiDefinitionConfig]
-  private val customsEnrolmentConfig = CustomsEnrolmentConfig(customsEnrolmentName, eoriIdentifier)
+  private val exportsEnrolmentConfig = ExportsEnrolmentConfig(customsEnrolmentName, eoriIdentifier)
 
   private val errorResultEoriNotFoundInCustomsEnrolment = ErrorResponse(UNAUTHORIZED, errorCode = "UNAUTHORIZED",
     message = "EORI number not found in Customs Enrolment").XmlResult.withHeaders(X_CONVERSATION_ID_HEADER)
