@@ -21,16 +21,16 @@ import javax.inject.{Inject, Singleton}
 import play.api.Configuration
 import uk.gov.hmrc.customs.api.common.config.ConfigValidationNelAdaptor
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiDefinitionConfig, CustomsEnrolmentConfig, OverridesConfig}
+import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiDefinitionConfig, ExportsEnrolmentConfig, ExportsConfig}
 
 import scalaz.ValidationNel
 import scalaz.syntax.apply._
 import scalaz.syntax.traverse._
 
 @Singleton
-class CustomsConfigService @Inject()(configuration: Configuration,
+class ExportsConfigService @Inject()(configuration: Configuration,
                                      configValidationNel: ConfigValidationNelAdaptor,
-                                     logger: ExportsLogger) {
+                                     logger: ExportsLogger) extends ExportsConfig {
 
   private val root = configValidationNel.root
 
@@ -40,19 +40,16 @@ class CustomsConfigService @Inject()(configuration: Configuration,
       getStringSeq("api.access.version-1.0.whitelistedApplicationIds")
     ) (ApiDefinitionConfig.apply)
 
-  private val validatedCustomsEnrolmentConfig: ValidationNel[String, CustomsEnrolmentConfig] = (
+  private val validatedCustomsEnrolmentConfig: ValidationNel[String, ExportsEnrolmentConfig] = (
     root.string("inventory-linking.enrolment.name") |@|
       root.string("inventory-linking.enrolment.eori-identifier")
-    ) (CustomsEnrolmentConfig.apply)
+    ) (ExportsEnrolmentConfig.apply)
 
-  private val validatedOverridesConfig: ValidationNel[String, OverridesConfig] =
-    getOptionalString("override.clientID") map OverridesConfig.apply
-
-  private val customsConfigHolder = (
+  private val exportsConfig = (
     validatedDefinitionConfig |@|
       validatedCustomsEnrolmentConfig |@|
-      validatedOverridesConfig
-    ) (CustomsConfigHolder.apply) fold(
+      configValidationNel.service("api-subscription-fields").serviceUrl
+    ) (ExportsConfigImpl.apply) fold(
     fail = { nel =>
       val errorMsg = nel.toList.mkString("\n", "\n", "")
       logger.errorWithoutRequestContext(errorMsg)
@@ -61,18 +58,15 @@ class CustomsConfigService @Inject()(configuration: Configuration,
     succ = identity
   )
 
-  val apiDefinitionConfig: ApiDefinitionConfig = customsConfigHolder.apiDefinitionConfig
+  val apiDefinitionConfig: ApiDefinitionConfig = exportsConfig.apiDefinitionConfig
 
-  val customsEnrolmentConfig: CustomsEnrolmentConfig = customsConfigHolder.customsEnrolmentConfig
+  val exportsEnrolmentConfig: ExportsEnrolmentConfig = exportsConfig.exportsEnrolmentConfig
 
-  val overridesConfig: OverridesConfig = customsConfigHolder.overridesConfig
+  val apiSubscriptionFieldsBaseUrl: String = exportsConfig.apiSubscriptionFieldsBaseUrl
 
-  private case class CustomsConfigHolder(apiDefinitionConfig: ApiDefinitionConfig,
-                                         customsEnrolmentConfig: CustomsEnrolmentConfig,
-                                         overridesConfig: OverridesConfig)
-
-  private def getOptionalString(configKey: String): ValidationNel[String, Option[String]] =
-    scalaz.Success(configuration.getString(configKey))
+  private case class ExportsConfigImpl(apiDefinitionConfig: ApiDefinitionConfig,
+                                       exportsEnrolmentConfig: ExportsEnrolmentConfig,
+                                       apiSubscriptionFieldsBaseUrl: String)
 
   private def getStringSeq(configKey: String): ValidationNel[String, Seq[String]] =
     scalaz.Success(configuration.getStringSeq(configKey).getOrElse(Nil))

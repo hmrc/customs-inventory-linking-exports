@@ -23,13 +23,11 @@ import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.Eventually
 import org.scalatest.mockito.MockitoSugar
-import play.api.{Configuration, Environment}
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.ApiSubscriptionFieldsConnector
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
-import uk.gov.hmrc.customs.inventorylinking.export.services.WSHttp
+import uk.gov.hmrc.customs.inventorylinking.export.services.{ExportsConfigService, WSHttp}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, NotFoundException}
-import uk.gov.hmrc.play.config.inject.ServicesConfig
 import uk.gov.hmrc.play.test.UnitSpec
 import util.ExportsExternalServicesConfig._
 import util.ExternalServicesConfig._
@@ -43,6 +41,7 @@ class ApiSubscriptionFieldsConnectorSpec extends UnitSpec
   with Eventually
   with ApiSubscriptionFieldsTestData {
 
+  private val mockExportsConfigService = mock[ExportsConfigService]
   private val mockWSGetImpl = mock[WSHttp]
   private val mockExportsLogger = mock[ExportsLogger]
   private implicit val hc = HeaderCarrier()
@@ -55,7 +54,9 @@ class ApiSubscriptionFieldsConnectorSpec extends UnitSpec
   private implicit val vpr = TestData.TestCspValidatedPayloadRequest
 
   override protected def beforeEach() {
-    reset(mockExportsLogger, mockWSGetImpl)
+    reset(mockExportsLogger, mockWSGetImpl, mockExportsConfigService)
+
+    when(mockExportsConfigService.apiSubscriptionFieldsBaseUrl).thenReturn("http://localhost:11111/api-subscription-fields/field")
   }
 
   "ApiSubscriptionFieldsConnector" can {
@@ -63,24 +64,6 @@ class ApiSubscriptionFieldsConnectorSpec extends UnitSpec
       "use the correct URL for valid path parameters and config" in {
         returnResponseForRequest(Future.successful(apiSubscriptionFieldsResponse))
         awaitSubscriptionFields shouldBe apiSubscriptionFieldsResponse
-      }
-    }
-
-    "when configuration is invalid" should {
-      "throw RuntimeException when host is missing" in {
-        val caught = intercept[RuntimeException] {
-          await(connectorWithConfig(invalidConfigMissingHost).getSubscriptionFields(apiSubscriptionKey))
-        }
-
-        caught.getMessage shouldBe "Could not find config api-subscription-fields.host"
-      }
-
-      "throw RuntimeException when context is missing" in {
-        val caught = intercept[IllegalStateException] {
-          await(connectorWithConfig(invalidConfigMissingContext).getSubscriptionFields(apiSubscriptionKey))
-        }
-
-        caught.getMessage shouldBe "Configuration error - api-subscription-fields.context not found."
       }
     }
 
@@ -116,12 +99,6 @@ class ApiSubscriptionFieldsConnectorSpec extends UnitSpec
       (any[HttpReads[ApiSubscriptionFieldsResponse]](), any[HeaderCarrier](), any[ExecutionContext])).thenReturn(eventualResponse)
   }
 
-  private def testServicesConfig(configuration: Config) = new ServicesConfig {
-    override val runModeConfiguration = new Configuration(configuration)
-    override val mode = play.api.Mode.Test
-    override def environment: Environment = mock[Environment]
-  }
-
-  private def connectorWithConfig(config: Config) = new ApiSubscriptionFieldsConnector(mockWSGetImpl, mockExportsLogger, testServicesConfig(config))
+  private def connectorWithConfig(config: Config) = new ApiSubscriptionFieldsConnector(mockWSGetImpl, mockExportsLogger, mockExportsConfigService)
 
 }

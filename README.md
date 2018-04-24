@@ -16,18 +16,8 @@ There is an SBT task `zipXsds` that generates a ZIP file containing schemas, for
 during the packaging phase (so are not generated during normal development). These ZIP files are referenced by the RAML. 
  These references are rendered as HTML links to generated ZIP in the deployed service. 
 
-# Overriding Client Id value
-As per design the service accepts incoming HTTP header `api-subscription-fields-id` and sends its value downstream as `<types:clientID>` XML tag value in payload.
-If a hardcoded value is provided in deployment configuration, the service uses this value calling downstream system ignoring HTTP header value if any.
-```
-override.clientID: 'predefined-client-id'
-```
-
 # Lookup of `fieldsId` UUID from `api-subscription-fields` service
-The strategic design is for the developer hub gateway to lookup the `fieldsId` UUID from `api-subscription-fields` service, and to put this value
- in the `api-subscription-fields-id`.
- 
-The tactical solution implemented is to use the incoming `X-Client-ID` header, together with the application context and version,
+The `X-Client-ID` header, together with the application context and version are used
  to call the `api-subscription-fields` service to get the unique `fieldsId` UUID and to put this value in the `api-subscription-fields-id`
  header.    
 
@@ -36,24 +26,11 @@ So there is now a direct dependency on the `api-subscription-fields` service. No
 ## Seeding Data in `api-subscription-fields` for local end to end testing
 
 Make sure the `api-subscription-fields` service is running on port `9650`. Then run the below curl command.
- - Please note that the UUID `6372609a-f550-11e7-8c3f-9a214cf093ae` is used as an example and is not a valid identifier.
+ - Please note that the UUID `6372609a-f550-11e7-8c3f-9a214cf093ae` is used as an example - please generate your own.
 
     curl -v -X PUT "http://localhost:9650/field/application/6372609a-f550-11e7-8c3f-9a214cf093ae/context/customs%2Finventory-linking%2Fexports/version/1.0" -H "Cache-Control: no-cache" -H "Content-Type: application/json" -d '{ "fields" : { "callbackUrl" : "https://postman-echo.com/post", "securityToken" : "securityToken" } }'
 
-We then have to manually reset the `fieldId` field to match the id expected by the downstream services. In a mongo command
-window paste the following, one after the other.
-
-    use api-subscription-fields
-
-    db.subscriptionFields.update(
-        { "clientId" : "6372609a-f550-11e7-8c3f-9a214cf093ae", "apiContext" : "customs/inventory-linking/exports", "apiVersion" : "1.0" },
-        { $set:
-            {"fieldsId" : "6372609a-f550-11e7-8c3f-9a214cf093ae"}
-        }
-    )
-    
 When you then send a request to `customs-inventory-linking-exports` make sure you have the HTTP header `X-Client-ID` with the value `6372609a-f550-11e7-8c3f-9a214cf093ae`    
-
 
 
 # Switching service endpoints
@@ -119,4 +96,3 @@ that `default` configuration is declared directly inside the `customs-inventory-
       "url": "http://currenturl/customs-inventory-linking-exports"
       "bearerToken": "current token"
     }
-

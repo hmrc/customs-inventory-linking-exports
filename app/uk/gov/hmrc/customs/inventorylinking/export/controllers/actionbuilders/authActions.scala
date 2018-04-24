@@ -89,7 +89,7 @@ class CspAuthAction @Inject()(
     authorised(Enrolment("write:customs-inventory-linking-exports") and AuthProviders(PrivilegedApplication)) {
       Future.successful{
         if (vhr.maybeBadgeIdentifier.isDefined) {
-          logger.debug("found badge identifier for CSP")
+          logger.info("Authorising as CSP")
           Right(vhr.toAuthorisedRequest().asCsp)
         } else {
           logger.debug("badge identifier not present for CSP")
@@ -156,7 +156,7 @@ class NonCspAuthAction @Inject()(
         logger.debug(s"EORI from Customs enrolment for non-CSP request: $maybeEori")
         maybeEori match {
           case Some(_) =>
-            logger.info("Processing an authorised non-CSP submission.")
+            logger.info("Authorising as non-CSP")
             Future.successful(Right(ar.asNonCsp))
           case _ =>
             Future.successful(Left(errorResponseEoriNotFoundInCustomsEnrolment.XmlResult.withConversationId))
