@@ -17,19 +17,19 @@
 package uk.gov.hmrc.customs.inventorylinking.export.connectors
 
 import javax.inject.{Inject, Singleton}
-
 import model.ApiSubscriptionFieldsResponse
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.ApiSubscriptionKey
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
-import uk.gov.hmrc.customs.inventorylinking.export.services.{ExportsConfigService, WSHttp}
+import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
 import uk.gov.hmrc.http.{HeaderCarrier, HttpException}
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 @Singleton
-class ApiSubscriptionFieldsConnector @Inject()(http: WSHttp,
+class ApiSubscriptionFieldsConnector @Inject()(http: HttpClient,
                                                logger: ExportsLogger,
                                                config: ExportsConfigService) {
 

@@ -2,20 +2,17 @@ import sbt._
 
 object AppDependencies {
 
-  val microserviceBootstrapVersion = "6.12.0"
-  val authClientVersion = "2.3.0"
+  val bootstrapPlay25Version = "1.5.0"
   val hmrcTestVersion = "3.0.0"
-  val scalaTestVersion = "3.0.4"
+  val scalaTestVersion = "3.0.5"
   val scalatestplusVersion = "2.0.1"
-  val mockitoVersion = "2.6.2"
+  val mockitoVersion = "2.18.3"
   val pegdownVersion = "1.6.0"
-  val wireMockVersion = "2.10.1"
-  val customsApiCommonVersion = "1.23.0"
+  val wireMockVersion = "2.17.0"
+  val customsApiCommonVersion = "1.25.0"
   val testScope = "test,it"
 
-  val microserviceBootStrap = "uk.gov.hmrc" %% "microservice-bootstrap" % microserviceBootstrapVersion
-
-  val authClient =  "uk.gov.hmrc" %% "auth-client" % authClientVersion
+  val bootstrapPlay25 = "uk.gov.hmrc" %% "bootstrap-play-25" % bootstrapPlay25Version
 
   val hmrcTest = "uk.gov.hmrc" %% "hmrctest" % hmrcTestVersion % testScope
 
@@ -33,5 +30,5 @@ object AppDependencies {
 
   val customsApiCommonTests = "uk.gov.hmrc" %% "customs-api-common" % customsApiCommonVersion % testScope classifier "tests"
 
-  val hmrcApi = "uk.gov.hmrc" %% "play-hmrc-api" % "1.4.0"
+  val hmrcApi = "uk.gov.hmrc" %% "play-hmrc-api" % "2.1.0"
 }

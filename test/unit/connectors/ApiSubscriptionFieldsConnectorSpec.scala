@@ -26,8 +26,9 @@ import org.scalatest.mockito.MockitoSugar
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.ApiSubscriptionFieldsConnector
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
-import uk.gov.hmrc.customs.inventorylinking.export.services.{ExportsConfigService, WSHttp}
+import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
 import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, NotFoundException}
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.play.test.UnitSpec
 import util.ExportsExternalServicesConfig._
 import util.ExternalServicesConfig._
@@ -42,7 +43,7 @@ class ApiSubscriptionFieldsConnectorSpec extends UnitSpec
   with ApiSubscriptionFieldsTestData {
 
   private val mockExportsConfigService = mock[ExportsConfigService]
-  private val mockWSGetImpl = mock[WSHttp]
+  private val mockWSGetImpl = mock[HttpClient]
   private val mockExportsLogger = mock[ExportsLogger]
   private implicit val hc = HeaderCarrier()
 

@@ -52,7 +52,7 @@ lazy val microservice = (project in file("."))
     allResolvers
   )
 
-def onPackageName(rootPackage: String): (String => Boolean) = {
+def onPackageName(rootPackage: String): String => Boolean = {
   testName => testName startsWith rootPackage
 }
 
@@ -108,8 +108,7 @@ lazy val scoverageSettings: Seq[Setting[_]] = Seq(
 
 scalastyleConfig := baseDirectory.value / "project" / "scalastyle-config.xml"
 
-val compileDependencies = Seq(microserviceBootStrap, customsApiCommon, hmrcApi)
-
+val compileDependencies = Seq(bootstrapPlay25, customsApiCommon, hmrcApi)
 
 val testDependencies = Seq(hmrcTest, scalaTest, pegDown,
   scalaTestPlusPlay, wireMock, mockito, customsApiCommonTests)
@@ -137,4 +136,4 @@ packageBin in Compile := {
   (packageBin in Compile).value
 }
 
-evictionWarningOptions in update := EvictionWarningOptions.default.withWarnScalaVersionEviction(false)
+evictionWarningOptions in update := EvictionWarningOptions.default.withWarnTransitiveEvictions(false)

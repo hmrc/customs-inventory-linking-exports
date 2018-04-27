@@ -22,10 +22,10 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, Matchers}
 import play.api.mvc._
 import play.api.test.Helpers._
+import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.errorBadRequest
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.connectors.InventoryLinkingAuthConnector
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders._
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.{HeaderValidator, InventoryLinkingExportController}
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
@@ -45,7 +45,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
   with Matchers with MockitoSugar with BeforeAndAfterEach {
 
   trait SetUp extends AuthConnectorStubbing {
-    override val mockAuthConnector: InventoryLinkingAuthConnector = mock[InventoryLinkingAuthConnector]
+    override val mockAuthConnector: AuthConnector = mock[AuthConnector]
 
     protected val mockExportsLogger2: ExportsLogger = mock[ExportsLogger]
     protected val mockCdsLogger: CdsLogger = mock[CdsLogger]
