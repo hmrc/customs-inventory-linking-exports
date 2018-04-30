@@ -17,7 +17,6 @@
 package uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders
 
 import javax.inject.{Inject, Singleton}
-
 import play.api.http.Status
 import play.api.http.Status.UNAUTHORIZED
 import play.api.mvc.{ActionFunction, ActionRefiner, RequestHeader, Result}
@@ -26,7 +25,6 @@ import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.Retrievals
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.{UnauthorizedCode, errorBadRequest}
-import uk.gov.hmrc.customs.inventorylinking.export.connectors.InventoryLinkingAuthConnector
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.Eori
@@ -67,7 +65,7 @@ class CspAndThenNonCspAuthAction @Inject()(cspAuthAction: CspAuthAction, nonCspA
   */
 @Singleton
 class CspAuthAction @Inject()(
-  override val authConnector: InventoryLinkingAuthConnector,
+  override val authConnector: AuthConnector,
   logger: ExportsLogger
   ) extends ActionRefiner[ValidatedHeadersRequest, AuthorisedRequest] with AuthorisedFunctions with AuthAction {
 
@@ -122,7 +120,7 @@ class CspAuthAction @Inject()(
   */
 @Singleton
 class NonCspAuthAction @Inject()(
-                               override val authConnector: InventoryLinkingAuthConnector,
+                               override val authConnector: AuthConnector,
                                logger: ExportsLogger
                              ) extends ActionRefiner[AuthorisedRequest, AuthorisedRequest] with AuthorisedFunctions with AuthAction {
 

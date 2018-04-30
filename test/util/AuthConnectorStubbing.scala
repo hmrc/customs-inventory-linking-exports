@@ -22,7 +22,6 @@ import org.scalatest.mockito.MockitoSugar
 import uk.gov.hmrc.auth.core.AuthProvider.{GovernmentGateway, PrivilegedApplication}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.{EmptyRetrieval, Retrievals}
-import uk.gov.hmrc.customs.inventorylinking.export.connectors.InventoryLinkingAuthConnector
 import uk.gov.hmrc.customs.inventorylinking.export.model.Eori
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
@@ -30,7 +29,7 @@ import uk.gov.hmrc.play.test.UnitSpec
 import scala.concurrent.{ExecutionContext, Future}
 
 trait AuthConnectorStubbing extends UnitSpec with MockitoSugar {
-  val mockAuthConnector = mock[InventoryLinkingAuthConnector]
+  val mockAuthConnector = mock[AuthConnector]
   private val apiScope = "write:customs-inventory-linking-exports"
   private val customsEnrolmentName = "HMRC-CUS-ORG"
   private val eoriIdentifier = "EORINumber"

@@ -29,8 +29,8 @@ import uk.gov.hmrc.customs.api.common.config.{ServiceConfig, ServiceConfigProvid
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.MdgExportsConnector
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
-import uk.gov.hmrc.customs.inventorylinking.export.services.WSHttp
 import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse, NotFoundException}
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.play.test.UnitSpec
 import util.RequestHeaders
 import util.TestData._
@@ -39,7 +39,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class MdgExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach with Eventually {
 
-  private val mockWsPost = mock[WSHttp]
+  private val mockWsPost = mock[HttpClient]
   private val mockExportsLogger = mock[ExportsLogger]
   private val mockServiceConfigProvider = mock[ServiceConfigProvider]
 
