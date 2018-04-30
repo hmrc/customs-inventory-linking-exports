@@ -47,7 +47,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
   trait SetUp extends AuthConnectorStubbing {
     override val mockAuthConnector: AuthConnector = mock[AuthConnector]
 
-    protected val mockExportsLogger2: ExportsLogger = mock[ExportsLogger]
+    protected val mockExportsLogger: ExportsLogger = mock[ExportsLogger]
     protected val mockCdsLogger: CdsLogger = mock[CdsLogger]
     protected val mockCustomsConfigService: ExportsConfigService = mock[ExportsConfigService]
     protected val mockBusinessService: BusinessService = mock[BusinessService]
@@ -55,16 +55,16 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
     protected val mockResult: Result = mock[Result]
     protected val mockXmlValidationService: XmlValidationService = mock[XmlValidationService]
 
-    protected val stubConversationIdAction: ConversationIdAction = new ConversationIdAction(stubUniqueIdsService, mockExportsLogger2)
-    protected val stubCspAuthAction: CspAuthAction = new CspAuthAction(mockAuthConnector, mockExportsLogger2)
-    protected val stubNonCspAuthAction: NonCspAuthAction = new NonCspAuthAction(mockAuthConnector, mockExportsLogger2)
+    protected val stubConversationIdAction: ConversationIdAction = new ConversationIdAction(stubUniqueIdsService, mockExportsLogger)
+    protected val stubCspAuthAction: CspAuthAction = new CspAuthAction(mockAuthConnector, mockExportsLogger)
+    protected val stubNonCspAuthAction: NonCspAuthAction = new NonCspAuthAction(mockAuthConnector, mockExportsLogger)
     protected val stubAuthAction: CspAndThenNonCspAuthAction = new CspAndThenNonCspAuthAction(stubCspAuthAction, stubNonCspAuthAction)
-    protected val stubValidateAndExtractHeadersAction: ValidateAndExtractHeadersAction = new ValidateAndExtractHeadersAction(new HeaderValidator(mockCdsLogger), mockExportsLogger2)
-    protected val stubPayloadValidationAction: PayloadValidationAction = new PayloadValidationAction(mockXmlValidationService, mockExportsLogger2)
+    protected val stubValidateAndExtractHeadersAction: ValidateAndExtractHeadersAction = new ValidateAndExtractHeadersAction(new HeaderValidator(mockCdsLogger), mockExportsLogger)
+    protected val stubPayloadValidationAction: PayloadValidationAction = new PayloadValidationAction(mockXmlValidationService, mockExportsLogger)
 
     protected val controller: InventoryLinkingExportController = new InventoryLinkingExportController(
       stubConversationIdAction, stubAuthAction, stubValidateAndExtractHeadersAction, stubPayloadValidationAction,
-      mockBusinessService, mockExportsLogger2)
+      mockBusinessService, mockExportsLogger)
 
     protected def awaitSubmit(request: Request[AnyContent]): Result = {
       await(controller.post().apply(request))
