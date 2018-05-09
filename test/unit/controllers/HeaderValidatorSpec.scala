@@ -28,14 +28,11 @@ import uk.gov.hmrc.customs.inventorylinking.export.model.VersionOne
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ConversationIdRequest, ExtractedHeadersImpl}
 import uk.gov.hmrc.play.test.UnitSpec
 import util.RequestHeaders._
-import util.TestData.badgeIdentifier
-import util.{ApiSubscriptionFieldsTestData, RequestHeaders, TestData}
+import util.{ApiSubscriptionFieldsTestData, TestData}
 
 class HeaderValidatorSpec extends UnitSpec with TableDrivenPropertyChecks with MockitoSugar {
 
-  private val extractedHeadersWithBadgeIdentifier = ExtractedHeadersImpl(Some(badgeIdentifier), VersionOne, ApiSubscriptionFieldsTestData.clientId)
-  private val extractedHeadersWithoutBadgeIdentifier = extractedHeadersWithBadgeIdentifier.copy(maybeBadgeIdentifier = None)
-  private val errorResponseBadgeIdentifierHeaderMissing = errorBadRequest(s"${RequestHeaders.X_BADGE_IDENTIFIER_NAME} header is missing or invalid")
+  private val extractedHeaders = ExtractedHeadersImpl(VersionOne, ApiSubscriptionFieldsTestData.clientId)
 
   trait SetUp {
     val loggerMock: CdsLogger = mock[CdsLogger]
@@ -45,17 +42,15 @@ class HeaderValidatorSpec extends UnitSpec with TableDrivenPropertyChecks with M
   val headersTable =
     Table(
       ("description", "Headers", "Expected response"),
-      ("Valid Headers", ValidHeaders, Right(extractedHeadersWithBadgeIdentifier)),
-      ("Valid content type XML with no space header", ValidHeaders + (CONTENT_TYPE -> "application/xml;charset=utf-8"), Right(extractedHeadersWithBadgeIdentifier)),
+      ("Valid Headers", ValidHeaders, Right(extractedHeaders)),
+      ("Valid content type XML with no space header", ValidHeaders + (CONTENT_TYPE -> "application/xml;charset=utf-8"), Right(extractedHeaders)),
       ("Missing accept header", ValidHeaders - ACCEPT, Left(ErrorAcceptHeaderInvalid)),
       ("Missing content type header", ValidHeaders - CONTENT_TYPE, Left(ErrorContentTypeHeaderInvalid)),
       ("Missing X-Client-ID header", ValidHeaders - XClientIdHeaderName, Left(ErrorInternalServerError)),
-      ("Missing X-Badge-Identifier header", ValidHeaders - XBadgeIdentifierHeaderName, Right(extractedHeadersWithoutBadgeIdentifier)),
       ("Invalid accept header", ValidHeaders + ACCEPT_HEADER_INVALID, Left(ErrorAcceptHeaderInvalid)),
       ("Invalid content type header JSON header", ValidHeaders + CONTENT_TYPE_HEADER_INVALID, Left(ErrorContentTypeHeaderInvalid)),
       ("Invalid content type XML without UTF-8 header", ValidHeaders + (CONTENT_TYPE -> "application/xml"), Left(ErrorContentTypeHeaderInvalid)),
-      ("Invalid X-Client-ID header", ValidHeaders + X_CLIENT_ID_HEADER_INVALID, Left(ErrorInternalServerError)),
-      ("Invalid X-Badge-Identifier header", ValidHeaders + X_BADGE_IDENTIFIER_HEADER_INVALID, Left(errorResponseBadgeIdentifierHeaderMissing))
+      ("Invalid X-Client-ID header", ValidHeaders + X_CLIENT_ID_HEADER_INVALID, Left(ErrorInternalServerError))
     )
 
   "HeaderValidatorAction" should {

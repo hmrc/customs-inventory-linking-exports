@@ -19,7 +19,7 @@ package util.externalservices
 import com.github.tomakehurst.wiremock.client.WireMock._
 import play.api.test.Helpers.OK
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.ApiSubscriptionFieldsPath._
-import uk.gov.hmrc.customs.inventorylinking.export.model.ApiSubscriptionKey
+import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionKey, VersionOne}
 import util.{ApiSubscriptionFieldsTestData, ExportsExternalServicesConfig, WireMockRunner}
 
 trait ApiSubscriptionFieldsService extends WireMockRunner with ApiSubscriptionFieldsTestData {
@@ -29,7 +29,7 @@ trait ApiSubscriptionFieldsService extends WireMockRunner with ApiSubscriptionFi
   }
 
   def startApiSubscriptionFieldsService(): Unit =
-    setupGetSubscriptionFieldsToReturn(apiSubsKey = ApiSubscriptionKey(xClientIdValue, "customs%2Finventory-linking%2Fexports", "1.0"))
+    setupGetSubscriptionFieldsToReturn(apiSubsKey = ApiSubscriptionKey(clientId, "customs%2Finventory-linking%2Fexports", VersionOne))
 
   def setupGetSubscriptionFieldsToReturn(status: Int = OK, apiSubsKey: ApiSubscriptionKey = apiSubscriptionKey): Unit = {
 

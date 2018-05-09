@@ -274,7 +274,7 @@ class InventoryLinkingExportsUnhappyPathSpec extends AcceptanceTestSpec
 
     scenario("Response status 400 when a user submits a request with an invalid X-Badge-Identifier header") {
       Given("the API is available")
-      val request = InvalidXBadgeIdentifierHeaderRequest.copyFakeRequest(method = POST, uri = endpoint)
+      val request = InvalidXBadgeIdentifierHeaderRequest.copyFakeRequest(method = POST, uri = endpoint).fromCsp
 
       When("a POST request with data is sent to the API")
       val result: Option[Future[Result]] = route(app = app, request)

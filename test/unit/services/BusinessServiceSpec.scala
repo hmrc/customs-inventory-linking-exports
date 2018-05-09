@@ -46,7 +46,7 @@ class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfter
   private val dateTime = new DateTime()
   private val headerCarrier: HeaderCarrier = HeaderCarrier()
     .withExtraHeaders(RequestHeaders.API_SUBSCRIPTION_FIELDS_ID_HEADER)
-  private val expectedApiSubscriptionKey = ApiSubscriptionKey(xClientIdValue, "customs%2Finventory-linking%2Fexports", "1.0")
+  private val expectedApiSubscriptionKey = ApiSubscriptionKey(clientId, "customs%2Finventory-linking%2Fexports", VersionOne)
   private implicit val vpr: ValidatedPayloadRequest[AnyContentAsXml] = TestCspValidatedPayloadRequest
 
 
@@ -66,8 +66,10 @@ class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfter
     protected def send(vpr: ValidatedPayloadRequest[AnyContentAsXml] = TestCspValidatedPayloadRequest, hc: HeaderCarrier = headerCarrier): Either[Result, Unit] = {
       await(service.send(vpr, hc))
     }
-
-    when(mockPayloadDecorator.decorate(meq(TestXmlPayload), meq(TestSubscriptionFieldsId.value), meq(correlationIdValue), any[DateTime])(any[ValidatedPayloadRequest[_]])).thenReturn(wrappedValidXML)
+    // https://stackoverflow.com/questions/27289757/mockito-matchers-scala-value-class-and-nullpointerexception
+    // Mockito matching was having problems so had to use the eq type then as instance of. Important that the 1st type is the
+    // type of the value contained in the value class i.e. for CorrelationId the value is UUID so needs to meq type of UUID
+    when(mockPayloadDecorator.decorate(meq(TestXmlPayload), meq[String](TestSubscriptionFieldsId.value).asInstanceOf[SubscriptionFieldsId], meq[UUID](correlationIdUuid).asInstanceOf[CorrelationId], any[DateTime])(any[ValidatedPayloadRequest[_]])).thenReturn(wrappedValidXML)
     when(mockDateTimeProvider.getUtcNow).thenReturn(dateTime)
     when(mockApiDefinitionConfig.apiContext).thenReturn("customs/inventory-linking/exports")
     when(mockCustomsConfigService.apiDefinitionConfig).thenReturn(mockApiDefinitionConfig)
@@ -97,8 +99,11 @@ class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfter
 
       val result: Either[Result, Unit] = send()
 
+      // https://stackoverflow.com/questions/27289757/mockito-matchers-scala-value-class-and-nullpointerexception
+      // Mockito matching was having problems so had to use the eq type then as instance of. Important that the 1st type is the
+      // type of the value contained in the value class i.e. for CorrelationId the value is UUID so needs to meq type of UUID
       result shouldBe Right(())
-      verify(mockPayloadDecorator).decorate(meq(TestXmlPayload), meq(TestSubscriptionFieldsId.value), meq(correlationIdValue), any[DateTime])(any[ValidatedPayloadRequest[_]])
+      verify(mockPayloadDecorator).decorate(meq(TestXmlPayload), meq[String](TestSubscriptionFieldsId.value).asInstanceOf[SubscriptionFieldsId], meq[UUID](correlationIdUuid).asInstanceOf[CorrelationId], any[DateTime])(any[ValidatedPayloadRequest[_]])
       verify(mockApiSubscriptionFieldsConnector).getSubscriptionFields(meq(expectedApiSubscriptionKey))(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])
     }
 

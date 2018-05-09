@@ -27,22 +27,23 @@ import play.api.test.Helpers.POST
 import uk.gov.hmrc.customs.inventorylinking.export.model._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders._
-import uk.gov.hmrc.customs.inventorylinking.export.services.UniqueIdsService
+import uk.gov.hmrc.customs.inventorylinking.export.services.{UniqueIdsService, UuidService}
 import util.RequestHeaders._
 import util.TestData._
 import util.XMLTestData._
 
 import scala.util.Random
+import scala.xml.Elem
 
 object TestData {
 
   val conversationIdValue = "28e5aa87-3f89-4f12-b1b1-60f2b2de66f1"
   val conversationIdUuid: UUID = UUID.fromString(conversationIdValue)
-  val conversationId = ConversationId(conversationIdValue)
+  val conversationId = ConversationId(conversationIdUuid)
 
   val correlationIdValue = "e61f8eee-812c-4b8f-b193-06aedc60dca2"
   val correlationIdUuid: UUID = UUID.fromString(correlationIdValue)
-  val correlationId = CorrelationId(correlationIdValue)
+  val correlationId = CorrelationId(correlationIdUuid)
 
   val validBadgeIdentifierValue = "BADGEID"
   val invalidBadgeIdentifierValue = "InvalidBadgeId"
@@ -114,23 +115,22 @@ object TestData {
   }
 
   // note we can not mock service methods that return value classes - however IMHO it results in cleaner code (less mocking noise)
-  val stubUniqueIdsService = new UniqueIdsService() {
+  val stubUniqueIdsService = new UniqueIdsService(new UuidService()) {
     override def conversation: ConversationId = conversationId
     override def correlation: CorrelationId = correlationId
   }
 
-  val TestXmlPayload = <foo>bar</foo>
-  val TestFakeRequest = FakeRequest().withXmlBody(TestXmlPayload)
+  val TestXmlPayload: Elem = <foo>bar</foo>
+  val TestFakeRequest: FakeRequest[AnyContentAsXml] = FakeRequest().withXmlBody(TestXmlPayload)
+
+  def testFakeRequestWithBadgeId(badgeIdString: String = badgeIdentifier.value): FakeRequest[AnyContentAsXml] =
+    FakeRequest().withXmlBody(TestXmlPayload).withHeaders(RequestHeaders.X_BADGE_IDENTIFIER_NAME -> badgeIdString)
+
   val TestConversationIdRequest = ConversationIdRequest(conversationId, TestFakeRequest)
-  val TestExtractedHeaders = ExtractedHeadersImpl(Some(badgeIdentifier), VersionOne, ApiSubscriptionFieldsTestData.clientId)
-  val TestExtractedHeadersNoBadge = TestExtractedHeaders.copy(maybeBadgeIdentifier = None)
-  val TestValidatedHeadersRequest = TestConversationIdRequest.toValidatedHeadersRequest(TestExtractedHeaders)
-  val TestValidatedHeadersRequestNoBadge = TestConversationIdRequest.toValidatedHeadersRequest(TestExtractedHeadersNoBadge)
-  val TestUnAuthorisedRequest = TestValidatedHeadersRequest.toAuthorisedRequest(maybeAuthorised = None)
-  val TestUnAuthorisedRequestNoBadge = TestValidatedHeadersRequestNoBadge.toAuthorisedRequest(maybeAuthorised = None)
-  val TestCspAuthorisedRequest = TestValidatedHeadersRequest.toAuthorisedRequest(maybeAuthorised = Some(AuthorisedAs.Csp))
-  val TestNonCspAuthorisedRequest = TestValidatedHeadersRequestNoBadge.toAuthorisedRequest(maybeAuthorised = Some(AuthorisedAs.NonCsp))
-  val TestCspValidatedPayloadRequest = TestCspAuthorisedRequest.toValidatedPayloadRequest(xmlBody = TestXmlPayload)
+  val TestExtractedHeaders = ExtractedHeadersImpl(VersionOne, ApiSubscriptionFieldsTestData.clientId)
+  val TestValidatedHeadersRequest: ValidatedHeadersRequest[AnyContentAsXml] = TestConversationIdRequest.toValidatedHeadersRequest(TestExtractedHeaders)
+  val TestCspAuthorisedRequest: AuthorisedRequest[AnyContentAsXml] = TestValidatedHeadersRequest.toCspAuthorisedRequest(badgeIdentifier)
+  val TestCspValidatedPayloadRequest: ValidatedPayloadRequest[AnyContentAsXml] = TestValidatedHeadersRequest.toCspAuthorisedRequest(badgeIdentifier).toValidatedPayloadRequest(xmlBody = TestXmlPayload)
 
 }
 

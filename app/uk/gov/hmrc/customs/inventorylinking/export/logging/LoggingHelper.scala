@@ -18,24 +18,24 @@ package uk.gov.hmrc.customs.inventorylinking.export.logging
 
 import play.api.http.HeaderNames.{ACCEPT, CONTENT_TYPE}
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames._
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{HasConversationId, ConversationIdRequest, ExtractedHeaders}
+import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ConversationIdRequest, ExtractedHeaders, HasAuthorisedAs, HasConversationId}
 
 object LoggingHelper {
-  private val headerSet = Set(CONTENT_TYPE, ACCEPT, XConversationIdHeaderName, XClientIdHeaderName)
+  private val headerSet = Set(CONTENT_TYPE, ACCEPT, XConversationIdHeaderName, XClientIdHeaderName, XBadgeIdentifierHeaderName)
 
-  def formatError(msg: String, r: HasConversationId with ExtractedHeaders): String = {
+  def formatError(msg: String, r: HasConversationId): String = {
     formatMessage(msg, r)
   }
 
-  def formatWarn(msg: String, r: HasConversationId with ExtractedHeaders): String = {
+  def formatWarn(msg: String, r: HasConversationId): String = {
     formatMessage(msg, r)
   }
 
-  def formatInfo(msg: String, r: HasConversationId with ExtractedHeaders): String = {
+  def formatInfo(msg: String, r: HasConversationId): String = {
     formatMessage(msg, r)
   }
 
-  def formatDebug(msg: String, r: HasConversationId with ExtractedHeaders): String = {
+  def formatDebug(msg: String, r: HasConversationId): String = {
     formatMessage(msg, r)
   }
 
@@ -43,19 +43,31 @@ object LoggingHelper {
     formatMessageFull(msg, r)
   }
 
-  private def formatMessage(msg: String, r: HasConversationId with ExtractedHeaders): String = {
+  private def formatMessage(msg: String, r: HasConversationId): String = {
     s"${format(r)} $msg".trim
   }
 
-  private def format(r: HasConversationId with ExtractedHeaders): String = {
-    s"[conversationId=${r.conversationId.value}][clientId=${r.clientId.value}][requestedApiVersion=${r.requestedApiVersion.value}]"
+  private def format(r: HasConversationId): String = {
+    def conversationId = r match {
+      case c: HasConversationId => s"[conversationId=${c.conversationId}]"
+      case _ => ""
+    }
+    def extractedHeaders = r match {
+      case h: ExtractedHeaders => s"[clientId=${h.clientId.value}][requestedApiVersion=${h.requestedApiVersion}]"
+      case _ => ""
+    }
+    def authorised = r match {
+      case a: HasAuthorisedAs => s"[authorisedAs=${a.authorisedAs}]"
+      case _ => ""
+    }
+    s"$conversationId$extractedHeaders$authorised"
   }
 
   def formatMessageFull(msg: String, r: ConversationIdRequest[_]): String = {
 
     val filteredHeaders = r.request.headers.toSimpleMap.filter(keyValTuple => headerSet.contains(keyValTuple._1))
 
-    s"[conversationId=${r.conversationId.value}] $msg headers=$filteredHeaders"
+    s"[conversationId=${r.conversationId}] $msg headers=$filteredHeaders"
   }
 
 

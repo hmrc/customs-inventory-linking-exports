@@ -18,6 +18,8 @@ package unit.xml
 
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.prop.TableDrivenPropertyChecks._
+import play.api.mvc.AnyContentAsXml
+import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
 import uk.gov.hmrc.customs.inventorylinking.export.xml.MdgPayloadDecorator
 import uk.gov.hmrc.play.test.UnitSpec
 import util.ApiSubscriptionFieldsTestData._
@@ -36,10 +38,10 @@ class MdgPayloadDecoratorSpec extends UnitSpec with MockitoSugar{
 
   private val decorator = new MdgPayloadDecorator()
 
-  private implicit val vpr = TestCspValidatedPayloadRequest
+  private implicit val vpr: ValidatedPayloadRequest[AnyContentAsXml] = TestCspValidatedPayloadRequest
 
-  private def wrapPayloadWithBadgeIdentifier(payload: NodeSeq = xmlPayload) = decorator.decorate(payload, xClientIdValue, correlationId.value, dateTime)
-  private def wrapPayloadWithoutBadgeIdentifier(payload: NodeSeq = xmlPayload) = decorator.decorate(payload, xClientIdValue, correlationId.value, dateTime)
+  private def wrapPayloadWithBadgeIdentifier(payload: NodeSeq = xmlPayload) = decorator.decorate(payload, TestSubscriptionFieldsId, correlationId, dateTime)
+  private def wrapPayloadWithoutBadgeIdentifier(payload: NodeSeq = xmlPayload) = decorator.decorate(payload, TestSubscriptionFieldsId, correlationId, dateTime)
 
   "MdgPayloadDecorator" should {
 
@@ -91,7 +93,7 @@ class MdgPayloadDecoratorSpec extends UnitSpec with MockitoSugar{
 
       val rd = result \ commonLabel \ "clientID"
 
-      rd.head.text shouldBe xClientIdValue
+      rd.head.text shouldBe TestSubscriptionFieldsId.value
     }
 
     "set the badgeIdentifier when present" in {

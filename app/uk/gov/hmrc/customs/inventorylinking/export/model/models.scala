@@ -16,26 +16,34 @@
 
 package uk.gov.hmrc.customs.inventorylinking.export.model
 
+import java.util.UUID
+
 case class Eori(value: String) extends AnyVal
 
-case class ConversationId(value: String) extends AnyVal
+case class ClientId(value: String) extends AnyVal
 
-case class CorrelationId(value: String) extends AnyVal
+case class ConversationId(uuid: UUID) extends AnyVal {
+  override def toString: String = uuid.toString
+}
+
+case class CorrelationId(uuid: UUID) extends AnyVal {
+  override def toString: String = uuid.toString
+}
 
 case class BadgeIdentifier(value: String) extends AnyVal
-
-case class ClientId(value: String) extends AnyVal
 
 case class SubscriptionFieldsId(value: String) extends AnyVal
 
 sealed trait ApiVersion {
   val value: String
+  val configPrefix: String
+  override def toString: String = value
 }
 object VersionOne extends ApiVersion{
   override val value: String = "1.0"
+  override val configPrefix: String = ""
 }
 
-object AuthorisedAs extends Enumeration {
-  type AuthorisedAs = Value
-  val Csp, NonCsp = Value
-}
+sealed trait AuthorisedAs
+case class Csp(badgeIdentifier: BadgeIdentifier) extends AuthorisedAs
+case class NonCsp(eori: Eori) extends AuthorisedAs

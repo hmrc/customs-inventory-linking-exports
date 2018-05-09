@@ -34,13 +34,13 @@ package unit.controllers.actionbuilders
 
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
-import play.api.mvc.{AnyContentAsXml, Result}
+import play.api.mvc.{AnyContentAsText, AnyContentAsXml, Result}
 import play.api.test.FakeRequest
 import uk.gov.hmrc.customs.api.common.controllers.{ErrorResponse, ResponseContents}
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders.PayloadValidationAction
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ConversationIdRequest, ValidatedPayloadRequest}
+import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{AuthorisedRequest, ConversationIdRequest, ValidatedPayloadRequest}
 import uk.gov.hmrc.customs.inventorylinking.export.services.XmlValidationService
 import uk.gov.hmrc.play.test.UnitSpec
 import util.TestData._
@@ -51,7 +51,7 @@ import scala.xml.SAXException
 
 class PayloadValidationActionSpec extends UnitSpec with MockitoSugar {
 
-  private implicit val forConversions = TestConversationIdRequest
+  private implicit val forConversions: ConversationIdRequest[AnyContentAsXml] = TestConversationIdRequest
   private val saxException = new SAXException("Boom!")
   private val expectedXmlSchemaErrorResult = ErrorResponse
     .errorBadRequest("Payload is not valid according to schema")
@@ -59,8 +59,8 @@ class PayloadValidationActionSpec extends UnitSpec with MockitoSugar {
 
   trait SetUp {
     val mockXmlValidationService: XmlValidationService = mock[XmlValidationService]
-    val mockExportsLogger2: ExportsLogger = mock[ExportsLogger]
-    val payloadValidationAction = new PayloadValidationAction(mockXmlValidationService, mockExportsLogger2)
+    val mockExportsLogger: ExportsLogger = mock[ExportsLogger]
+    val payloadValidationAction = new PayloadValidationAction(mockXmlValidationService, mockExportsLogger)
   }
 
   "PayloadValidationAction" should {
@@ -82,9 +82,9 @@ class PayloadValidationActionSpec extends UnitSpec with MockitoSugar {
 
     "return Left of error Result when XML validation fails" in new SetUp {
       val errorMessage = "Request body does not contain well-formed XML."
-      val errorNotWellFormed = ErrorResponse.errorBadRequest(errorMessage).XmlResult.withConversationId
-      val authorisedRequestWithNonWellFormedXml = ConversationIdRequest(conversationId, FakeRequest().withTextBody("<foo><foo>"))
-        .toValidatedHeadersRequest(TestExtractedHeaders).toAuthorisedRequest()
+      val errorNotWellFormed: Result = ErrorResponse.errorBadRequest(errorMessage).XmlResult.withConversationId
+      val authorisedRequestWithNonWellFormedXml: AuthorisedRequest[AnyContentAsText] = ConversationIdRequest(conversationId, FakeRequest().withTextBody("<foo><foo>"))
+        .toValidatedHeadersRequest(TestExtractedHeaders).toCspAuthorisedRequest(badgeIdentifier)
 
       private val actual = await(payloadValidationAction.refine(authorisedRequestWithNonWellFormedXml))
 

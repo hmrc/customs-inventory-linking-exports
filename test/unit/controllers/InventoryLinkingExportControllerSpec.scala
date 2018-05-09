@@ -56,9 +56,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
     protected val mockXmlValidationService: XmlValidationService = mock[XmlValidationService]
 
     protected val stubConversationIdAction: ConversationIdAction = new ConversationIdAction(stubUniqueIdsService, mockExportsLogger)
-    protected val stubCspAuthAction: CspAuthAction = new CspAuthAction(mockAuthConnector, mockExportsLogger)
-    protected val stubNonCspAuthAction: NonCspAuthAction = new NonCspAuthAction(mockAuthConnector, mockExportsLogger)
-    protected val stubAuthAction: CspAndThenNonCspAuthAction = new CspAndThenNonCspAuthAction(stubCspAuthAction, stubNonCspAuthAction)
+    protected val stubAuthAction: AuthAction = new AuthAction(mockAuthConnector, mockExportsLogger)
     protected val stubValidateAndExtractHeadersAction: ValidateAndExtractHeadersAction = new ValidateAndExtractHeadersAction(new HeaderValidator(mockCdsLogger), mockExportsLogger)
     protected val stubPayloadValidationAction: PayloadValidationAction = new PayloadValidationAction(mockXmlValidationService, mockExportsLogger)
 

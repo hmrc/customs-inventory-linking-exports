@@ -19,7 +19,6 @@ package uk.gov.hmrc.customs.inventorylinking.export.services
 import java.net.URLEncoder
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
-
 import model.ApiSubscriptionFieldsResponse
 import org.joda.time.DateTime
 import play.api.mvc.Result
@@ -28,7 +27,7 @@ import uk.gov.hmrc.customs.inventorylinking.export.connectors.{ApiSubscriptionFi
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
-import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionKey, ClientId, CorrelationId, SubscriptionFieldsId}
+import uk.gov.hmrc.customs.inventorylinking.export.model._
 import uk.gov.hmrc.customs.inventorylinking.export.xml.MdgPayloadDecorator
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -61,7 +60,7 @@ class BusinessService @Inject()(logger: ExportsLogger,
 
   private def futureApiSubFieldsId[A](c: ClientId)
                                      (implicit vpr: ValidatedPayloadRequest[A], hc: HeaderCarrier): Future[Either[Result, SubscriptionFieldsId]] = {
-    (apiSubFieldsConnector.getSubscriptionFields(ApiSubscriptionKey(c.value, apiContextEncoded, "1.0")) map {
+    (apiSubFieldsConnector.getSubscriptionFields(ApiSubscriptionKey(c, apiContextEncoded, VersionOne)) map {
       response: ApiSubscriptionFieldsResponse =>
         Right(SubscriptionFieldsId(response.fieldsId.toString))
     }).recover {
@@ -77,7 +76,7 @@ class BusinessService @Inject()(logger: ExportsLogger,
     val correlationId = uniqueIdsService.correlation
     val xmlToSend = preparePayload(vpr.xmlBody, subscriptionFieldsId, correlationId, dateTime)
 
-    connector.send(xmlToSend, dateTime, UUID.fromString(correlationId.value)).map(_ => Right(())).recover{
+    connector.send(xmlToSend, dateTime, UUID.fromString(correlationId.toString)).map(_ => Right(())).recover{
       case NonFatal(e) =>
         logger.error(s"Inventory linking call failed: ${e.getMessage}", e)
         Left(ErrorResponse.ErrorInternalServerError.XmlResult.withConversationId)
@@ -87,7 +86,7 @@ class BusinessService @Inject()(logger: ExportsLogger,
   private def preparePayload[A](xml: NodeSeq, clientId: SubscriptionFieldsId, correlationId: CorrelationId, dateTime: DateTime)
                                (implicit vpr: ValidatedPayloadRequest[A], hc: HeaderCarrier): NodeSeq = {
     logger.debug(s"preparePayload called")
-    wrapper.decorate(xml, clientId.value, correlationId.value, dateTime)
+    wrapper.decorate(xml, clientId, correlationId, dateTime)
   }
 
 }

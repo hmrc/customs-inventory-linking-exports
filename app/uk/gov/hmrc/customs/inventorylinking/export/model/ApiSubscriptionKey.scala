@@ -16,4 +16,5 @@
 
 package uk.gov.hmrc.customs.inventorylinking.export.model
 
-case class ApiSubscriptionKey(clientId: String, context: String, version: String)
+
+case class ApiSubscriptionKey(clientId: ClientId, context: String, version: ApiVersion)
