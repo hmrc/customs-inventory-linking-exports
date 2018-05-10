@@ -49,12 +49,11 @@
 package uk.gov.hmrc.customs.inventorylinking.export.controllers
 
 import javax.inject.{Inject, Singleton}
-
 import play.api.http.MimeTypes
 import play.api.mvc._
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders.{ConversationIdAction, CspAndThenNonCspAuthAction, PayloadValidationAction, ValidateAndExtractHeadersAction}
-import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
+import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
+import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
 import uk.gov.hmrc.customs.inventorylinking.export.services.BusinessService
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
@@ -64,7 +63,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 @Singleton
 class InventoryLinkingExportController @Inject()(
                                                   conversationIdAction: ConversationIdAction,
-                                                  authAction: CspAndThenNonCspAuthAction,
+                                                  authAction: AuthAction,
                                                   validateAndExtractHeadersAction: ValidateAndExtractHeadersAction,
                                                   payloadValidationAction: PayloadValidationAction,
                                                   businessService: BusinessService,
@@ -82,7 +81,7 @@ class InventoryLinkingExportController @Inject()(
     Action andThen
     conversationIdAction andThen
     validateAndExtractHeadersAction andThen
-    authAction.authAction andThen
+    authAction andThen
     payloadValidationAction
     )
     .async(bodyParser = xmlOrEmptyBody) {

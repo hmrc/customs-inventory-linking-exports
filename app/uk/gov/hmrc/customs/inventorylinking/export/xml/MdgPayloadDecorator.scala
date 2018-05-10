@@ -17,9 +17,9 @@
 package uk.gov.hmrc.customs.inventorylinking.export.xml
 
 import javax.inject.Singleton
-
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
+import uk.gov.hmrc.customs.inventorylinking.export.model.{CorrelationId, Csp, SubscriptionFieldsId}
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
 
 import scala.xml.NodeSeq
@@ -27,17 +27,21 @@ import scala.xml.NodeSeq
 @Singleton
 class MdgPayloadDecorator() {
 
-  def decorate[A](xml: NodeSeq, clientId: String, correlationId: String, dateTime: DateTime)(implicit vpr: ValidatedPayloadRequest[A]): NodeSeq = {
+  def decorate[A](xml: NodeSeq, clientId: SubscriptionFieldsId, correlationId: CorrelationId, dateTime: DateTime)(implicit vpr: ValidatedPayloadRequest[A]): NodeSeq = {
 
     <n1:InventoryLinkingExportsInboundRequest xmlns:inv="http://gov.uk/customs/inventoryLinking/v1"
                                               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                                               xmlns:gw="http://gov.uk/customs/inventoryLinking/gatewayHeader/v1"
                                               xmlns:n1="http://www.hmrc.gov.uk/cds/inventorylinking/exportmovement">
       <n1:requestCommon>
-        { if(vpr.maybeBadgeIdentifier.isDefined) <gw:badgeIdentifier>{vpr.maybeBadgeIdentifier.get.value}</gw:badgeIdentifier> }
-        <gw:clientID>{clientId}</gw:clientID>
-        <gw:conversationID>{vpr.conversationId.value}</gw:conversationID>
-        <gw:correlationID>{correlationId}</gw:correlationID>
+        { vpr.authorisedAs match {
+            case Csp(badgeId) => <gw:badgeIdentifier>{badgeId.value}</gw:badgeIdentifier>
+            case _ => NodeSeq.Empty
+          }
+        }
+        <gw:clientID>{clientId.value}</gw:clientID>
+        <gw:conversationID>{vpr.conversationId.toString}</gw:conversationID>
+        <gw:correlationID>{correlationId.toString}</gw:correlationID>
         <gw:dateTimeStamp>{dateTime.toString(ISODateTimeFormat.dateTimeNoMillis)}</gw:dateTimeStamp>
       </n1:requestCommon>
       <n1:requestDetail>

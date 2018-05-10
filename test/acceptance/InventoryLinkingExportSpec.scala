@@ -20,7 +20,7 @@ import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Matchers, OptionVal
 import play.api.mvc._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import uk.gov.hmrc.customs.inventorylinking.export.model.ApiSubscriptionKey
+import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionKey, VersionOne}
 import util.RequestHeaders.X_CONVERSATION_ID_NAME
 import util.externalservices.{ApiSubscriptionFieldsService, AuthService, InventoryLinkingExportsService}
 import util.TestData._
@@ -39,7 +39,7 @@ class InventoryLinkingExportSpec extends AcceptanceTestSpec
   private val endpoint = "/"
 
   private val apiSubscriptionKeyForXClientId =
-    ApiSubscriptionKey(clientId = xClientIdValue, context = "customs%2Finventory-linking%2Fexports", version = "1.0")
+    ApiSubscriptionKey(clientId , context = "customs%2Finventory-linking%2Fexports", VersionOne)
 
   private val UnauthorisedError =
     """<?xml version="1.0" encoding="UTF-8"?>

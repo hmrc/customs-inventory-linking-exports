@@ -14,11 +14,15 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.customs.inventorylinking.export.connectors
+package uk.gov.hmrc.customs.inventorylinking.export.services
 
-import uk.gov.hmrc.customs.inventorylinking.export.model.ApiSubscriptionKey
+import java.util.UUID
 
-object ApiSubscriptionFieldsPath {
-  def url(baseUrlAndContext: String, apiSubscriptionKey: ApiSubscriptionKey): String =
-    s"$baseUrlAndContext/application/${apiSubscriptionKey.clientId.value}/context/${apiSubscriptionKey.context}/version/${apiSubscriptionKey.version}"
+import com.google.inject.Singleton
+
+@Singleton
+class UuidService {
+
+  def uuid(): UUID = UUID.randomUUID()
+
 }

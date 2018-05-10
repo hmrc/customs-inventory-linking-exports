@@ -29,7 +29,7 @@ import uk.gov.hmrc.play.test.UnitSpec
 import scala.concurrent.{ExecutionContext, Future}
 
 trait AuthConnectorStubbing extends UnitSpec with MockitoSugar {
-  val mockAuthConnector = mock[AuthConnector]
+  val mockAuthConnector: AuthConnector = mock[AuthConnector]
   private val apiScope = "write:customs-inventory-linking-exports"
   private val customsEnrolmentName = "HMRC-CUS-ORG"
   private val eoriIdentifier = "EORINumber"
@@ -86,5 +86,7 @@ trait AuthConnectorStubbing extends UnitSpec with MockitoSugar {
     verify(mockAuthConnector, times(numberOfTimes))
       .authorise(ameq(nonCspAuthPredicate), ameq(Retrievals.authorisedEnrolments))(any[HeaderCarrier], any[ExecutionContext])
   }
+
+  def verifyNonCspAuthorisationNotCalled: Future[Enrolments] = verifyNonCspAuthorisationCalled(0)
 
 }
