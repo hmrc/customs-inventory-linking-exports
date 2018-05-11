@@ -22,13 +22,13 @@ import play.api.http.MimeTypes
 import play.api.mvc.Headers
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse._
-import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames._
+import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ConversationIdRequest, ExtractedHeadersImpl}
 import uk.gov.hmrc.customs.inventorylinking.export.model.{ClientId, VersionOne}
 
 @Singleton
-class HeaderValidator @Inject()(logger: CdsLogger) {
+class HeaderValidator @Inject()(logger: ExportsLogger) {
 
   private lazy val validAcceptHeaders = Seq("application/vnd.hmrc.1.0+xml")
   private lazy val validContentTypeHeaders = Seq(MimeTypes.XML + ";charset=utf-8", MimeTypes.XML + "; charset=utf-8")
@@ -57,7 +57,7 @@ class HeaderValidator @Inject()(logger: CdsLogger) {
     theResult
   }
 
-  private def validateHeader(headerName: String, rule: String => Boolean, errorResponse: ErrorResponse)(implicit h: Headers): Either[ErrorResponse, String] = {
+  private def validateHeader[A](headerName: String, rule: String => Boolean, errorResponse: ErrorResponse)(implicit conversationIdRequest: ConversationIdRequest[A], h: Headers): Either[ErrorResponse, String] = {
     val left = Left(errorResponse)
     def leftWithLog(headerName: String) = {
       logger.error(s"Error - header '$headerName' not present")

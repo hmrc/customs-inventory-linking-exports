@@ -21,9 +21,9 @@ import org.scalatest.prop.TableDrivenPropertyChecks
 import play.api.http.HeaderNames._
 import play.api.test.FakeRequest
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse._
-import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames._
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.HeaderValidator
+import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.VersionOne
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ConversationIdRequest, ExtractedHeadersImpl}
 import uk.gov.hmrc.play.test.UnitSpec
@@ -35,7 +35,7 @@ class HeaderValidatorSpec extends UnitSpec with TableDrivenPropertyChecks with M
   private val extractedHeaders = ExtractedHeadersImpl(VersionOne, ApiSubscriptionFieldsTestData.clientId)
 
   trait SetUp {
-    val loggerMock: CdsLogger = mock[CdsLogger]
+    val loggerMock: ExportsLogger = mock[ExportsLogger]
     val validator = new HeaderValidator(loggerMock)
   }
 
