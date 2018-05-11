@@ -25,7 +25,6 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.errorBadRequest
-import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders._
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.{HeaderValidator, InventoryLinkingExportController}
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
@@ -48,8 +47,6 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
     override val mockAuthConnector: AuthConnector = mock[AuthConnector]
 
     protected val mockExportsLogger: ExportsLogger = mock[ExportsLogger]
-    protected val mockCdsLogger: CdsLogger = mock[CdsLogger]
-    protected val mockCustomsConfigService: ExportsConfigService = mock[ExportsConfigService]
     protected val mockBusinessService: BusinessService = mock[BusinessService]
     protected val mockErrorResponse: ErrorResponse = mock[ErrorResponse]
     protected val mockResult: Result = mock[Result]
@@ -57,7 +54,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
 
     protected val stubConversationIdAction: ConversationIdAction = new ConversationIdAction(stubUniqueIdsService, mockExportsLogger)
     protected val stubAuthAction: AuthAction = new AuthAction(mockAuthConnector, mockExportsLogger)
-    protected val stubValidateAndExtractHeadersAction: ValidateAndExtractHeadersAction = new ValidateAndExtractHeadersAction(new HeaderValidator(mockCdsLogger), mockExportsLogger)
+    protected val stubValidateAndExtractHeadersAction: ValidateAndExtractHeadersAction = new ValidateAndExtractHeadersAction(new HeaderValidator(mockExportsLogger), mockExportsLogger)
     protected val stubPayloadValidationAction: PayloadValidationAction = new PayloadValidationAction(mockXmlValidationService, mockExportsLogger)
 
     protected val controller: InventoryLinkingExportController = new InventoryLinkingExportController(
@@ -73,8 +70,6 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
     }
 
     when(mockApiDefinitionConfig.apiScope).thenReturn(apiScope)
-    when(mockCustomsConfigService.apiDefinitionConfig).thenReturn(mockApiDefinitionConfig)
-    when(mockCustomsConfigService.exportsEnrolmentConfig).thenReturn(exportsEnrolmentConfig)
     when(mockXmlValidationService.validate(any[NodeSeq])(any[ExecutionContext])).thenReturn(Future.successful(()))
     when(mockBusinessService.send(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])).thenReturn(Future.successful(Right(())))
   }
