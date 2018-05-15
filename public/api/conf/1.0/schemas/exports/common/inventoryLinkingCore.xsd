@@ -17,11 +17,11 @@
 		</xs:annotation>
 		<xs:sequence>
 			<xs:element name="messageCode" type="messageCodeMovement" minOccurs="1" />
-			<xs:element name="agentDetails" type="agentDetails"	minOccurs="1" />
+			<xs:element name="agentDetails" type="agentDetails"	minOccurs="0" />
 			<xs:element name="ucrBlock" type="ucrBlock"	minOccurs="1" />
 			<xs:element name="goodsLocation" type="goodsLocation" minOccurs="1" />
 			<xs:element name="goodsArrivalDateTime" type="xs:dateTime" minOccurs="0" nillable="true" />
-			<xs:element name="goodsDepartureDate" type="xs:dateTime" minOccurs="0" nillable="true" />
+			<xs:element name="goodsDepartureDateTime" type="xs:dateTime" minOccurs="0" nillable="true" />
 			<xs:element name="shedOPID" type="shedOPID" minOccurs="0" nillable="true" />
 			<xs:element name="masterUCR" type="ucr" minOccurs="0" nillable="true" />
 			<xs:element name="masterOpt" type="masterOpt" minOccurs="0" />
@@ -43,7 +43,7 @@
             <xs:element name="movementReference" type="movementReference" minOccurs="0" nillable="true" />
             <xs:element name="submitRole" type="submitRole" minOccurs="0" nillable="true" />
             <xs:element name="ucrBlock" type="ucrBlock" minOccurs="0" />
-            <xs:element name="goodsItem" type="goodsItem" minOccurs="0" />
+            <xs:element name="goodsItem" type="goodsItem" minOccurs="0" maxOccurs="999" />
             <xs:element name="entryStatus" type="entryStatus" minOccurs="0" />
         </xs:sequence>
 	</xs:complexType>
@@ -90,7 +90,7 @@
 	<xs:simpleType name="consolidationTransaction">
 		<xs:restriction base="xs:string">
 			<xs:enumeration value="Associate" />
-			<xs:enumeration value="Dissassociate" />
+			<xs:enumeration value="Disassociate" />
 			<xs:enumeration value="Shut" />
 		</xs:restriction>
 	</xs:simpleType>
@@ -122,7 +122,7 @@
 		</xs:annotation>
         <xs:sequence>
             <xs:element name="queryUCR" type="ucrBlock" minOccurs="1" />
-            <xs:element name="agentDetails" type="agentDetails" minOccurs="1" />
+            <xs:element name="agentDetails" type="agentDetails" minOccurs="0" />
         </xs:sequence>
 	</xs:complexType>
 
@@ -203,12 +203,12 @@
 			<xs:element name="messageCode" type="messageCodeMovement" minOccurs="1" />
 			<xs:element name="goodsLocation" type="goodsLocation" minOccurs="1" />
 			<xs:element name="goodsArrivalDateTime" type="xs:dateTime" minOccurs="0" nillable="true" />
-			<xs:element name="goodsDepartureDate" type="xs:dateTime" minOccurs="0" nillable="true" />
+			<xs:element name="goodsDepartureDateTime" type="xs:dateTime" minOccurs="0" nillable="true" />
 			<xs:element name="shedOPID" type="shedOPID" minOccurs="0" nillable="true" />
 			<xs:element name="masterOpt" type="masterOpt" minOccurs="0" />
 			<xs:element name="movementReference" type="movementReference" minOccurs="0" nillable="true" />
 			<xs:element name="transportDetails" type="transportDetails" minOccurs="0" />
-			<xs:element name="goodsItem" type="goodsItem" minOccurs="0" />
+			<xs:element name="goodsItem" type="goodsItem" minOccurs="0" maxOccurs="999" />
 			<xs:element name="entryStatus" type="entryStatus" minOccurs="0" />
 		</xs:sequence>
 	</xs:complexType>
@@ -240,7 +240,7 @@
 	<xs:complexType name="entry">
 		<xs:sequence>
 			<xs:element name="ucrBlock" type="ucrBlock" minOccurs="1" />
-			<xs:element name="goodsItem" type="goodsItem" minOccurs="0" />
+			<xs:element name="goodsItem" type="goodsItem" minOccurs="0" maxOccurs="999" />
 			<xs:element name="submitRole" type="submitRole" minOccurs="0" nillable="true" />
 			<xs:element name="entryStatus" type="entryStatus" minOccurs="0" />
 		</xs:sequence>
@@ -280,20 +280,12 @@
 	<xs:complexType name="inventoryLinkingValidateMUCRRequest">
 		<xs:sequence>
 			<xs:element name="masterUCR" type="ucr" minOccurs="1" nillable="false" />
-			<xs:element name="declarationID" type="declarationID" minOccurs="0" nillable="true" >
-				<xs:annotation>
-				<xs:documentation>
-					Declaration ID is what DMS is keyed on. DMS needs to pass it to IL so IL can pass it back, to allow the formation of the response without needing to retain data in session from the request.  Without it looping through, WSO2 would have to persist the request. Also for auditing and logging in message transfer components.  
-					IL will not persist this field, as IL key off the mucr. It is optional due to that fact (and if called from other systems it may not be provided), but DMS will always send it.IL will pull out of request to put in response, not persist it any longer than the transaction. 
-				</xs:documentation>
-				</xs:annotation></xs:element>
 		</xs:sequence>
 	</xs:complexType>
 
 	<xs:complexType name="inventoryLinkingValidateMUCRResponse">
 		<xs:sequence>
 			<xs:element name="masterUCR" type="ucr" minOccurs="1" nillable="false" />
-			<xs:element name="declarationID" type="declarationID" minOccurs="0" nillable="true" />
 			<xs:element name="isFound" type="xs:boolean" minOccurs="1" nillable="false" />
 			<xs:element name="isShut" type="xs:boolean" minOccurs="0" nillable="true" />
 			<xs:element name="shutDate" type="xs:dateTime" minOccurs="0" nillable="true" />
