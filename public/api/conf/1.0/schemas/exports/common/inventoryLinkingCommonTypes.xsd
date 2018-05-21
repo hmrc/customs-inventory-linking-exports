@@ -189,8 +189,8 @@
 	</xs:simpleType>
 
 	<xs:complexType name="agentDetails">
-		<xs:sequence minOccurs="1">
-			<xs:element name="EORI" minOccurs="1">
+		<xs:sequence>
+			<xs:element name="EORI" minOccurs="0">
 				<xs:simpleType>
 					<xs:restriction base="xs:string">
 						<xs:maxLength value="17" />
@@ -242,7 +242,7 @@
 	
 	<xs:simpleType name="declarationID">
 		<xs:restriction base="xs:string">
-			<xs:length value="35" />
+			<xs:maxLength value="35" />
 		</xs:restriction>
 	</xs:simpleType>
 

@@ -68,7 +68,7 @@ object XMLTestData {
   val ValidInventoryLinkingConsolidationRequestXML: Elem =
     <inventoryLinkingConsolidationRequest xmlns="http://gov.uk/customs/inventoryLinking/v1">
       <messageCode>EAC</messageCode>
-      <transactionType>Dissassociate</transactionType>
+      <transactionType>Disassociate</transactionType>
       <masterUCR>GB/AAAA-00000</masterUCR>
       <ucrBlock>
         <ucr>GB/BBBB-00000</ucr>
