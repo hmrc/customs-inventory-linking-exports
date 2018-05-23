@@ -46,7 +46,7 @@ class BusinessService @Inject()(logger: ExportsLogger,
                                 uniqueIdsService: UniqueIdsService,
                                 customsConfigService: ExportsConfigService) {
 
-  private val apiContextEncoded = URLEncoder.encode(customsConfigService.apiDefinitionConfig.apiContext, "UTF-8")
+  private val apiContextEncoded = URLEncoder.encode("customs/inventory-linking/exports", "UTF-8")
 
   def send[A](implicit vpr: ValidatedPayloadRequest[A], hc: HeaderCarrier): Future[Either[Result, Unit]] = {
 

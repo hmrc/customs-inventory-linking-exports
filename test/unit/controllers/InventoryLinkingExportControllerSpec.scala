@@ -28,9 +28,8 @@ import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.errorBadRequest
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders._
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.{HeaderValidator, InventoryLinkingExportController}
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
-import uk.gov.hmrc.customs.inventorylinking.export.services.{BusinessService, ExportsConfigService, XmlValidationService}
+import uk.gov.hmrc.customs.inventorylinking.export.services.{BusinessService, XmlValidationService}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 import util.AuthConnectorStubbing
@@ -69,18 +68,10 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
       controller.post().apply(request)
     }
 
-    when(mockApiDefinitionConfig.apiScope).thenReturn(apiScope)
     when(mockXmlValidationService.validate(any[NodeSeq])(any[ExecutionContext])).thenReturn(Future.successful(()))
     when(mockBusinessService.send(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])).thenReturn(Future.successful(Right(())))
   }
 
-
-  private val apiScope = "write:customs-inventory-linking-exports"
-  // "scope-in-api-definition"
-  private val customsEnrolmentName = "HMRC-CUS-ORG"
-  private val eoriIdentifier = "EORINumber"
-  private val mockApiDefinitionConfig = mock[ApiDefinitionConfig]
-  private val exportsEnrolmentConfig = ExportsEnrolmentConfig(customsEnrolmentName, eoriIdentifier)
 
   private val errorResultEoriNotFoundInCustomsEnrolment = ErrorResponse(UNAUTHORIZED, errorCode = "UNAUTHORIZED",
     message = "EORI number not found in Customs Enrolment").XmlResult.withHeaders(X_CONVERSATION_ID_HEADER)
