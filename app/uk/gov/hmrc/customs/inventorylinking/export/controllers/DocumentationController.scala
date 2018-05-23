@@ -28,6 +28,6 @@ class DocumentationController @Inject()(httpErrorHandler: HttpErrorHandler, conf
   extends uk.gov.hmrc.api.controllers.DocumentationController(httpErrorHandler) {
 
   override def definition(): Action[AnyContent] = Action {
-    Ok(txt.definition(configService.apiDefinitionConfig)).withHeaders(CONTENT_TYPE -> JSON)
+    Ok(txt.definition()).withHeaders(CONTENT_TYPE -> JSON)
   }
 }

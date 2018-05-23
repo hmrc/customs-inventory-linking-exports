@@ -16,12 +16,6 @@
 
 package uk.gov.hmrc.customs.inventorylinking.export.model
 
-case class ApiDefinitionConfig(apiContext: String, apiScope: String, whitelistedApplicationIds: Seq[String])
-
-case class ExportsEnrolmentConfig(customsEnrolmentName: String, eoriIdentifierName: String)
-
 trait ExportsConfig {
-  val apiDefinitionConfig: ApiDefinitionConfig
-  val exportsEnrolmentConfig: ExportsEnrolmentConfig
   val apiSubscriptionFieldsBaseUrl: String
 }

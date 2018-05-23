@@ -21,10 +21,8 @@ import javax.inject.{Inject, Singleton}
 import play.api.Configuration
 import uk.gov.hmrc.customs.api.common.config.ConfigValidationNelAdaptor
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiDefinitionConfig, ExportsEnrolmentConfig, ExportsConfig}
+import uk.gov.hmrc.customs.inventorylinking.export.model.ExportsConfig
 
-import scalaz.ValidationNel
-import scalaz.syntax.apply._
 import scalaz.syntax.traverse._
 
 @Singleton
@@ -32,24 +30,8 @@ class ExportsConfigService @Inject()(configuration: Configuration,
                                      configValidationNel: ConfigValidationNelAdaptor,
                                      logger: ExportsLogger) extends ExportsConfig {
 
-  private val root = configValidationNel.root
-
-  private val validatedDefinitionConfig: ValidationNel[String, ApiDefinitionConfig] = (
-    root.string("inventory-linking.definition.api-context") |@|
-      root.string("inventory-linking.definition.api-scope") |@|
-      getStringSeq("api.access.version-1.0.whitelistedApplicationIds")
-    ) (ApiDefinitionConfig.apply)
-
-  private val validatedCustomsEnrolmentConfig: ValidationNel[String, ExportsEnrolmentConfig] = (
-    root.string("inventory-linking.enrolment.name") |@|
-      root.string("inventory-linking.enrolment.eori-identifier")
-    ) (ExportsEnrolmentConfig.apply)
-
-  private val exportsConfig = (
-    validatedDefinitionConfig |@|
-      validatedCustomsEnrolmentConfig |@|
-      configValidationNel.service("api-subscription-fields").serviceUrl
-    ) (ExportsConfigImpl.apply) fold(
+  private val exportsConfig =
+    configValidationNel.service("api-subscription-fields").serviceUrl.map(ExportsConfigImpl.apply) fold(
     fail = { nel =>
       val errorMsg = nel.toList.mkString("\n", "\n", "")
       logger.errorWithoutRequestContext(errorMsg)
@@ -58,17 +40,8 @@ class ExportsConfigService @Inject()(configuration: Configuration,
     succ = identity
   )
 
-  val apiDefinitionConfig: ApiDefinitionConfig = exportsConfig.apiDefinitionConfig
-
-  val exportsEnrolmentConfig: ExportsEnrolmentConfig = exportsConfig.exportsEnrolmentConfig
-
   val apiSubscriptionFieldsBaseUrl: String = exportsConfig.apiSubscriptionFieldsBaseUrl
 
-  private case class ExportsConfigImpl(apiDefinitionConfig: ApiDefinitionConfig,
-                                       exportsEnrolmentConfig: ExportsEnrolmentConfig,
-                                       apiSubscriptionFieldsBaseUrl: String)
-
-  private def getStringSeq(configKey: String): ValidationNel[String, Seq[String]] =
-    scalaz.Success(configuration.getStringSeq(configKey).getOrElse(Nil))
+  private case class ExportsConfigImpl(apiSubscriptionFieldsBaseUrl: String) extends ExportsConfig
 
 }

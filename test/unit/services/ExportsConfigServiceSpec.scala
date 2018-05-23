@@ -21,17 +21,13 @@ import org.scalatest.mockito.MockitoSugar
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.customs.api.common.config.{ConfigValidationNelAdaptor, ServicesConfig}
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiDefinitionConfig, ExportsConfig, ExportsEnrolmentConfig}
+import uk.gov.hmrc.customs.inventorylinking.export.model.ExportsConfig
 import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
 import uk.gov.hmrc.play.test.UnitSpec
 
 class ExportsConfigServiceSpec extends UnitSpec with MockitoSugar {
   private val validAppConfig: Config = ConfigFactory.parseString(
     """
-      |inventory-linking.definition.api-context = some-api-context
-      |inventory-linking.definition.api-scope = some-api-scope
-      |inventory-linking.enrolment.name = some-enrolment-name
-      |inventory-linking.enrolment.eori-identifier = some-eori
       |api.access.version-1.0.whitelistedApplicationIds.0 = someId-1
       |api.access.version-1.0.whitelistedApplicationIds.1 = someId-2
       |microservice.services.api-subscription-fields.host=some-host
@@ -52,17 +48,11 @@ class ExportsConfigServiceSpec extends UnitSpec with MockitoSugar {
     "return config as object model when configuration is valid" in {
       val configService = customsConfigService(validServicesConfiguration)
 
-      configService.apiDefinitionConfig shouldBe ApiDefinitionConfig("some-api-context", "some-api-scope", Seq("someId-1", "someId-2"))
-      configService.exportsEnrolmentConfig shouldBe ExportsEnrolmentConfig("some-enrolment-name", "some-eori")
       configService.apiSubscriptionFieldsBaseUrl shouldBe "http://some-host:1111/some-context"
     }
 
     "throw an exception when configuration is invalid, that contains AGGREGATED error messages" in {
       val expectedErrorMessage =
-        "\nCould not find config key 'inventory-linking.definition.api-context'" +
-        "\nCould not find config key 'inventory-linking.definition.api-scope'" +
-        "\nCould not find config key 'inventory-linking.enrolment.name'" +
-        "\nCould not find config key 'inventory-linking.enrolment.eori-identifier'" +
         "\nCould not find config api-subscription-fields.host" +
         "\nService configuration not found for key: api-subscription-fields.context"
 

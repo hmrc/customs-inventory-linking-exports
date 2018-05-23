@@ -57,7 +57,6 @@ class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfter
     protected val mockPayloadDecorator: MdgPayloadDecorator = mock[MdgPayloadDecorator]
     protected val mockDateTimeProvider: DateTimeService = mock[DateTimeService]
     protected val mockCustomsConfigService: ExportsConfigService = mock[ExportsConfigService]
-    protected val mockApiDefinitionConfig: ApiDefinitionConfig = mock[ApiDefinitionConfig]
     protected val mockHttpResponse: HttpResponse = mock[HttpResponse]
 
     protected lazy val service: BusinessService = new BusinessService(mockLogger, mockMdgExportsConnector, mockApiSubscriptionFieldsConnector,
@@ -71,8 +70,6 @@ class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfter
     // type of the value contained in the value class i.e. for CorrelationId the value is UUID so needs to meq type of UUID
     when(mockPayloadDecorator.decorate(meq(TestXmlPayload), meq[String](TestSubscriptionFieldsId.value).asInstanceOf[SubscriptionFieldsId], meq[UUID](correlationIdUuid).asInstanceOf[CorrelationId], any[DateTime])(any[ValidatedPayloadRequest[_]])).thenReturn(wrappedValidXML)
     when(mockDateTimeProvider.getUtcNow).thenReturn(dateTime)
-    when(mockApiDefinitionConfig.apiContext).thenReturn("customs/inventory-linking/exports")
-    when(mockCustomsConfigService.apiDefinitionConfig).thenReturn(mockApiDefinitionConfig)
     when(mockMdgExportsConnector.send(any[NodeSeq], meq(dateTime), any[UUID])(any[ValidatedPayloadRequest[_]])).thenReturn(mockHttpResponse)
     when(mockApiSubscriptionFieldsConnector.getSubscriptionFields(any[ApiSubscriptionKey])(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])).thenReturn(Future.successful(apiSubscriptionFieldsResponse))
   }
