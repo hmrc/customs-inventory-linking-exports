@@ -17,31 +17,50 @@
 package uk.gov.hmrc.customs.inventorylinking.export.services
 
 import javax.inject.{Inject, Singleton}
-
 import play.api.Configuration
+import scalaz.ValidationNel
+import scalaz.syntax.apply._
+import scalaz.syntax.traverse._
 import uk.gov.hmrc.customs.api.common.config.ConfigValidationNelAdaptor
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model.ExportsConfig
+import uk.gov.hmrc.customs.inventorylinking.export.model.{ExportsCircuitBreakerConfig, ExportsConfig}
 
-import scalaz.syntax.traverse._
 
 @Singleton
 class ExportsConfigService @Inject()(configuration: Configuration,
                                      configValidationNel: ConfigValidationNelAdaptor,
-                                     logger: ExportsLogger) extends ExportsConfig {
+                                     logger: ExportsLogger) {
 
-  private val exportsConfig =
-    configValidationNel.service("api-subscription-fields").serviceUrl.map(ExportsConfigImpl.apply) fold(
-    fail = { nel =>
-      val errorMsg = nel.toList.mkString("\n", "\n", "")
-      logger.errorWithoutRequestContext(errorMsg)
-      throw new IllegalStateException(errorMsg)
-    },
-    succ = identity
-  )
+  private val root = configValidationNel.root
 
-  val apiSubscriptionFieldsBaseUrl: String = exportsConfig.apiSubscriptionFieldsBaseUrl
+  private val apiSubscriptionFieldsService = configValidationNel.service("api-subscription-fields")
+  private val apiSubscriptionFieldsServiceUrlNel = apiSubscriptionFieldsService.serviceUrl
+  private val numberOfCallsToTriggerStateChangeNel = root.int("circuitBreaker.numberOfCallsToTriggerStateChange")
+  private val unavailablePeriodDurationInMillisNel = root.int("circuitBreaker.unavailablePeriodDurationInMillis")
+  private val unstablePeriodDurationInMillisNel = root.int("circuitBreaker.unstablePeriodDurationInMillis")
 
-  private case class ExportsConfigImpl(apiSubscriptionFieldsBaseUrl: String) extends ExportsConfig
+  private val validatedExportsConfig: ValidationNel[String, ExportsConfig] = apiSubscriptionFieldsServiceUrlNel.map(ExportsConfig.apply)
+
+  private val validatedExportsCircuitBreakerConfig: ValidationNel[String, ExportsCircuitBreakerConfig] = (
+    numberOfCallsToTriggerStateChangeNel |@| unavailablePeriodDurationInMillisNel |@| unstablePeriodDurationInMillisNel
+    ) (ExportsCircuitBreakerConfig.apply)
+
+  private val exportsConfigHolder =
+    (validatedExportsConfig |@| validatedExportsCircuitBreakerConfig) (ExportsConfigHolder.apply) fold(
+      fail = { nel =>
+        // error case exposes nel (a NotEmptyList)
+        val errorMsg = nel.toList.mkString("\n", "\n", "")
+        logger.errorWithoutRequestContext(errorMsg)
+        throw new IllegalStateException(errorMsg)
+      },
+      succ = identity
+    )
+
+  val exportsConfig: ExportsConfig = exportsConfigHolder.exportsConfig
+
+  val exportsCircuitBreakerConfig: ExportsCircuitBreakerConfig = exportsConfigHolder.exportsCircuitBreakerConfig
+
+  private case class ExportsConfigHolder(exportsConfig: ExportsConfig,
+                                         exportsCircuitBreakerConfig: ExportsCircuitBreakerConfig)
 
 }
