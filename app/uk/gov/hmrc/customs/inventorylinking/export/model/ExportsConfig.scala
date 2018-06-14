@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.customs.inventorylinking.export.model
 
-trait ExportsConfig {
-  val apiSubscriptionFieldsBaseUrl: String
-}
+case class ExportsConfig (apiSubscriptionFieldsBaseUrl: String)
+
+case class ExportsCircuitBreakerConfig(numberOfCallsToTriggerStateChange: Int,
+                                       unavailablePeriodDurationInMillis: Int,
+                                       unstablePeriodDurationInMillis: Int)

@@ -33,6 +33,9 @@ class ExportsConfigServiceSpec extends UnitSpec with MockitoSugar {
       |microservice.services.api-subscription-fields.host=some-host
       |microservice.services.api-subscription-fields.port=1111
       |microservice.services.api-subscription-fields.context=/some-context
+      |circuitBreaker.numberOfCallsToTriggerStateChange=5
+      |circuitBreaker.unstablePeriodDurationInMillis=1000
+      |circuitBreaker.unavailablePeriodDurationInMillis=1000
     """.stripMargin)
 
   private val emptyAppConfig: Config = ConfigFactory.parseString("")
@@ -41,20 +44,27 @@ class ExportsConfigServiceSpec extends UnitSpec with MockitoSugar {
   private val emptyServicesConfiguration = Configuration(emptyAppConfig)
   private val mockExportsLogger = mock[ExportsLogger]
 
-  private def customsConfigService(conf: Configuration): ExportsConfig =
+  private def customsConfigService(conf: Configuration) =
     new ExportsConfigService(conf, new ConfigValidationNelAdaptor(testServicesConfig(conf), conf), mockExportsLogger)
 
   "ImportsConfigService" should {
     "return config as object model when configuration is valid" in {
       val configService = customsConfigService(validServicesConfiguration)
 
-      configService.apiSubscriptionFieldsBaseUrl shouldBe "http://some-host:1111/some-context"
+      configService.exportsConfig.apiSubscriptionFieldsBaseUrl shouldBe "http://some-host:1111/some-context"
+      configService.exportsCircuitBreakerConfig.numberOfCallsToTriggerStateChange shouldBe 5
+      configService.exportsCircuitBreakerConfig.unavailablePeriodDurationInMillis shouldBe 1000
+      configService.exportsCircuitBreakerConfig.unstablePeriodDurationInMillis shouldBe 1000
     }
 
     "throw an exception when configuration is invalid, that contains AGGREGATED error messages" in {
       val expectedErrorMessage =
-        "\nCould not find config api-subscription-fields.host" +
-        "\nService configuration not found for key: api-subscription-fields.context"
+        """
+          |Could not find config api-subscription-fields.host
+          |Service configuration not found for key: api-subscription-fields.context
+          |Could not find config key 'circuitBreaker.numberOfCallsToTriggerStateChange'
+          |Could not find config key 'circuitBreaker.unavailablePeriodDurationInMillis'
+          |Could not find config key 'circuitBreaker.unstablePeriodDurationInMillis'""".stripMargin
 
       val caught = intercept[IllegalStateException](customsConfigService(emptyServicesConfiguration))
 

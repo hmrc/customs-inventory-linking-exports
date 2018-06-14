@@ -35,7 +35,7 @@ trait InventoryLinkingExportsService extends WireMockRunner {
                                                         expectedAuthToken: String = ExternalServicesConfig.AuthToken,
                                                         maybeUnexpectedAuthToken: Option[String] = None) {
     verify(1, postRequestedFor(urlMatchingRequestPath)
-      .withHeader(CONTENT_TYPE, equalTo(XML))
+      .withHeader(CONTENT_TYPE, equalTo(XML + "; charset=UTF-8"))
       .withHeader(ACCEPT, equalTo(XML))
       .withHeader(AUTHORIZATION, equalTo(s"Bearer $expectedAuthToken"))
       .withHeader(DATE, notMatching(""))

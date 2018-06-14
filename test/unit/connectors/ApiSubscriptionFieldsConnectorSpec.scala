@@ -25,6 +25,7 @@ import org.scalatest.concurrent.Eventually
 import org.scalatest.mockito.MockitoSugar
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.ApiSubscriptionFieldsConnector
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
+import uk.gov.hmrc.customs.inventorylinking.export.model.ExportsConfig
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
 import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
 import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, NotFoundException}
@@ -43,6 +44,7 @@ class ApiSubscriptionFieldsConnectorSpec extends UnitSpec
   with ApiSubscriptionFieldsTestData {
 
   private val mockExportsConfigService = mock[ExportsConfigService]
+  private val mockExportsConfig = mock[ExportsConfig]
   private val mockWSGetImpl = mock[HttpClient]
   private val mockExportsLogger = mock[ExportsLogger]
   private implicit val hc = HeaderCarrier()
@@ -56,8 +58,8 @@ class ApiSubscriptionFieldsConnectorSpec extends UnitSpec
 
   override protected def beforeEach() {
     reset(mockExportsLogger, mockWSGetImpl, mockExportsConfigService)
-
-    when(mockExportsConfigService.apiSubscriptionFieldsBaseUrl).thenReturn("http://localhost:11111/api-subscription-fields/field")
+    when(mockExportsConfigService.exportsConfig).thenReturn(mockExportsConfig)
+    when(mockExportsConfig.apiSubscriptionFieldsBaseUrl).thenReturn("http://localhost:11111/api-subscription-fields/field")
   }
 
   "ApiSubscriptionFieldsConnector" can {
