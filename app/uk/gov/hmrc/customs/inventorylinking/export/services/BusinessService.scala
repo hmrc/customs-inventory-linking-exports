@@ -18,7 +18,6 @@ package uk.gov.hmrc.customs.inventorylinking.export.services
 
 import java.net.URLEncoder
 import java.util.UUID
-
 import javax.inject.{Inject, Singleton}
 import model.ApiSubscriptionFieldsResponse
 import org.joda.time.DateTime
