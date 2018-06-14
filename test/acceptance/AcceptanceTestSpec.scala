@@ -34,7 +34,7 @@ trait AcceptanceTestSpec extends FeatureSpec with GivenWhenThen with GuiceOneApp
     "microservice.services.auth.port" -> ExternalServicesConfig.Port,
     "microservice.services.mdg-exports.host" -> ExternalServicesConfig.Host,
     "microservice.services.mdg-exports.port" -> ExternalServicesConfig.Port,
-    "microservice.services.mdg-exports.context" -> ExportsExternalServicesConfig.MdgExportsServiceContext,
+    "microservice.services.mdg-exports.context" -> ExportsExternalServicesConfig.ExportsServiceContext,
     "microservice.services.mdg-exports.bearer-token" -> ExternalServicesConfig.AuthToken,
     "microservice.services.api-subscription-fields.host" -> ExternalServicesConfig.Host,
     "microservice.services.api-subscription-fields.port" -> ExternalServicesConfig.Port,

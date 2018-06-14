@@ -34,9 +34,9 @@ import scala.concurrent.Future
 import scala.xml.NodeSeq
 
 @Singleton
-class MdgExportsConnector @Inject()(http: HttpClient,
-                                    logger: ExportsLogger,
-                                    serviceConfigProvider: ServiceConfigProvider) {
+class ExportsConnector @Inject()(http: HttpClient,
+                                 logger: ExportsLogger,
+                                 serviceConfigProvider: ServiceConfigProvider) {
 
   def send[A](xml: NodeSeq, date: DateTime, correlationId: UUID)(implicit vpr: ValidatedPayloadRequest[A]): Future[HttpResponse] = {
     val config = Option(serviceConfigProvider.getConfig("mdg-exports")).getOrElse(throw new IllegalArgumentException("config not found"))

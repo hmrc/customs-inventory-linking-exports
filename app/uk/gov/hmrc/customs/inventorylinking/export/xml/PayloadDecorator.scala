@@ -25,7 +25,7 @@ import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.Validate
 import scala.xml.NodeSeq
 
 @Singleton
-class MdgPayloadDecorator() {
+class PayloadDecorator() {
 
   def decorate[A](xml: NodeSeq, clientId: SubscriptionFieldsId, correlationId: CorrelationId, dateTime: DateTime)(implicit vpr: ValidatedPayloadRequest[A]): NodeSeq = {
 

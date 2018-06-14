@@ -21,7 +21,7 @@ import play.api.test.Helpers._
 import util.{ExternalServicesConfig, ExportsExternalServicesConfig, WireMockRunner}
 
 trait InventoryLinkingExportsService extends WireMockRunner {
-  private val urlMatchingRequestPath = urlMatching(ExportsExternalServicesConfig.MdgExportsServiceContext)
+  private val urlMatchingRequestPath = urlMatching(ExportsExternalServicesConfig.ExportsServiceContext)
 
   def startInventoryLinkingExportsService(): Unit = setupInventoryLinkingExportsServiceToReturn(ACCEPTED)
 

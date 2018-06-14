@@ -20,7 +20,7 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.prop.TableDrivenPropertyChecks._
 import play.api.mvc.AnyContentAsXml
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
-import uk.gov.hmrc.customs.inventorylinking.export.xml.MdgPayloadDecorator
+import uk.gov.hmrc.customs.inventorylinking.export.xml.PayloadDecorator
 import uk.gov.hmrc.play.test.UnitSpec
 import util.ApiSubscriptionFieldsTestData._
 import util.TestData._
@@ -28,7 +28,7 @@ import util.XMLTestData._
 
 import scala.xml.NodeSeq
 
-class MdgPayloadDecoratorSpec extends UnitSpec with MockitoSugar{
+class PayloadDecoratorSpec extends UnitSpec with MockitoSugar{
 
   val xmlPayload: NodeSeq = <inventoryLinkingMovementRequest>
     <node1>whatever</node1>
@@ -36,23 +36,23 @@ class MdgPayloadDecoratorSpec extends UnitSpec with MockitoSugar{
 
   private val commonLabel = "requestCommon"
 
-  private val decorator = new MdgPayloadDecorator()
+  private val decorator = new PayloadDecorator()
 
   private implicit val vpr: ValidatedPayloadRequest[AnyContentAsXml] = TestCspValidatedPayloadRequest
 
   private def wrapPayloadWithBadgeIdentifier(payload: NodeSeq = xmlPayload) = decorator.decorate(payload, TestSubscriptionFieldsId, correlationId, dateTime)
   private def wrapPayloadWithoutBadgeIdentifier(payload: NodeSeq = xmlPayload) = decorator.decorate(payload, TestSubscriptionFieldsId, correlationId, dateTime)
 
-  "MdgPayloadDecorator" should {
+  "PayloadDecorator" should {
 
-    "wrap passed complete inventoryLinkingMovementRequest in MDG wrapper" in {
+    "wrap passed complete inventoryLinkingMovementRequest" in {
       val result = wrapPayloadWithBadgeIdentifier(ValidInventoryLinkingMovementRequestXML)
 
        xml.Utility.trim(result.head) shouldBe xml.Utility.trim(wrappedValidXML.head)
     }
 
     forAll(xmlRequests) { (linkingType, xml) =>
-      s"wrap passed $linkingType in MDG wrapper" in {
+      s"wrap passed $linkingType" in {
         val result = wrapPayloadWithBadgeIdentifier(xml)
 
         val header = result \ commonLabel

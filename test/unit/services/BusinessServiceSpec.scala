@@ -25,13 +25,13 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatest.mockito.MockitoSugar
 import play.api.mvc.{AnyContentAsXml, Result}
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
-import uk.gov.hmrc.customs.inventorylinking.export.connectors.{ApiSubscriptionFieldsConnector, MdgExportsConnector}
+import uk.gov.hmrc.customs.inventorylinking.export.connectors.{ApiSubscriptionFieldsConnector, ExportsConnector}
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
 import uk.gov.hmrc.customs.inventorylinking.export.services.{BusinessService, _}
-import uk.gov.hmrc.customs.inventorylinking.export.xml.MdgPayloadDecorator
+import uk.gov.hmrc.customs.inventorylinking.export.xml.PayloadDecorator
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.test.UnitSpec
 import util.TestData._
@@ -52,14 +52,14 @@ class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfter
 
   trait SetUp {
     protected val mockLogger: ExportsLogger = mock[ExportsLogger]
-    protected val mockMdgExportsConnector: MdgExportsConnector = mock[MdgExportsConnector]
+    protected val mockExportsConnector: ExportsConnector = mock[ExportsConnector]
     protected val mockApiSubscriptionFieldsConnector: ApiSubscriptionFieldsConnector = mock[ApiSubscriptionFieldsConnector]
-    protected val mockPayloadDecorator: MdgPayloadDecorator = mock[MdgPayloadDecorator]
+    protected val mockPayloadDecorator: PayloadDecorator = mock[PayloadDecorator]
     protected val mockDateTimeProvider: DateTimeService = mock[DateTimeService]
     protected val mockCustomsConfigService: ExportsConfigService = mock[ExportsConfigService]
     protected val mockHttpResponse: HttpResponse = mock[HttpResponse]
 
-    protected lazy val service: BusinessService = new BusinessService(mockLogger, mockMdgExportsConnector, mockApiSubscriptionFieldsConnector,
+    protected lazy val service: BusinessService = new BusinessService(mockLogger, mockExportsConnector, mockApiSubscriptionFieldsConnector,
       mockPayloadDecorator, mockDateTimeProvider, stubUniqueIdsService, mockCustomsConfigService)
 
     protected def send(vpr: ValidatedPayloadRequest[AnyContentAsXml] = TestCspValidatedPayloadRequest, hc: HeaderCarrier = headerCarrier): Either[Result, Unit] = {
@@ -70,7 +70,7 @@ class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfter
     // type of the value contained in the value class i.e. for CorrelationId the value is UUID so needs to meq type of UUID
     when(mockPayloadDecorator.decorate(meq(TestXmlPayload), meq[String](TestSubscriptionFieldsId.value).asInstanceOf[SubscriptionFieldsId], meq[UUID](correlationIdUuid).asInstanceOf[CorrelationId], any[DateTime])(any[ValidatedPayloadRequest[_]])).thenReturn(wrappedValidXML)
     when(mockDateTimeProvider.getUtcNow).thenReturn(dateTime)
-    when(mockMdgExportsConnector.send(any[NodeSeq], meq(dateTime), any[UUID])(any[ValidatedPayloadRequest[_]])).thenReturn(mockHttpResponse)
+    when(mockExportsConnector.send(any[NodeSeq], meq(dateTime), any[UUID])(any[ValidatedPayloadRequest[_]])).thenReturn(mockHttpResponse)
     when(mockApiSubscriptionFieldsConnector.getSubscriptionFields(any[ApiSubscriptionKey])(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])).thenReturn(Future.successful(apiSubscriptionFieldsResponse))
   }
 
@@ -81,7 +81,7 @@ class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfter
       val result: Either[Result, Unit] = send()
 
       result shouldBe Right(())
-      verify(mockMdgExportsConnector).send(meq(wrappedValidXML), any[DateTime], any[UUID])(any[ValidatedPayloadRequest[_]])
+      verify(mockExportsConnector).send(meq(wrappedValidXML), any[DateTime], any[UUID])(any[ValidatedPayloadRequest[_]])
     }
 
     "get utc date time and pass to connector" in new SetUp() {
@@ -89,7 +89,7 @@ class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfter
       val result: Either[Result, Unit] = send()
 
       result shouldBe Right(())
-      verify(mockMdgExportsConnector).send(any[NodeSeq], meq(dateTime), any[UUID])(any[ValidatedPayloadRequest[_]])
+      verify(mockExportsConnector).send(any[NodeSeq], meq(dateTime), any[UUID])(any[ValidatedPayloadRequest[_]])
     }
 
     "call payload decorator passing incoming xml" in new SetUp() {
@@ -111,11 +111,11 @@ class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfter
 
       result shouldBe Left(ErrorResponse.ErrorInternalServerError.XmlResult.withConversationId)
       verifyZeroInteractions(mockPayloadDecorator)
-      verifyZeroInteractions(mockMdgExportsConnector)
+      verifyZeroInteractions(mockExportsConnector)
     }
 
-    "return Left of error Result when MDG call fails" in new SetUp() {
-      when(mockMdgExportsConnector.send(any[NodeSeq], any[DateTime], any[UUID])(any[ValidatedPayloadRequest[_]])).thenReturn(Future.failed(emulatedServiceFailure))
+    "return Left of error Result when backend call fails" in new SetUp() {
+      when(mockExportsConnector.send(any[NodeSeq], any[DateTime], any[UUID])(any[ValidatedPayloadRequest[_]])).thenReturn(Future.failed(emulatedServiceFailure))
 
       val result: Either[Result, Unit] = send()
 

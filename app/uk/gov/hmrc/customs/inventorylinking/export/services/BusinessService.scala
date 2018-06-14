@@ -23,12 +23,12 @@ import model.ApiSubscriptionFieldsResponse
 import org.joda.time.DateTime
 import play.api.mvc.Result
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
-import uk.gov.hmrc.customs.inventorylinking.export.connectors.{ApiSubscriptionFieldsConnector, MdgExportsConnector}
+import uk.gov.hmrc.customs.inventorylinking.export.connectors.{ApiSubscriptionFieldsConnector, ExportsConnector}
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
 import uk.gov.hmrc.customs.inventorylinking.export.model._
-import uk.gov.hmrc.customs.inventorylinking.export.xml.MdgPayloadDecorator
+import uk.gov.hmrc.customs.inventorylinking.export.xml.PayloadDecorator
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -39,9 +39,9 @@ import scala.xml.NodeSeq
 
 @Singleton
 class BusinessService @Inject()(logger: ExportsLogger,
-                                connector: MdgExportsConnector,
+                                connector: ExportsConnector,
                                 apiSubFieldsConnector: ApiSubscriptionFieldsConnector,
-                                wrapper: MdgPayloadDecorator,
+                                wrapper: PayloadDecorator,
                                 dateTimeProvider: DateTimeService,
                                 uniqueIdsService: UniqueIdsService,
                                 customsConfigService: ExportsConfigService) {

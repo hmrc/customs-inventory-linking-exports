@@ -26,7 +26,7 @@ import org.scalatest.mockito.MockitoSugar
 import play.api.http.HeaderNames
 import play.mvc.Http.MimeTypes
 import uk.gov.hmrc.customs.api.common.config.{ServiceConfig, ServiceConfigProvider}
-import uk.gov.hmrc.customs.inventorylinking.export.connectors.MdgExportsConnector
+import uk.gov.hmrc.customs.inventorylinking.export.connectors.ExportsConnector
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
 import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse, NotFoundException}
@@ -37,13 +37,13 @@ import util.TestData._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class MdgExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach with Eventually {
+class ExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach with Eventually {
 
   private val mockWsPost = mock[HttpClient]
   private val mockExportsLogger = mock[ExportsLogger]
   private val mockServiceConfigProvider = mock[ServiceConfigProvider]
 
-  private val connector = new MdgExportsConnector(mockWsPost, mockExportsLogger, mockServiceConfigProvider)
+  private val connector = new ExportsConnector(mockWsPost, mockExportsLogger, mockServiceConfigProvider)
 
   private val serviceConfig = ServiceConfig("the-url", Some("bearerToken"), "default")
 
@@ -64,7 +64,7 @@ class MdgExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndA
 
   private implicit val vpr = TestCspValidatedPayloadRequest
 
-  "MdgExportsConnector" can {
+  "ExportsConnector" can {
 
     "when making a successful request" should {
 
@@ -143,7 +143,7 @@ class MdgExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndA
     }
 
     "when making an failing request" should {
-      "propagate an underlying error when MDG call fails with a non-http exception" in {
+      "propagate an underlying error when backend call fails with a non-http exception" in {
         returnResponseForRequest(Future.failed(emulatedServiceFailure))
 
         val caught = intercept[EmulatedServiceFailure] {
@@ -153,7 +153,7 @@ class MdgExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndA
         caught shouldBe emulatedServiceFailure
       }
 
-      "wrap an underlying error when MDG call fails with an http exception" in {
+      "wrap an underlying error when backend call fails with an http exception" in {
         returnResponseForRequest(Future.failed(httpException))
 
         val caught = intercept[RuntimeException] {

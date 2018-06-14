@@ -17,6 +17,6 @@
 package util
 
 object ExportsExternalServicesConfig {
-  val MdgExportsServiceContext = "/InventoryLinking/ExportMovement/1.0.0"
+  val ExportsServiceContext = "/InventoryLinking/ExportMovement/1.0.0"
   val ApiSubscriptionFieldsContext = "/api-subscription-fields/field"
 }
