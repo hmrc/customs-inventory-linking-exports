@@ -26,7 +26,7 @@ import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._
 import uk.gov.hmrc.circuitbreaker.UnhealthyServiceException
-import uk.gov.hmrc.customs.inventorylinking.export.connectors.MdgExportsConnector
+import uk.gov.hmrc.customs.inventorylinking.export.connectors.ExportsConnector
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.logging.Authorization
@@ -51,11 +51,11 @@ class ConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite with Mo
       "circuitBreaker.unavailablePeriodDurationInMillis" -> unavailablePeriodDurationInMillis,
       "microservice.services.mdg-exports.host" -> Host,
       "microservice.services.mdg-exports.port" -> Port,
-      "microservice.services.mdg-exports.context" -> ExportsExternalServicesConfig.MdgExportsServiceContext,
+      "microservice.services.mdg-exports.context" -> ExportsExternalServicesConfig.ExportsServiceContext,
       "microservice.services.mdg-exports.bearer-token" -> AuthToken
     )).build()
 
-  private lazy val connector = app.injector.instanceOf[MdgExportsConnector]
+  private lazy val connector = app.injector.instanceOf[ExportsConnector]
 
   private val incomingBearerToken = "some_client's_bearer_token"
   private val incomingAuthToken = s"Bearer $incomingBearerToken"
