@@ -24,8 +24,11 @@ import org.mockito.Mockito.{verify, verifyZeroInteractions, when}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.mockito.MockitoSugar
 import play.api.mvc.{AnyContentAsXml, Result}
+import uk.gov.hmrc.circuitbreaker.UnhealthyServiceException
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.{ApiSubscriptionFieldsConnector, ExportsConnector}
+import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.errorInternalServerError
+import uk.gov.hmrc.customs.inventorylinking.export.connectors.{ApiSubscriptionFieldsConnector, MdgExportsConnector}
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
@@ -48,7 +51,7 @@ class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfter
     .withExtraHeaders(RequestHeaders.API_SUBSCRIPTION_FIELDS_ID_HEADER)
   private val expectedApiSubscriptionKey = ApiSubscriptionKey(clientId, "customs%2Finventory-linking%2Fexports", VersionOne)
   private implicit val vpr: ValidatedPayloadRequest[AnyContentAsXml] = TestCspValidatedPayloadRequest
-
+  private val errorResponseServiceUnavailable = errorInternalServerError("This service is currently unavailable")
 
   trait SetUp {
     protected val mockLogger: ExportsLogger = mock[ExportsLogger]
@@ -120,6 +123,14 @@ class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfter
       val result: Either[Result, Unit] = send()
 
       result shouldBe Left(ErrorResponse.ErrorInternalServerError.XmlResult.withConversationId)
+    }
+
+    "return Left of internal error Result when backend circuit breaker trips" in new SetUp() {
+      when(mockMdgExportsConnector.send(any[NodeSeq], any[DateTime], any[UUID])(any[ValidatedPayloadRequest[_]])).thenReturn(Future.failed(new UnhealthyServiceException("service-name")))
+
+      val result: Either[Result, Unit] = send()
+
+      result shouldBe Left(errorResponseServiceUnavailable.XmlResult)
     }
 
   }

@@ -20,13 +20,17 @@ import java.util.UUID
 
 import com.google.inject._
 import org.joda.time.DateTime
+import play.api.Configuration
 import play.api.http.HeaderNames.{ACCEPT, CONTENT_TYPE, DATE, X_FORWARDED_HOST}
 import play.api.http.MimeTypes
+import uk.gov.hmrc.circuitbreaker.{CircuitBreakerConfig, UsingCircuitBreaker}
 import uk.gov.hmrc.customs.api.common.config.ServiceConfigProvider
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
+import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
 import uk.gov.hmrc.http.logging.Authorization
-import uk.gov.hmrc.http.{HeaderCarrier, HttpException, HttpResponse}
+import uk.gov.hmrc.http._
+import uk.gov.hmrc.play.bootstrap.config.AppName
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -35,14 +39,17 @@ import scala.xml.NodeSeq
 
 @Singleton
 class ExportsConnector @Inject()(http: HttpClient,
-                                 logger: ExportsLogger,
-                                 serviceConfigProvider: ServiceConfigProvider) {
+                                    logger: ExportsLogger,
+                                    serviceConfigProvider: ServiceConfigProvider,
+                                    config: ExportsConfigService,
+                                    override val configuration: Configuration
+                                   ) extends UsingCircuitBreaker with AppName {
 
   def send[A](xml: NodeSeq, date: DateTime, correlationId: UUID)(implicit vpr: ValidatedPayloadRequest[A]): Future[HttpResponse] = {
     val config = Option(serviceConfigProvider.getConfig("mdg-exports")).getOrElse(throw new IllegalArgumentException("config not found"))
     val bearerToken = "Bearer " + config.bearerToken.getOrElse(throw new IllegalStateException("no bearer token was found in config"))
     implicit val hc = HeaderCarrier(extraHeaders = getHeaders(date, correlationId), authorization = Some(Authorization(bearerToken)))
-    post(xml, config.url)
+    withCircuitBreaker(post(xml, config.url))
   }
 
   private def getHeaders(date: DateTime, correlationId: UUID) = {
@@ -60,11 +67,24 @@ class ExportsConnector @Inject()(http: HttpClient,
     http.POSTString[HttpResponse](url, xml.toString())
       .recoverWith {
         case httpError: HttpException => Future.failed(new RuntimeException(httpError))
-      }
-      .recoverWith {
         case e: Throwable =>
           logger.error(s"Call to inventory linking exports failed. url = $url", e)
           Future.failed(e)
       }
   }
+
+
+  override protected def circuitBreakerConfig: CircuitBreakerConfig =
+    CircuitBreakerConfig(
+      serviceName = appName,
+      numberOfCallsToTriggerStateChange = config.exportsCircuitBreakerConfig.numberOfCallsToTriggerStateChange,
+      unavailablePeriodDuration = config.exportsCircuitBreakerConfig.unavailablePeriodDurationInMillis,
+      unstablePeriodDuration = config.exportsCircuitBreakerConfig.unstablePeriodDurationInMillis
+    )
+
+  override protected def breakOnException(t: Throwable): Boolean = t match {
+    case _: BadRequestException | _: NotFoundException | _: Upstream4xxResponse => false
+    case _ => true
+  }
+
 }

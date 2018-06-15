@@ -22,8 +22,11 @@ import javax.inject.{Inject, Singleton}
 import model.ApiSubscriptionFieldsResponse
 import org.joda.time.DateTime
 import play.api.mvc.Result
+import uk.gov.hmrc.circuitbreaker.UnhealthyServiceException
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.{ApiSubscriptionFieldsConnector, ExportsConnector}
+import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.errorInternalServerError
+import uk.gov.hmrc.customs.inventorylinking.export.connectors.{ApiSubscriptionFieldsConnector, MdgExportsConnector}
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
@@ -47,6 +50,7 @@ class BusinessService @Inject()(logger: ExportsLogger,
                                 customsConfigService: ExportsConfigService) {
 
   private val apiContextEncoded = URLEncoder.encode("customs/inventory-linking/exports", "UTF-8")
+  private val errorResponseServiceUnavailable = errorInternalServerError("This service is currently unavailable")
 
   def send[A](implicit vpr: ValidatedPayloadRequest[A], hc: HeaderCarrier): Future[Either[Result, Unit]] = {
 
@@ -77,6 +81,9 @@ class BusinessService @Inject()(logger: ExportsLogger,
     val xmlToSend = preparePayload(vpr.xmlBody, subscriptionFieldsId, correlationId, dateTime)
 
     connector.send(xmlToSend, dateTime, UUID.fromString(correlationId.toString)).map(_ => Right(())).recover{
+      case _: UnhealthyServiceException =>
+        logger.error("unhealthy state entered")
+        Left(errorResponseServiceUnavailable.XmlResult)
       case NonFatal(e) =>
         logger.error(s"Inventory linking call failed: ${e.getMessage}", e)
         Left(ErrorResponse.ErrorInternalServerError.XmlResult.withConversationId)
@@ -85,7 +92,7 @@ class BusinessService @Inject()(logger: ExportsLogger,
 
   private def preparePayload[A](xml: NodeSeq, clientId: SubscriptionFieldsId, correlationId: CorrelationId, dateTime: DateTime)
                                (implicit vpr: ValidatedPayloadRequest[A], hc: HeaderCarrier): NodeSeq = {
-    logger.debug(s"preparePayload called")
+    logger.debug("preparePayload called")
     wrapper.decorate(xml, clientId, correlationId, dateTime)
   }
 

@@ -23,12 +23,15 @@ import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.Eventually
 import org.scalatest.mockito.MockitoSugar
+import play.api.Configuration
 import play.api.http.HeaderNames
 import play.mvc.Http.MimeTypes
 import uk.gov.hmrc.customs.api.common.config.{ServiceConfig, ServiceConfigProvider}
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.ExportsConnector
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
+import uk.gov.hmrc.customs.inventorylinking.export.model.ExportsCircuitBreakerConfig
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
+import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
 import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse, NotFoundException}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.play.test.UnitSpec
@@ -42,8 +45,11 @@ class ExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfte
   private val mockWsPost = mock[HttpClient]
   private val mockExportsLogger = mock[ExportsLogger]
   private val mockServiceConfigProvider = mock[ServiceConfigProvider]
+  private val mockExportsConfigService = mock[ExportsConfigService]
+  private val mockExportsCircuitBreakerConfig = mock[ExportsCircuitBreakerConfig]
+  private val mockConfiguration = mock[Configuration]
 
-  private val connector = new ExportsConnector(mockWsPost, mockExportsLogger, mockServiceConfigProvider)
+  private val connector = new ExportsConnector(mockWsPost, mockExportsLogger, mockServiceConfigProvider, mockExportsConfigService, mockConfiguration)
 
   private val serviceConfig = ServiceConfig("the-url", Some("bearerToken"), "default")
 
@@ -54,11 +60,17 @@ class ExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfte
 
   override protected def beforeEach() {
     reset(mockWsPost, mockServiceConfigProvider, mockExportsLogger)
-
+    when(mockExportsConfigService.exportsCircuitBreakerConfig).thenReturn(mockExportsCircuitBreakerConfig)
     when(mockServiceConfigProvider.getConfig("mdg-exports")).thenReturn(serviceConfig)
+    when(mockConfiguration.getString("appName")).thenReturn(Some("an-app-name"))
   }
 
-  private val date: DateTime = new DateTime(2017, 7, 4, 13, 45, DateTimeZone.UTC)
+  private val year = 2017
+  private val monthOfYear = 7
+  private val dayOfMonth = 4
+  private val hourOfDay = 13
+  private val minuteOfHour = 45
+  private val date = new DateTime(year, monthOfYear, dayOfMonth, hourOfDay, minuteOfHour, DateTimeZone.UTC)
 
   private val httpFormattedDate = "Tue, 04 Jul 2017 13:45:00 UTC"
 
