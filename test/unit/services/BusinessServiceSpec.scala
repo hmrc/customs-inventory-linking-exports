@@ -20,7 +20,7 @@ import java.util.UUID
 
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.{eq => meq, _}
-import org.mockito.Mockito.{verify, verifyZeroInteractions, when}
+import org.mockito.Mockito.{atLeastOnce, verify, verifyZeroInteractions, when}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.mockito.MockitoSugar
 import play.api.mvc.{AnyContentAsXml, Result}
@@ -79,60 +79,51 @@ class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfter
   "BusinessService" should {
 
     "send transformed xml to connector" in new SetUp() {
+      send() shouldBe Right(())
 
-      val result: Either[Result, Unit] = send()
-
-      result shouldBe Right(())
+      verify(mockApiSubscriptionFieldsConnector, atLeastOnce()).getSubscriptionFields(any[ApiSubscriptionKey])(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])
       verify(mockExportsConnector).send(meq(wrappedValidXML), any[DateTime], any[UUID])(any[ValidatedPayloadRequest[_]])
     }
 
     "get utc date time and pass to connector" in new SetUp() {
+      send() shouldBe Right(())
 
-      val result: Either[Result, Unit] = send()
-
-      result shouldBe Right(())
+      verify(mockApiSubscriptionFieldsConnector, atLeastOnce()).getSubscriptionFields(any[ApiSubscriptionKey])(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])
       verify(mockExportsConnector).send(any[NodeSeq], meq(dateTime), any[UUID])(any[ValidatedPayloadRequest[_]])
     }
 
     "call payload decorator passing incoming xml" in new SetUp() {
-
-      val result: Either[Result, Unit] = send()
-
       // https://stackoverflow.com/questions/27289757/mockito-matchers-scala-value-class-and-nullpointerexception
       // Mockito matching was having problems so had to use the eq type then as instance of. Important that the 1st type is the
       // type of the value contained in the value class i.e. for CorrelationId the value is UUID so needs to meq type of UUID
-      result shouldBe Right(())
+      send() shouldBe Right(())
+
       verify(mockPayloadDecorator).decorate(meq(TestXmlPayload), meq[String](TestSubscriptionFieldsId.value).asInstanceOf[SubscriptionFieldsId], meq[UUID](correlationIdUuid).asInstanceOf[CorrelationId], any[DateTime])(any[ValidatedPayloadRequest[_]])
       verify(mockApiSubscriptionFieldsConnector).getSubscriptionFields(meq(expectedApiSubscriptionKey))(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])
     }
 
-    "return Left of error Result when subscription fields call fails" in new SetUp() {
+    "return InternalServerError ErrorResponse when subscription fields call fails" in new SetUp() {
       when(mockApiSubscriptionFieldsConnector.getSubscriptionFields(any[ApiSubscriptionKey])(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])).thenReturn(Future.failed(emulatedServiceFailure))
+      send() shouldBe Left(ErrorResponse.ErrorInternalServerError.XmlResult.withConversationId)
 
-      val result: Either[Result, Unit] = send()
-
-      result shouldBe Left(ErrorResponse.ErrorInternalServerError.XmlResult.withConversationId)
       verifyZeroInteractions(mockPayloadDecorator)
       verifyZeroInteractions(mockExportsConnector)
     }
 
-    "return Left of error Result when backend call fails" in new SetUp() {
+    "return InternalServerError ErrorResponse when backend call fails" in new SetUp() {
       when(mockExportsConnector.send(any[NodeSeq], any[DateTime], any[UUID])(any[ValidatedPayloadRequest[_]])).thenReturn(Future.failed(emulatedServiceFailure))
+      send() shouldBe Left(ErrorResponse.ErrorInternalServerError.XmlResult.withConversationId)
 
-      val result: Either[Result, Unit] = send()
-
-      result shouldBe Left(ErrorResponse.ErrorInternalServerError.XmlResult.withConversationId)
+      verify(mockApiSubscriptionFieldsConnector, atLeastOnce()).getSubscriptionFields(any[ApiSubscriptionKey])(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])
     }
 
-    "return Left of internal error Result when backend circuit breaker trips" in new SetUp() {
-      when(mockExportsConnector.send(any[NodeSeq], any[DateTime], any[UUID])(any[ValidatedPayloadRequest[_]])).thenReturn(Future.failed(new UnhealthyServiceException("service-name")))
+    "return InternalServerError ErrorResponse when backend circuit breaker trips" in new SetUp() {
+      when(mockExportsConnector.send(any[NodeSeq], any[DateTime], any[UUID])(any[ValidatedPayloadRequest[_]])).thenReturn(Future.failed(new UnhealthyServiceException("wco-declaration")))
+      send() shouldBe Left(errorResponseServiceUnavailable.XmlResult)
 
-      val result: Either[Result, Unit] = send()
-
-      result shouldBe Left(errorResponseServiceUnavailable.XmlResult)
+      verify(mockApiSubscriptionFieldsConnector, atLeastOnce()).getSubscriptionFields(any[ApiSubscriptionKey])(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])
     }
 
   }
-
 
 }

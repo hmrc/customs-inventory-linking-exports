@@ -81,7 +81,7 @@ class PayloadValidationActionSpec extends UnitSpec with MockitoSugar {
     }
 
     "return Left of error Result when XML validation fails" in new SetUp {
-      val errorMessage = "Request body does not contain well-formed XML."
+      val errorMessage = "Request body does not contain a well-formed XML document."
       val errorNotWellFormed: Result = ErrorResponse.errorBadRequest(errorMessage).XmlResult.withConversationId
       val authorisedRequestWithNonWellFormedXml: AuthorisedRequest[AnyContentAsText] = ConversationIdRequest(conversationId, FakeRequest().withTextBody("<foo><foo>"))
         .toValidatedHeadersRequest(TestExtractedHeaders).toCspAuthorisedRequest(badgeIdentifier)

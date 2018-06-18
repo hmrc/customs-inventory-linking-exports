@@ -31,9 +31,9 @@ import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.Validate
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.logging.Authorization
 import util.ExternalServicesConfig.{AuthToken, Host, Port}
+import util.TestData
 import util.XMLTestData.ValidInventoryLinkingMovementRequestXML
-import util.externalservices.InventoryLinkingExportsService
-import util.{ExportsExternalServicesConfig, TestData}
+import util.externalservices.{ExportsExternalServicesConfig, InventoryLinkingExportsService}
 
 import scala.xml.NodeSeq
 

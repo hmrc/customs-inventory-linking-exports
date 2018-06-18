@@ -66,7 +66,7 @@ object TestData {
   val xsdLocations = List(
     "/api/conf/1.0/schemas/exports/request/inventoryLinkingRequestExternal.xsd")
 
-  lazy val ValidRequest: FakeRequest[AnyContentAsXml] = FakeRequest()
+  lazy val ValidRequest: FakeRequest[AnyContentAsXml] = FakeRequest("POST", "/")
     .withHeaders(
       RequestHeaders.X_CLIENT_ID_HEADER,
       RequestHeaders.ACCEPT_HMRC_XML_HEADER,

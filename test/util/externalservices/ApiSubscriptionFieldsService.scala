@@ -20,7 +20,7 @@ import com.github.tomakehurst.wiremock.client.WireMock._
 import play.api.test.Helpers.OK
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.ApiSubscriptionFieldsPath._
 import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionKey, VersionOne}
-import util.{ApiSubscriptionFieldsTestData, ExportsExternalServicesConfig, WireMockRunner}
+import util.{ApiSubscriptionFieldsTestData, WireMockRunner}
 
 trait ApiSubscriptionFieldsService extends WireMockRunner with ApiSubscriptionFieldsTestData {
   private def apiSubsUrl(apiSubsKey: ApiSubscriptionKey) = url(ExportsExternalServicesConfig.ApiSubscriptionFieldsContext, apiSubsKey)

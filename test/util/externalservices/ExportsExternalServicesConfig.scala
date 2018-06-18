@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package util
+package util.externalservices
 
 object ExportsExternalServicesConfig {
   val ExportsServiceContext = "/InventoryLinking/ExportMovement/1.0.0"

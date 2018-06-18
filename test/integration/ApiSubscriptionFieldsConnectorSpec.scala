@@ -28,7 +28,7 @@ import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.Validate
 import uk.gov.hmrc.http._
 import util.ExternalServicesConfig.{Host, Port}
 import util._
-import util.externalservices.ApiSubscriptionFieldsService
+import util.externalservices.{ApiSubscriptionFieldsService, ExportsExternalServicesConfig}
 import util.TestData._
 
 import scala.concurrent.Future

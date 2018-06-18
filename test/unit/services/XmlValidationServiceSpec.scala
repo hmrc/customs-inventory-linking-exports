@@ -34,50 +34,50 @@ import scala.xml.{Node, SAXException}
 
 class XmlValidationServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach {
 
-  private val MockConfiguration = mock[Configuration]
-  private val MockXml = mock[Node]
+  private val mockConfiguration = mock[Configuration]
+  private val mockXml = mock[Node]
 
   private def testService(test: XmlValidationService => Unit) = {
-    test(new XmlValidationService(MockConfiguration))
+    test(new XmlValidationService(mockConfiguration))
   }
 
   override protected def beforeEach() {
-    reset(MockConfiguration)
-    when(MockConfiguration.getStringSeq("xsd.locations")).thenReturn(Some(xsdLocations))
-    when(MockConfiguration.getInt("xml.max-errors")).thenReturn(None)
+    reset(mockConfiguration)
+    when(mockConfiguration.getStringSeq("xsd.locations")).thenReturn(Some(xsdLocations))
+    when(mockConfiguration.getInt("xml.max-errors")).thenReturn(None)
   }
 
   "XmlValidationService" should {
     "get location of xsd resource files from configuration" in testService { xmlValidationService =>
       await(xmlValidationService.validate(ValidInventoryLinkingMovementRequestXML))
-      verify(MockConfiguration).getStringSeq(ameq("xsd.locations"))
+      verify(mockConfiguration).getStringSeq(ameq("xsd.locations"))
     }
 
     "fail the future when in configuration there are no locations of xsd resource files" in testService {
       xmlValidationService =>
-        when(MockConfiguration.getStringSeq("xsd.locations")).thenReturn(None)
+        when(mockConfiguration.getStringSeq("xsd.locations")).thenReturn(None)
 
         val caught = intercept[IllegalStateException] {
-          await(xmlValidationService.validate(MockXml))
+          await(xmlValidationService.validate(mockXml))
         }
         caught.getMessage shouldBe "application.conf is missing mandatory property 'xsd.locations'"
     }
 
     "fail the future when in configuration there is an empty list for locations of xsd resource files" in testService {
       xmlValidationService =>
-        when(MockConfiguration.getStringSeq("xsd.locations")).thenReturn(Some(Nil))
+        when(mockConfiguration.getStringSeq("xsd.locations")).thenReturn(Some(Nil))
 
         val caught = intercept[IllegalStateException] {
-          await(xmlValidationService.validate(MockXml))
+          await(xmlValidationService.validate(mockXml))
         }
         caught.getMessage shouldBe "application.conf is missing mandatory property 'xsd.locations'"
     }
 
     "fail the future when a configured xsd resource file cannot be found" in testService { xmlValidationService =>
-      when(MockConfiguration.getStringSeq("xsd.locations")).thenReturn(Some(List("there/is/no/such/file")))
+      when(mockConfiguration.getStringSeq("xsd.locations")).thenReturn(Some(List("there/is/no/such/file")))
 
       val caught = intercept[FileNotFoundException] {
-        await(xmlValidationService.validate(MockXml))
+        await(xmlValidationService.validate(mockXml))
       }
       caught.getMessage shouldBe "XML Schema resource file: there/is/no/such/file"
     }
@@ -119,12 +119,12 @@ class XmlValidationServiceSpec extends UnitSpec with MockitoSugar with BeforeAnd
 
     "fail the future with configured number of wrapped SAXExceptions when there are multiple errors in XML" in testService {
       xmlValidationService =>
-        when(MockConfiguration.getInt("xml.max-errors")).thenReturn(Some(2))
+        when(mockConfiguration.getInt("xml.max-errors")).thenReturn(Some(2))
 
         val caught = intercept[SAXException] {
           await(xmlValidationService.validate(InvalidXMLWith3Errors))
         }
-        verify(MockConfiguration).getInt("xml.max-errors")
+        verify(mockConfiguration).getInt("xml.max-errors")
 
         caught.getMessage shouldBe "cvc-type.3.1.1: Element 'goodsLocation' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'random' was found."
 
@@ -138,10 +138,10 @@ class XmlValidationServiceSpec extends UnitSpec with MockitoSugar with BeforeAnd
 
     "fail the future with system error when a configured maximum of xml errors is not a positive number" in testService {
       xmlValidationService =>
-        when(MockConfiguration.getInt("xml.max-errors")).thenReturn(Some(0))
+        when(mockConfiguration.getInt("xml.max-errors")).thenReturn(Some(0))
 
         val caught = intercept[IllegalArgumentException] {
-          await(xmlValidationService.validate(MockXml))
+          await(xmlValidationService.validate(mockXml))
         }
         caught.getMessage shouldBe "requirement failed: maxErrors should be a positive number but 0 was provided instead."
     }

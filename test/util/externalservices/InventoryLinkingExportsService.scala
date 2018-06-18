@@ -18,7 +18,7 @@ package util.externalservices
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import play.api.test.Helpers._
-import util.{ExternalServicesConfig, ExportsExternalServicesConfig, WireMockRunner}
+import util.{ExternalServicesConfig, WireMockRunner}
 
 trait InventoryLinkingExportsService extends WireMockRunner {
   private val urlMatchingRequestPath = urlMatching(ExportsExternalServicesConfig.ExportsServiceContext)
