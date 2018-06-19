@@ -98,7 +98,7 @@ class ExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfte
           any[HttpReads[HttpResponse]](), any[HeaderCarrier](), any[ExecutionContext])
       }
 
-      "ensure the content type header in passed through in the request" in {
+      "ensure the content type header is passed through in the request" in {
         returnResponseForRequest(Future.successful(mock[HttpResponse]))
 
         awaitRequest
@@ -109,7 +109,7 @@ class ExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfte
         headersCaptor.getValue.extraHeaders should contain(HeaderNames.CONTENT_TYPE -> (MimeTypes.XML + "; charset=UTF-8"))
       }
 
-      "ensure the accept header in passed through in the request" in {
+      "ensure the accept header is passed through in the request" in {
         returnResponseForRequest(Future.successful(mock[HttpResponse]))
 
         awaitRequest
@@ -120,7 +120,7 @@ class ExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfte
         headersCaptor.getValue.extraHeaders should contain(HeaderNames.ACCEPT -> MimeTypes.XML)
       }
 
-      "ensure the date header in passed through in the request" in {
+      "ensure the date header is passed through in the request" in {
         returnResponseForRequest(Future.successful(mock[HttpResponse]))
 
         awaitRequest
@@ -131,7 +131,7 @@ class ExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfte
         headersCaptor.getValue.extraHeaders should contain(HeaderNames.DATE -> httpFormattedDate)
       }
 
-      "ensure the X-FORWARDED_HOST header in passed through in the request" in {
+      "ensure the X-FORWARDED_HOST header is passed through in the request" in {
         returnResponseForRequest(Future.successful(mock[HttpResponse]))
 
         awaitRequest
@@ -142,7 +142,7 @@ class ExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfte
         headersCaptor.getValue.extraHeaders should contain(HeaderNames.X_FORWARDED_HOST -> "MDTP")
       }
 
-      "ensure the X-Correlation-Id header in passed through in MDG request" in {
+      "ensure the X-Correlation-Id header is passed through in the request" in {
         returnResponseForRequest(Future.successful(mock[HttpResponse]))
 
         awaitRequest
