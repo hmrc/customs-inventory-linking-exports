@@ -21,7 +21,6 @@ import org.scalatest.mockito.MockitoSugar
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.customs.api.common.config.{ConfigValidationNelAdaptor, ServicesConfig}
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model.ExportsConfig
 import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
 import uk.gov.hmrc.play.test.UnitSpec
 
