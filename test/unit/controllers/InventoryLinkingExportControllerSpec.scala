@@ -72,7 +72,6 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
     when(mockBusinessService.send(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])).thenReturn(Future.successful(Right(())))
   }
 
-
   private val errorResultEoriNotFoundInCustomsEnrolment = ErrorResponse(UNAUTHORIZED, errorCode = "UNAUTHORIZED",
     message = "EORI number not found in Customs Enrolment").XmlResult.withHeaders(X_CONVERSATION_ID_HEADER)
 
@@ -85,8 +84,10 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
     "process CSP request when call is authorised for CSP" in new SetUp() {
       authoriseCsp()
 
-      val result: Result = awaitSubmit(ValidRequest)
+      val result: Future[Result] = submit(ValidRequest)
 
+      status(result) shouldBe ACCEPTED
+      header(X_CONVERSATION_ID_NAME, result) shouldBe Some(conversationIdValue)
       verifyCspAuthorisationCalled(numberOfTimes = 1)
       verifyNonCspAuthorisationCalled(numberOfTimes = 0)
     }
@@ -94,19 +95,12 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
     "process a non-CSP request when call is unauthorised for CSP but authorised for non-CSP" in new SetUp() {
       authoriseNonCsp(Some(declarantEori))
 
-      val result: Result = awaitSubmit(ValidRequest)
-
-      verifyCspAuthorisationCalled(numberOfTimes = 1)
-      verifyNonCspAuthorisationCalled(numberOfTimes = 1)
-    }
-
-    "respond with status 202 and conversationId in header for a processed valid CSP request" in new SetUp() {
-      authoriseCsp()
-
       val result: Future[Result] = submit(ValidRequest)
 
       status(result) shouldBe ACCEPTED
       header(X_CONVERSATION_ID_NAME, result) shouldBe Some(conversationIdValue)
+      verifyCspAuthorisationCalled(numberOfTimes = 1)
+      verifyNonCspAuthorisationCalled(numberOfTimes = 1)
     }
 
     "respond with status 400 for a CSP request with a missing X-Badge-Identifier" in new SetUp() {
@@ -118,10 +112,19 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
       verifyZeroInteractions(mockXmlValidationService)
     }
 
+    "respond with status 500 for a request with a missing X-Client-ID" in new SetUp() {
+      authoriseCsp()
+
+      val result: Result = awaitSubmit(ValidRequest.copyFakeRequest(headers = ValidRequest.headers.remove(X_CLIENT_ID_NAME)))
+      status(result) shouldBe INTERNAL_SERVER_ERROR
+      verifyZeroInteractions(mockBusinessService)
+      verifyZeroInteractions(mockXmlValidationService)
+    }
+
     "respond with status 400 for a request with an invalid X-Badge-Identifier" in new SetUp() {
       authoriseCsp()
 
-      val result: Result = awaitSubmit(ValidRequest.withHeaders((ValidHeaders + (X_BADGE_IDENTIFIER_NAME -> invalidBadgeIdentifierValue)).toSeq: _*))
+      val result: Result = awaitSubmit(ValidRequest.withHeaders((ValidHeaders + X_BADGE_IDENTIFIER_HEADER_INVALID).toSeq: _*))
 
       result shouldBe errorResultBadgeIdentifier
       verifyZeroInteractions(mockBusinessService)
@@ -183,7 +186,6 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
       result shouldBe mockResult
     }
 
-    //TODO "return the Internal Server error when business service returns a 500" needed
   }
 
 }

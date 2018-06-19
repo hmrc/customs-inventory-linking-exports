@@ -80,7 +80,7 @@ class ExportsServiceSpec extends ComponentTestSpec
 
   override protected def beforeEach() {
     resetMockServer()
-    startInventoryLinkingExportsService()
+    startBackendService()
     startApiSubscriptionFieldsService()
   }
 
@@ -88,15 +88,14 @@ class ExportsServiceSpec extends ComponentTestSpec
     stopMockServer()
   }
 
-  feature("CSPs and Software Houses submits a message") {
+  feature("CSPs and Software Houses submit a message") {
 
     scenario("A valid message is submitted and successfully forwarded to the backend") {
       Given("a CSP is authorised to use the API endpoint")
-      authServiceAuthorizesCSP()
+      authServiceAuthorisesCSP()
 
       And("the backend service will return a successful response")
       startApiSubscriptionFieldsService()
-      startInventoryLinkingExportsService()
 
       When("a valid message is submitted with valid headers")
       val result: Future[Result] = route(app, ValidRequest.fromCsp).get
@@ -104,36 +103,21 @@ class ExportsServiceSpec extends ComponentTestSpec
       And("an Accepted (202) response is returned")
       status(result) shouldBe ACCEPTED
       header(X_CONVERSATION_ID_NAME, result).get shouldNot be("")
-      verifyAuthServiceCalledForCsp()
-    }
-
-    scenario("A non-CSP successfully submits a message on behalf of somebody with a Customs enrolment") {
-      Given("A Software House wants to submit a valid message")
-      authServiceUnauthorisesScopeForCSP(nonCspBearerToken)
-
-      And("declarant is enrolled with Customs having an EORI number")
-      authServiceAuthorizesNonCspWithEori()
-
-      When("a valid message is submitted with valid headers")
-      val result: Future[Result] = route(app = app, ValidRequest.fromNonCsp).value
-
-      Then("a response with a 202 (ACCEPTED) status is received")
-      status(result) shouldBe ACCEPTED
 
       And("the response body is empty")
       contentAsString(result) shouldBe 'empty
 
       And("the request was authorised with AuthService")
-      verifyAuthServiceCalledForNonCsp()
+      verifyAuthServiceCalledForCsp()
     }
 
     scenario("A valid message is submitted and the backend service fails") {
       Given("a CSP is authorised to use the API endpoint")
-      authServiceAuthorizesCSP()
+      authServiceAuthorisesCSP()
 
       And("the back end Service will return an error response")
       startApiSubscriptionFieldsService()
-      setupInventoryLinkingExportsServiceToReturn(NOT_FOUND)
+      setupBackendServiceToReturn(NOT_FOUND)
 
       When("a valid message request is submitted")
       val result = route(app, ValidRequest.fromCsp).get
@@ -168,7 +152,7 @@ class ExportsServiceSpec extends ComponentTestSpec
 
     scenario("Response status 400 when user submits a message with an XML payload that does not adhere to schema") {
       Given("an authorised CSP wants to submit a message with an invalid XML payload")
-      authServiceAuthorizesCSP()
+      authServiceAuthorisesCSP()
 
       When("a POST request with data is sent to the API")
       val result = route(app, InvalidRequest.fromCsp)
@@ -185,64 +169,6 @@ class ExportsServiceSpec extends ComponentTestSpec
       stringToXml(contentAsString(resultFuture)) shouldBe stringToXml(badRequestError)
     }
 
-    scenario("Response status 400 when user submits a message with a malformed XML payload") {
-
-      Given(s"an authorised CSP wants to submit a message with a malformed XML payload")
-      authServiceAuthorizesCSP()
-
-      When("a POST request with data is sent to the API")
-      val result = route(app, ValidRequest.withBody("<xm> malformed xml <xm>").fromCsp)
-
-      Then("a response with a 400 status is received")
-      result shouldBe 'defined
-
-      val resultFuture = result.get
-
-      status(resultFuture) shouldBe BAD_REQUEST
-      headers(resultFuture).get(X_CONVERSATION_ID_NAME) shouldBe 'defined
-
-      And("the response body is a \"malformed xml body\" XML")
-      stringToXml(contentAsString(resultFuture)) shouldBe stringToXml(malformedXmlAndNonXmlPayloadError)
-    }
-
-    scenario("Response status 400 when user submits a message with a non-xml payload") {
-      Given("an authorised CSP wants to submit a message with a non-XML payload")
-      authServiceAuthorizesCSP()
-      When("a POST request with data is sent to the API")
-      val result = route(app, ValidRequest.withBody("""  {"valid": "json payload" }  """).fromCsp)
-
-      Then("a response with a 400 status is received")
-      result shouldBe 'defined
-
-      val resultFuture = result.get
-
-      status(resultFuture) shouldBe BAD_REQUEST
-      headers(resultFuture).get(X_CONVERSATION_ID_NAME) shouldBe 'defined
-
-      And("the response body is a \"malformed xml body\" XML")
-      stringToXml(contentAsString(resultFuture)) shouldBe stringToXml(malformedXmlAndNonXmlPayloadError)
-    }
-
-    scenario("A non-CSP is not authorised to submit a message on behalf of somebody without Customs enrolment") {
-      Given("A Software House wants to submit a valid IL request")
-      val request: FakeRequest[AnyContentAsXml] = ValidRequest.fromNonCsp
-
-      And("declarant is not enrolled with Customs")
-      authServiceUnauthorisesScopeForCSP(nonCspBearerToken)
-      authServiceUnauthorisesCustomsEnrolmentForNonCSP()
-
-      When("a POST request with data is sent to the API")
-      val result: Future[Result] = route(app = app, request).value
-
-      Then("a response with a 401 (UNAUTHORIZED) status is received")
-      status(result) shouldBe UNAUTHORIZED
-
-      And("the response body is empty")
-      stringToXml(contentAsString(result)) shouldBe stringToXml(unauthorisedError)
-
-      And("the request was authorised with AuthService")
-      verifyAuthServiceCalledForNonCsp()
-    }
   }
 
 }

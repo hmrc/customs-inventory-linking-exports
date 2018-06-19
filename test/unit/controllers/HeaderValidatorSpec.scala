@@ -35,8 +35,8 @@ class HeaderValidatorSpec extends UnitSpec with TableDrivenPropertyChecks with M
   private val extractedHeaders = ExtractedHeadersImpl(VersionOne, ApiSubscriptionFieldsTestData.clientId)
 
   trait SetUp {
-    val loggerMock: ExportsLogger = mock[ExportsLogger]
-    val validator = new HeaderValidator(loggerMock)
+    val mockExportsLogger: ExportsLogger = mock[ExportsLogger]
+    val validator = new HeaderValidator(mockExportsLogger)
   }
 
   val headersTable =

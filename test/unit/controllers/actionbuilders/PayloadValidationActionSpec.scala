@@ -51,20 +51,25 @@ import scala.xml.SAXException
 
 class PayloadValidationActionSpec extends UnitSpec with MockitoSugar {
 
-  private implicit val forConversions: ConversationIdRequest[AnyContentAsXml] = TestConversationIdRequest
-  private val saxException = new SAXException("Boom!")
-  private val expectedXmlSchemaErrorResult = ErrorResponse
-    .errorBadRequest("Payload is not valid according to schema")
-    .withErrors(ResponseContents("xml_validation_error", saxException.getMessage)).XmlResult.withConversationId
-
   trait SetUp {
+    implicit val forConversions: ConversationIdRequest[AnyContentAsXml] = TestConversationIdRequest
+    val saxException = new SAXException("Boom!")
+
+    val expectedXmlSchemaErrorResult: Result = ErrorResponse
+      .errorBadRequest("Payload is not valid according to schema")
+      .withErrors(ResponseContents("xml_validation_error", saxException.getMessage)).XmlResult.withConversationId
+
+    val errorNotWellFormedResult: Result = ErrorResponse
+      .errorBadRequest("Request body does not contain a well-formed XML document.")
+      .XmlResult.withConversationId
+
     val mockXmlValidationService: XmlValidationService = mock[XmlValidationService]
     val mockExportsLogger: ExportsLogger = mock[ExportsLogger]
     val payloadValidationAction = new PayloadValidationAction(mockXmlValidationService, mockExportsLogger)
   }
 
   "PayloadValidationAction" should {
-    "return Right of ValidatedPayloadRequest when XML validation is OK" in new SetUp {
+    "return a ValidatedPayloadRequest when XML validation is OK" in new SetUp {
       when(mockXmlValidationService.validate(TestCspAuthorisedRequest.body.asXml.get)).thenReturn(Future.successful(()))
 
       private val actual: Either[Result, ValidatedPayloadRequest[AnyContentAsXml]] = await(payloadValidationAction.refine(TestCspAuthorisedRequest))
@@ -72,7 +77,7 @@ class PayloadValidationActionSpec extends UnitSpec with MockitoSugar {
       actual shouldBe Right(TestCspValidatedPayloadRequest)
     }
 
-    "return Left of error Result when XML is not well formed" in new SetUp {
+    "return 400 error response when XML is not well formed" in new SetUp {
       when(mockXmlValidationService.validate(TestCspAuthorisedRequest.body.asXml.get)).thenReturn(Future.failed(saxException))
 
       private val actual: Either[Result, ValidatedPayloadRequest[AnyContentAsXml]] = await(payloadValidationAction.refine(TestCspAuthorisedRequest))
@@ -80,18 +85,16 @@ class PayloadValidationActionSpec extends UnitSpec with MockitoSugar {
       actual shouldBe Left(expectedXmlSchemaErrorResult)
     }
 
-    "return Left of error Result when XML validation fails" in new SetUp {
-      val errorMessage = "Request body does not contain a well-formed XML document."
-      val errorNotWellFormed: Result = ErrorResponse.errorBadRequest(errorMessage).XmlResult.withConversationId
+    "return 400 error response when XML validation fails" in new SetUp {
       val authorisedRequestWithNonWellFormedXml: AuthorisedRequest[AnyContentAsText] = ConversationIdRequest(conversationId, FakeRequest().withTextBody("<foo><foo>"))
         .toValidatedHeadersRequest(TestExtractedHeaders).toCspAuthorisedRequest(badgeIdentifier)
 
       private val actual = await(payloadValidationAction.refine(authorisedRequestWithNonWellFormedXml))
 
-      actual shouldBe Left(errorNotWellFormed)
+      actual shouldBe Left(errorNotWellFormedResult)
     }
 
-    "propagates downstream errors by returning Left of error Result" in new SetUp {
+    "propagates downstream errors by returning a 500 error response" in new SetUp {
       when(mockXmlValidationService.validate(TestCspAuthorisedRequest.body.asXml.get)).thenReturn(Future.failed(emulatedServiceFailure))
 
       private val actual: Either[Result, ValidatedPayloadRequest[AnyContentAsXml]] = await(payloadValidationAction.refine(TestCspAuthorisedRequest))

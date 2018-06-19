@@ -44,7 +44,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
   private lazy val validatedHeadersRequestWithValidBadgeId =
     ConversationIdRequest(conversationId, testFakeRequestWithBadgeId()).toValidatedHeadersRequest(TestExtractedHeaders)
   private lazy val validatedHeadersRequestWithInValidBadgeIdTooLong =
-    ConversationIdRequest(conversationId, testFakeRequestWithBadgeId(badgeIdString = "INVALID_BADGE_IDENTIFIER_TO_LONG")).toValidatedHeadersRequest(TestExtractedHeaders)
+    ConversationIdRequest(conversationId, testFakeRequestWithBadgeId(badgeIdString = "INVALID_BADGE_IDENTIFIER_TOO_LONG")).toValidatedHeadersRequest(TestExtractedHeaders)
   private lazy val validatedHeadersRequestWithInValidBadgeIdLowerCase =
     ConversationIdRequest(conversationId, testFakeRequestWithBadgeId(badgeIdString = "lowercase")).toValidatedHeadersRequest(TestExtractedHeaders)
   private lazy val validatedHeadersRequestWithInValidBadgeIdTooShort =
@@ -59,7 +59,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
   }
 
   "CspAuthAction" should {
-    "Return Right of AuthorisedRequest with authorisedAs CSP when authorised by auth API and badge identifier exists" in new SetUp {
+    "authorise as CSP when authorised by auth API and badge identifier exists" in new SetUp {
       authoriseCsp()
 
       private val actual = await(authAction.refine(validatedHeadersRequestWithValidBadgeId))
@@ -67,7 +67,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       verifyNonCspAuthorisationNotCalled
     }
 
-    "Return Left of 401 Result when authorised by auth API but badge identifier does not exists" in new SetUp {
+    "return 401 response with ConversationId when authorised by auth API but badge identifier does not exist" in new SetUp {
       authoriseCsp()
 
       private val actual = await(authAction.refine(TestValidatedHeadersRequest))
@@ -76,8 +76,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       verifyNonCspAuthorisationNotCalled
     }
 
-
-    "Return Left of 401 Result when authorised by auth API but badge identifier exists but is too long" in new SetUp {
+    "return 401 response with ConversationId when authorised by auth API but badge identifier exists but is too long" in new SetUp {
       authoriseCsp()
 
       private val actual = await(authAction.refine(validatedHeadersRequestWithInValidBadgeIdTooLong))
@@ -86,7 +85,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       verifyNonCspAuthorisationNotCalled
     }
 
-    "Return Left of 401 Result when authorised by auth API but badge identifier exists but is too short" in new SetUp {
+    "return 401 response with ConversationId when authorised by auth API but badge identifier exists but is too short" in new SetUp {
       authoriseCsp()
 
       private val actual = await(authAction.refine(validatedHeadersRequestWithInValidBadgeIdTooShort))
@@ -95,7 +94,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       verifyNonCspAuthorisationNotCalled
     }
 
-    "Return Left of 401 Result when authorised by auth API but badge identifier exists but contains invalid chars" in new SetUp {
+    "return 401 response with ConversationId when authorised by auth API but badge identifier exists but contains invalid chars" in new SetUp {
       authoriseCsp()
 
       private val actual = await(authAction.refine(validatedHeadersRequestWithInValidBadgeIdInvalidChars))
@@ -104,7 +103,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       verifyNonCspAuthorisationNotCalled
     }
 
-    "Return Left of 401 Result when authorised by auth API but badge identifier exists but contains all lowercase chars" in new SetUp {
+    "return 401 response with ConversationId when authorised by auth API but badge identifier exists but contains all lowercase chars" in new SetUp {
       authoriseCsp()
 
       private val actual = await(authAction.refine(validatedHeadersRequestWithInValidBadgeIdLowerCase))
@@ -113,10 +112,10 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       verifyNonCspAuthorisationNotCalled
     }
 
-    "propagate exceptional errors in CSP auth API call" in new SetUp {
+    "return 500 response with ConversationId when not authorised by auth API" in new SetUp {
       authoriseCspError()
 
-      private val actual: Either[Result, AuthorisedRequest[AnyContentAsXml]] = await(authAction.refine(TestValidatedHeadersRequest))
+      private val actual = await(authAction.refine(TestValidatedHeadersRequest))
 
       actual shouldBe Left(ErrorInternalServerError.XmlResult.withHeaders(RequestHeaders.X_CONVERSATION_ID_NAME -> conversationId.toString))
       verifyNonCspAuthorisationNotCalled
@@ -125,25 +124,27 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
   }
 
   "NonCspAuthAction" should {
-    "Authorise Non CSP when authorised by auth API " in new SetUp {
+    "authorise as non-CSP when authorised by auth API " in new SetUp {
       authoriseNonCsp(Some(declarantEori))
 
       private val actual = await(authAction.refine(TestValidatedHeadersRequest))
 
       actual shouldBe Right(TestValidatedHeadersRequest.toNonCspAuthorisedRequest(declarantEori))
       verifyCspAuthorisationCalled(1)
+      verifyNonCspAuthorisationCalled(1)
     }
 
-    "Return 401 when authorised by auth API but Eori not exists" in new SetUp {
+    "return 401 response with ConversationId when authorised by auth API but Eori does not exist" in new SetUp {
       authoriseNonCsp(maybeEori = None)
 
       private val actual = await(authAction.refine(TestValidatedHeadersRequest))
 
       actual shouldBe Left(errorResponseEoriNotFoundInCustomsEnrolment.XmlResult.withHeaders(RequestHeaders.X_CONVERSATION_ID_NAME -> conversationId.toString))
       verifyCspAuthorisationCalled(1)
+      verifyNonCspAuthorisationCalled(1)
     }
 
-    "Return 401 when not authorised as NonCsp" in new SetUp {
+    "return 401 response with ConversationId when not authorised as non-CSP" in new SetUp {
       unauthoriseCsp()
       unauthoriseNonCspOnly()
 
@@ -151,9 +152,10 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
 
       actual shouldBe Left(errorResponseUnauthorisedGeneral.XmlResult.withHeaders(RequestHeaders.X_CONVERSATION_ID_NAME -> conversationId.toString))
       verifyCspAuthorisationCalled(1)
+      verifyNonCspAuthorisationCalled(1)
     }
 
-    "propagate exceptional errors in Non CSP auth API call" in new SetUp {
+    "return 500 response with ConversationId when not authorised by auth API" in new SetUp {
       unauthoriseCsp()
       authoriseNonCspOnlyError()
 
@@ -161,6 +163,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
 
       actual shouldBe Left(ErrorInternalServerError.XmlResult.withHeaders(RequestHeaders.X_CONVERSATION_ID_NAME -> conversationId.toString))
       verifyCspAuthorisationCalled(1)
+      verifyNonCspAuthorisationCalled(1)
     }
   }
 

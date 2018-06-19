@@ -118,7 +118,7 @@ class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfter
     }
 
     "return InternalServerError ErrorResponse when backend circuit breaker trips" in new SetUp() {
-      when(mockExportsConnector.send(any[NodeSeq], any[DateTime], any[UUID])(any[ValidatedPayloadRequest[_]])).thenReturn(Future.failed(new UnhealthyServiceException("wco-declaration")))
+      when(mockExportsConnector.send(any[NodeSeq], any[DateTime], any[UUID])(any[ValidatedPayloadRequest[_]])).thenReturn(Future.failed(new UnhealthyServiceException("mdg-exports")))
       send() shouldBe Left(errorResponseServiceUnavailable.XmlResult)
 
       verify(mockApiSubscriptionFieldsConnector, atLeastOnce()).getSubscriptionFields(any[ApiSubscriptionKey])(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])

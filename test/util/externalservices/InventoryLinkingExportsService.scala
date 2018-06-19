@@ -23,9 +23,9 @@ import util.{ExternalServicesConfig, WireMockRunner}
 trait InventoryLinkingExportsService extends WireMockRunner {
   private val urlMatchingRequestPath = urlMatching(ExportsExternalServicesConfig.ExportsServiceContext)
 
-  def startInventoryLinkingExportsService(): Unit = setupInventoryLinkingExportsServiceToReturn(ACCEPTED)
+  def startBackendService(): Unit = setupBackendServiceToReturn(ACCEPTED)
 
-  def setupInventoryLinkingExportsServiceToReturn(status: Int): Unit =
+  def setupBackendServiceToReturn(status: Int): Unit =
     stubFor(post(urlMatchingRequestPath).
       willReturn(
         aResponse()
