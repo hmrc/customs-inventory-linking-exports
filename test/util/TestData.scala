@@ -21,18 +21,15 @@ import java.util.UUID
 import org.joda.time.{DateTime, DateTimeZone}
 import play.api.http.HeaderNames._
 import play.api.http.MimeTypes
-import play.api.mvc.{AnyContentAsText, AnyContentAsXml}
+import play.api.mvc.AnyContentAsXml
 import play.api.test.FakeRequest
-import play.api.test.Helpers.POST
 import uk.gov.hmrc.customs.inventorylinking.export.model._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders._
 import uk.gov.hmrc.customs.inventorylinking.export.services.{UniqueIdsService, UuidService}
-import util.RequestHeaders._
 import util.TestData._
 import util.XMLTestData._
 
-import scala.util.Random
 import scala.xml.Elem
 
 object TestData {
@@ -46,16 +43,12 @@ object TestData {
   val correlationId = CorrelationId(correlationIdUuid)
 
   val validBadgeIdentifierValue = "BADGEID"
-  val invalidBadgeIdentifierValue = "InvalidBadgeId"
-  val invalidBadgeIdentifier: BadgeIdentifier = BadgeIdentifier(invalidBadgeIdentifierValue)
   val badgeIdentifier: BadgeIdentifier = BadgeIdentifier(validBadgeIdentifierValue)
 
   val declarantEoriValue = "ZZ123456789000"
   val declarantEori = Eori(declarantEoriValue)
   val dateTime: DateTime = DateTime.now(DateTimeZone.UTC)
   val dateTimeFormat = "YYYY-MM-dd'T'HH:mm:ss'Z'"
-
-  val validBasicAuthToken = s"Basic ${Random.alphanumeric.take(18).mkString}=="
 
   val cspBearerToken = "CSP-Bearer-Token"
   val nonCspBearerToken = "Software-House-Bearer-Token"
@@ -66,7 +59,7 @@ object TestData {
   val xsdLocations = List(
     "/api/conf/1.0/schemas/exports/request/inventoryLinkingRequestExternal.xsd")
 
-  lazy val ValidRequest: FakeRequest[AnyContentAsXml] = FakeRequest()
+  lazy val ValidRequest: FakeRequest[AnyContentAsXml] = FakeRequest("POST", "/")
     .withHeaders(
       RequestHeaders.X_CLIENT_ID_HEADER,
       RequestHeaders.ACCEPT_HMRC_XML_HEADER,
@@ -75,43 +68,12 @@ object TestData {
       RequestHeaders.X_BADGE_IDENTIFIER_HEADER)
     .withXmlBody(ValidInventoryLinkingMovementRequestXML)
 
-  lazy val ValidRequestWithXClientIdHeader: FakeRequest[AnyContentAsXml] = ValidRequest
-    .copyFakeRequest(headers =
-      ValidRequest.headers.remove(API_SUBSCRIPTION_FIELDS_ID_NAME).add(X_CLIENT_ID_HEADER))
-
-  lazy val NoClientIdIdHeaderRequest: FakeRequest[AnyContentAsXml] = ValidRequest
-    .copyFakeRequest(headers = InvalidRequest.headers.remove(API_SUBSCRIPTION_FIELDS_ID_NAME))
-
   lazy val InvalidRequest: FakeRequest[AnyContentAsXml] = ValidRequest.withXmlBody(InvalidXML)
-
-  lazy val InvalidRequestWith3Errors: FakeRequest[AnyContentAsXml] = InvalidRequest.withXmlBody(InvalidXMLWith3Errors)
-
-  lazy val MalformedXmlRequest: FakeRequest[AnyContentAsText] = InvalidRequest.withTextBody("<xml><non_well_formed></xml>")
-
-  lazy val NoAcceptHeaderRequest: FakeRequest[AnyContentAsXml] = InvalidRequest
-    .copyFakeRequest(headers = InvalidRequest.headers.remove(ACCEPT))
-
-  lazy val InvalidAcceptHeaderRequest: FakeRequest[AnyContentAsXml] = InvalidRequest
-    .withHeaders(RequestHeaders.ACCEPT_HEADER_INVALID)
-
-  lazy val InvalidContentTypeHeaderRequest: FakeRequest[AnyContentAsXml] = InvalidRequest
-    .withHeaders(RequestHeaders.ACCEPT_HMRC_XML_HEADER, RequestHeaders.CONTENT_TYPE_HEADER_INVALID)
-
-  lazy val InvalidXBadgeIdentifierHeaderRequest: FakeRequest[AnyContentAsXml] = InvalidRequest
-    .withHeaders(RequestHeaders.ACCEPT_HMRC_XML_HEADER, RequestHeaders.X_BADGE_IDENTIFIER_HEADER_INVALID)
-
-  lazy val NoXBadgeIdentifierHeaderRequest: FakeRequest[AnyContentAsXml] = ValidRequest
-    .copyFakeRequest(headers = InvalidRequest.headers.remove(RequestHeaders.X_BADGE_IDENTIFIER_HEADER._1))
-
-  lazy val NoApiSubscriptionFieldsIdHeaderRequest: FakeRequest[AnyContentAsXml] = ValidRequest
-    .copyFakeRequest(headers = InvalidRequest.headers.remove(RequestHeaders.API_SUBSCRIPTION_FIELDS_ID_HEADER._1))
 
   implicit class FakeRequestOps[R](val fakeRequest: FakeRequest[R]) extends AnyVal {
     def fromCsp: FakeRequest[R] = fakeRequest.withHeaders(AUTHORIZATION -> s"Bearer $cspBearerToken")
 
     def fromNonCsp: FakeRequest[R] = fakeRequest.withHeaders(AUTHORIZATION -> s"Bearer $nonCspBearerToken")
-
-    def postTo(endpoint: String): FakeRequest[R] = fakeRequest.copyFakeRequest(method = POST, uri = endpoint)
   }
 
   // note we can not mock service methods that return value classes - however IMHO it results in cleaner code (less mocking noise)
@@ -131,12 +93,10 @@ object TestData {
   val TestValidatedHeadersRequest: ValidatedHeadersRequest[AnyContentAsXml] = TestConversationIdRequest.toValidatedHeadersRequest(TestExtractedHeaders)
   val TestCspAuthorisedRequest: AuthorisedRequest[AnyContentAsXml] = TestValidatedHeadersRequest.toCspAuthorisedRequest(badgeIdentifier)
   val TestCspValidatedPayloadRequest: ValidatedPayloadRequest[AnyContentAsXml] = TestValidatedHeadersRequest.toCspAuthorisedRequest(badgeIdentifier).toValidatedPayloadRequest(xmlBody = TestXmlPayload)
-
+  val TestNonCspValidatedPayloadRequest: ValidatedPayloadRequest[AnyContentAsXml] = TestValidatedHeadersRequest.toNonCspAuthorisedRequest(declarantEori).toValidatedPayloadRequest(xmlBody = TestXmlPayload)
 }
 
 object RequestHeaders {
-
-  val BASIC_AUTH_HEADER: (String, String) = AUTHORIZATION -> validBasicAuthToken
 
   val X_CONVERSATION_ID_NAME = "X-Conversation-ID"
   val X_CONVERSATION_ID_HEADER: (String, String) = X_CONVERSATION_ID_NAME -> conversationIdUuid.toString
@@ -153,7 +113,6 @@ object RequestHeaders {
   val X_BADGE_IDENTIFIER_HEADER_INVALID: (String, String) = X_BADGE_IDENTIFIER_NAME -> "SHORT"
 
   val CONTENT_TYPE_HEADER: (String, String) = CONTENT_TYPE -> (MimeTypes.XML + "; charset=utf-8")
-
   val CONTENT_TYPE_HEADER_INVALID: (String, String) = CONTENT_TYPE -> "somethinginvalid"
 
   val ACCEPT_HMRC_XML_HEADER: (String, String) = ACCEPT -> "application/vnd.hmrc.1.0+xml"
@@ -166,7 +125,4 @@ object RequestHeaders {
     ACCEPT_HMRC_XML_HEADER,
     API_SUBSCRIPTION_FIELDS_ID_HEADER,
     X_BADGE_IDENTIFIER_HEADER)
-
-  val LoggingHeaders = Seq(API_SUBSCRIPTION_FIELDS_ID_HEADER, X_CLIENT_ID_HEADER, X_CONVERSATION_ID_HEADER)
-  val LoggingHeadersWithAuth = Seq(API_SUBSCRIPTION_FIELDS_ID_HEADER, X_CLIENT_ID_HEADER, X_CONVERSATION_ID_HEADER, BASIC_AUTH_HEADER)
 }

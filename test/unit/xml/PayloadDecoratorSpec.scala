@@ -20,7 +20,7 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.prop.TableDrivenPropertyChecks._
 import play.api.mvc.AnyContentAsXml
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
-import uk.gov.hmrc.customs.inventorylinking.export.xml.MdgPayloadDecorator
+import uk.gov.hmrc.customs.inventorylinking.export.xml.PayloadDecorator
 import uk.gov.hmrc.play.test.UnitSpec
 import util.ApiSubscriptionFieldsTestData._
 import util.TestData._
@@ -28,39 +28,33 @@ import util.XMLTestData._
 
 import scala.xml.NodeSeq
 
-class MdgPayloadDecoratorSpec extends UnitSpec with MockitoSugar{
+class PayloadDecoratorSpec extends UnitSpec with MockitoSugar{
 
-  val xmlPayload: NodeSeq = <inventoryLinkingMovementRequest>
-    <node1>whatever</node1>
-  </inventoryLinkingMovementRequest>
+  private val xmlPayload: NodeSeq = <node1></node1>
 
   private val commonLabel = "requestCommon"
 
-  private val decorator = new MdgPayloadDecorator()
+  private val decorator = new PayloadDecorator()
 
-  private implicit val vpr: ValidatedPayloadRequest[AnyContentAsXml] = TestCspValidatedPayloadRequest
+  "PayloadDecorator for CSP" should {
+    implicit val vpr: ValidatedPayloadRequest[AnyContentAsXml] = TestCspValidatedPayloadRequest
+    def wrapPayloadWithBadgeIdentifier(payload: NodeSeq = xmlPayload): NodeSeq = decorator.decorate(payload, TestSubscriptionFieldsId, correlationId, dateTime)
 
-  private def wrapPayloadWithBadgeIdentifier(payload: NodeSeq = xmlPayload) = decorator.decorate(payload, TestSubscriptionFieldsId, correlationId, dateTime)
-  private def wrapPayloadWithoutBadgeIdentifier(payload: NodeSeq = xmlPayload) = decorator.decorate(payload, TestSubscriptionFieldsId, correlationId, dateTime)
-
-  "MdgPayloadDecorator" should {
-
-    "wrap passed complete inventoryLinkingMovementRequest in MDG wrapper" in {
+    "wrap passed complete inventoryLinkingMovementRequest" in {
       val result = wrapPayloadWithBadgeIdentifier(ValidInventoryLinkingMovementRequestXML)
 
        xml.Utility.trim(result.head) shouldBe xml.Utility.trim(wrappedValidXML.head)
     }
 
     forAll(xmlRequests) { (linkingType, xml) =>
-      s"wrap passed $linkingType in MDG wrapper" in {
+      s"wrap passed $linkingType" in {
         val result = wrapPayloadWithBadgeIdentifier(xml)
 
         val header = result \ commonLabel
         val request = result \\ linkingType
-
         request should have size 1
         request.head.child shouldBe xml.head.child
-        header shouldBe 'nonEmpty
+        header.isEmpty shouldBe false
       }
     }
 
@@ -103,16 +97,70 @@ class MdgPayloadDecoratorSpec extends UnitSpec with MockitoSugar{
 
       rd.head.text shouldBe badgeIdentifier.value
     }
+  }
+
+  "PayloadDecorator for non-CSP" should {
+    implicit val vpr: ValidatedPayloadRequest[AnyContentAsXml] = TestNonCspValidatedPayloadRequest
+    def wrapPayloadWithoutBadgeIdentifier(payload: NodeSeq = xmlPayload): NodeSeq = decorator.decorate(payload, TestSubscriptionFieldsId, correlationId, dateTime)
+
+    "wrap passed complete inventoryLinkingMovementRequest" in {
+      val result = wrapPayloadWithoutBadgeIdentifier()
+
+      val requestDetail = result \\ "requestDetail"
+      requestDetail.head.child.contains(<node1/>) shouldBe true
+    }
+
+    forAll(xmlRequests) { (linkingType, xml) =>
+      s"wrap passed $linkingType" in {
+        val result = wrapPayloadWithoutBadgeIdentifier(xml)
+
+        val header = result \ commonLabel
+        val request = result \\ linkingType
+        request should have size 1
+        request.head.child shouldBe xml.head.child
+        header.isEmpty shouldBe false
+      }
+    }
+
+    "set the timestamp in the wrapper" in {
+      val result = wrapPayloadWithoutBadgeIdentifier()
+
+      val rd = result \ commonLabel \ "dateTimeStamp"
+
+      rd.head.text shouldBe dateTime.toString(dateTimeFormat)
+    }
+
+    "set the conversationId" in {
+      val result = wrapPayloadWithoutBadgeIdentifier()
+
+      val rd = result \ commonLabel \ "conversationID"
+
+      rd.head.text shouldBe conversationIdValue
+    }
+
+    "set the correlationId" in {
+      val result = wrapPayloadWithoutBadgeIdentifier()
+
+      val rd = result \ commonLabel \ "correlationID"
+
+      rd.head.text shouldBe correlationIdValue
+    }
+
+    "set the clientId" in {
+      val result = wrapPayloadWithoutBadgeIdentifier()
+
+      val rd = result \ commonLabel \ "clientID"
+
+      rd.head.text shouldBe TestSubscriptionFieldsId.value
+    }
 
     "should not set the badgeIdentifier when absent" in {
       val result = wrapPayloadWithoutBadgeIdentifier()
 
       val rd = result \\ "badgeIdentifier"
 
-      rd.isEmpty
+      rd.isEmpty shouldBe true
     }
-
-
   }
 
 }

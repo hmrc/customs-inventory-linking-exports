@@ -38,7 +38,7 @@ import scala.concurrent.Future
 import scala.xml.NodeSeq
 
 @Singleton
-class MdgExportsConnector @Inject()(http: HttpClient,
+class ExportsConnector @Inject()(http: HttpClient,
                                     logger: ExportsLogger,
                                     serviceConfigProvider: ServiceConfigProvider,
                                     config: ExportsConfigService,

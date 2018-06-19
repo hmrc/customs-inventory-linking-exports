@@ -14,9 +14,23 @@
  * limitations under the License.
  */
 
-package util
+package unit.services
 
-object ExportsExternalServicesConfig {
-  val MdgExportsServiceContext = "/InventoryLinking/ExportMovement/1.0.0"
-  val ApiSubscriptionFieldsContext = "/api-subscription-fields/field"
+import uk.gov.hmrc.customs.inventorylinking.export.services.UuidService
+import uk.gov.hmrc.play.test.UnitSpec
+
+class UuidServiceSpec extends UnitSpec {
+
+  private val uuidService = new UuidService
+
+  "UuidService" should {
+    "provide different value on each call" in {
+      val uuid1 = uuidService.uuid()
+      val uuid2 = uuidService.uuid()
+
+      uuid1 should not be uuid2
+      uuid1.toString should not be uuid2.toString
+    }
+  }
+
 }

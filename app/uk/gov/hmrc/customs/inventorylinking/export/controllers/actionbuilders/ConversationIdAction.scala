@@ -25,15 +25,15 @@ import uk.gov.hmrc.customs.inventorylinking.export.services.UniqueIdsService
 
 import scala.concurrent.Future
 
-/** Action builder that transforms a `Request` to a `CorrelationIdsRequest`
-  *
+/**
+  * Action builder that transforms a `Request` to a `ConversationIdRequest`
   */
 @Singleton
-class ConversationIdAction @Inject()(correlationIdService: UniqueIdsService, logger: ExportsLogger) extends ActionTransformer[Request, ConversationIdRequest] {
+class ConversationIdAction @Inject()(uniqueIdsService: UniqueIdsService, logger: ExportsLogger) extends ActionTransformer[Request, ConversationIdRequest] {
 
   override def transform[A](request: Request[A]): Future[ConversationIdRequest[A]] = {
 
-    val r = ConversationIdRequest(correlationIdService.conversation, request)
+    val r = ConversationIdRequest(uniqueIdsService.conversation, request)
     logger.debugFull("In ConversationIdAction.")(r)
 
     Future.successful(r)

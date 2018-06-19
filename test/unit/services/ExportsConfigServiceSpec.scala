@@ -21,15 +21,14 @@ import org.scalatest.mockito.MockitoSugar
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.customs.api.common.config.{ConfigValidationNelAdaptor, ServicesConfig}
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model.ExportsConfig
 import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
 import uk.gov.hmrc.play.test.UnitSpec
 
 class ExportsConfigServiceSpec extends UnitSpec with MockitoSugar {
   private val validAppConfig: Config = ConfigFactory.parseString(
     """
-      |api.access.version-1.0.whitelistedApplicationIds.0 = someId-1
-      |api.access.version-1.0.whitelistedApplicationIds.1 = someId-2
+      |api.access.version-1.0.whitelistedApplicationIds.0=someId-1
+      |api.access.version-1.0.whitelistedApplicationIds.1=someId-2
       |microservice.services.api-subscription-fields.host=some-host
       |microservice.services.api-subscription-fields.port=1111
       |microservice.services.api-subscription-fields.context=/some-context

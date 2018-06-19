@@ -76,7 +76,7 @@ object XMLTestData {
       </ucrBlock>
     </inventoryLinkingConsolidationRequest>
 
-  val ValidinventoryLinkingQueryRequestXML: Elem =
+  val ValidInventoryLinkingQueryRequestXML: Elem =
     <inventoryLinkingQueryRequest xmlns="http://gov.uk/customs/inventoryLinking/v1">
     <queryUCR>
       <ucr>GB/AAAA-00000</ucr>
@@ -87,7 +87,7 @@ object XMLTestData {
     </agentDetails>
   </inventoryLinkingQueryRequest>
 
-  def wrappedValidXML: Elem =
+  val wrappedValidXML: Elem =
       <n1:InventoryLinkingExportsInboundRequest xmlns:n1="http://www.hmrc.gov.uk/cds/inventorylinking/exportmovement"
                                                 xmlns:gw="http://gov.uk/customs/inventoryLinking/gatewayHeader/v1"
                                                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:inv="http://gov.uk/customs/inventoryLinking/v1">
@@ -117,6 +117,6 @@ object XMLTestData {
     ("linkingType", "xml"),
     ("inventoryLinkingMovementRequest", ValidInventoryLinkingMovementRequestXML),
     ("inventoryLinkingConsolidationRequest", ValidInventoryLinkingConsolidationRequestXML),
-    ("inventoryLinkingQueryRequest", ValidinventoryLinkingQueryRequestXML)
+    ("inventoryLinkingQueryRequest", ValidInventoryLinkingQueryRequestXML)
   )
 }

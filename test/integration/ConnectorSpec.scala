@@ -26,14 +26,14 @@ import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._
 import uk.gov.hmrc.circuitbreaker.UnhealthyServiceException
-import uk.gov.hmrc.customs.inventorylinking.export.connectors.MdgExportsConnector
+import uk.gov.hmrc.customs.inventorylinking.export.connectors.ExportsConnector
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.logging.Authorization
 import util.ExternalServicesConfig.{AuthToken, Host, Port}
+import util.TestData
 import util.XMLTestData.ValidInventoryLinkingMovementRequestXML
-import util.externalservices.InventoryLinkingExportsService
-import util.{ExportsExternalServicesConfig, TestData}
+import util.externalservices.{ExportsExternalServicesConfig, InventoryLinkingExportsService}
 
 import scala.xml.NodeSeq
 
@@ -51,11 +51,11 @@ class ConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite with Mo
       "circuitBreaker.unavailablePeriodDurationInMillis" -> unavailablePeriodDurationInMillis,
       "microservice.services.mdg-exports.host" -> Host,
       "microservice.services.mdg-exports.port" -> Port,
-      "microservice.services.mdg-exports.context" -> ExportsExternalServicesConfig.MdgExportsServiceContext,
+      "microservice.services.mdg-exports.context" -> ExportsExternalServicesConfig.ExportsServiceContext,
       "microservice.services.mdg-exports.bearer-token" -> AuthToken
     )).build()
 
-  private lazy val connector = app.injector.instanceOf[MdgExportsConnector]
+  private lazy val connector = app.injector.instanceOf[ExportsConnector]
 
   private val incomingBearerToken = "some_client's_bearer_token"
   private val incomingAuthToken = s"Bearer $incomingBearerToken"
@@ -79,7 +79,7 @@ class ConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite with Mo
     "ExportsConnector" should {
 
       "make a correct request" in {
-        startInventoryLinkingExportsService()
+        startBackendService()
 
         await(sendValidXml(ValidInventoryLinkingMovementRequestXML))
 
@@ -87,19 +87,19 @@ class ConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite with Mo
       }
 
       "return a failed future when service returns 404" in {
-        setupInventoryLinkingExportsServiceToReturn(NOT_FOUND)
+        setupBackendServiceToReturn(NOT_FOUND)
 
         intercept[RuntimeException](await(sendValidXml(ValidInventoryLinkingMovementRequestXML))).getCause.getClass shouldBe classOf[NotFoundException]
       }
 
       "return a failed future when service returns 400" in {
-        setupInventoryLinkingExportsServiceToReturn(BAD_REQUEST)
+        setupBackendServiceToReturn(BAD_REQUEST)
 
         intercept[RuntimeException](await(sendValidXml(ValidInventoryLinkingMovementRequestXML))).getCause.getClass shouldBe classOf[BadRequestException]
       }
 
       "return a failed future when service returns 500" in {
-        setupInventoryLinkingExportsServiceToReturn(INTERNAL_SERVER_ERROR)
+        setupBackendServiceToReturn(INTERNAL_SERVER_ERROR)
 
         intercept[Upstream5xxResponse](await(sendValidXml(ValidInventoryLinkingMovementRequestXML)))
       }
@@ -107,7 +107,7 @@ class ConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite with Mo
       "cause circuit breaker to trip after specified number of failures" in {
         Thread.sleep(unavailablePeriodDurationInMillis)
 
-        setupInventoryLinkingExportsServiceToReturn(INTERNAL_SERVER_ERROR)
+        setupBackendServiceToReturn(INTERNAL_SERVER_ERROR)
 
         1 to numberOfCallsToTriggerStateChange foreach { _ =>
           val k = intercept[Upstream5xxResponse](await(sendValidXml(ValidInventoryLinkingMovementRequestXML)))
@@ -120,13 +120,13 @@ class ConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite with Mo
         }
 
         resetMockServer()
-        startInventoryLinkingExportsService()
+        startBackendService()
 
         Thread.sleep(unavailablePeriodDurationInMillis)
 
         1 to 5 foreach { _ =>
           resetMockServer()
-          startInventoryLinkingExportsService()
+          startBackendService()
           await(sendValidXml(ValidInventoryLinkingMovementRequestXML))
           verifyInventoryLinkingExportsServiceWasCalledWith(ValidInventoryLinkingMovementRequestXML.toString())
         }

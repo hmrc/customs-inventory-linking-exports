@@ -89,7 +89,7 @@ class InventoryLinkingExportController @Inject()(
       implicit vpr: ValidatedPayloadRequest[AnyContent] =>
 
         logger.debug(s"Request received. Payload = ${vpr.body.toString} headers = ${vpr.headers.headers}")
-        logger.info(s"Inventory linking exports request received")
+        logger.info("Inventory linking exports request received")
 
         businessService.send map {
           case Right(_) =>

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package acceptance
+package component
 
 import org.scalatest.Matchers
 import play.api.Application
@@ -26,7 +26,7 @@ import play.api.test.Helpers._
 
 import scala.concurrent.Future
 
-class DefinitionSpec extends AcceptanceTestSpec with Matchers {
+class ApiDefinitionSpec extends ComponentTestSpec with Matchers {
 
   override implicit lazy val app: Application = new GuiceApplicationBuilder().build()
 

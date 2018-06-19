@@ -14,37 +14,34 @@
  * limitations under the License.
  */
 
-package acceptance
+package component
 
 import org.scalatest._
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
-import util.{ExportsExternalServicesConfig, ExternalServicesConfig}
+import util.ExternalServicesConfig
+import util.externalservices.ExportsExternalServicesConfig
 
 import scala.util.control.NonFatal
 import scala.xml.{Node, Utility, XML}
 
-trait AcceptanceTestSpec extends FeatureSpec with GivenWhenThen with GuiceOneAppPerSuite
+trait ComponentTestSpec extends FeatureSpec with GivenWhenThen with GuiceOneAppPerSuite
   with BeforeAndAfterAll with BeforeAndAfterEach {
 
-  override implicit lazy val app: Application = new GuiceApplicationBuilder().configure(Map(
-    "xml.max-errors" -> 2,
+  override def fakeApplication(): Application = new GuiceApplicationBuilder().configure(Map(
     "microservice.services.auth.host" -> ExternalServicesConfig.Host,
     "microservice.services.auth.port" -> ExternalServicesConfig.Port,
     "microservice.services.mdg-exports.host" -> ExternalServicesConfig.Host,
     "microservice.services.mdg-exports.port" -> ExternalServicesConfig.Port,
-    "microservice.services.mdg-exports.context" -> ExportsExternalServicesConfig.MdgExportsServiceContext,
+    "microservice.services.mdg-exports.context" -> ExportsExternalServicesConfig.ExportsServiceContext,
     "microservice.services.mdg-exports.bearer-token" -> ExternalServicesConfig.AuthToken,
     "microservice.services.api-subscription-fields.host" -> ExternalServicesConfig.Host,
     "microservice.services.api-subscription-fields.port" -> ExternalServicesConfig.Port,
-    "microservice.services.api-subscription-fields.context" -> ExportsExternalServicesConfig.ApiSubscriptionFieldsContext,
-    "auditing.enabled" -> false,
-    "auditing.consumer.baseUri.host" -> ExternalServicesConfig.Host,
-    "auditing.consumer.baseUri.port" -> ExternalServicesConfig.Port
+    "microservice.services.api-subscription-fields.context" -> ExportsExternalServicesConfig.ApiSubscriptionFieldsContext
   )).build()
 
-  protected def string2xml(s: String): Node = {
+  protected def stringToXml(s: String): Node = {
     val xml = try {
       XML.loadString(s)
     } catch {

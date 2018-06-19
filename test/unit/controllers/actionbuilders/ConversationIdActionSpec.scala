@@ -28,14 +28,14 @@ import util.TestData.conversationId
 class ConversationIdActionSpec extends UnitSpec with MockitoSugar {
 
   trait SetUp {
-    private val mockExportsLogger2 = mock[ExportsLogger]
+    private val mockExportsLogger = mock[ExportsLogger]
     val request = FakeRequest()
-    val conversationIdAction = new ConversationIdAction(TestData.stubUniqueIdsService, mockExportsLogger2)
+    val conversationIdAction = new ConversationIdAction(TestData.stubUniqueIdsService, mockExportsLogger)
     val expected = ConversationIdRequest(conversationId, request)
   }
 
   "ConversationIdAction" should {
-    "transform Request to CorrelationIdsRequest" in new SetUp {
+    "Generate a Request containing a unique correlation id" in new SetUp {
 
       private val actual = await(conversationIdAction.transform(request))
 

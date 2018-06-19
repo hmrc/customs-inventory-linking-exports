@@ -55,7 +55,7 @@ trait AuthService {
     js
   }
 
-  def authServiceAuthorizesCSP(bearerToken: String = TestData.cspBearerToken): Unit = {
+  def authServiceAuthorisesCSP(bearerToken: String = TestData.cspBearerToken): Unit = {
     stubFor(post(authUrlMatcher)
       .withRequestBody(equalToJson(authRequestJson(cspAuthorisationPredicate)))
       .withHeader(AUTHORIZATION, bearerTokenMatcher(bearerToken))
@@ -79,7 +79,7 @@ trait AuthService {
     )
   }
 
-  def authServiceAuthorizesNonCspWithEori(bearerToken: String = TestData.nonCspBearerToken,
+  def authServiceAuthorisesNonCspWithEori(bearerToken: String = TestData.nonCspBearerToken,
                                           eori: Eori = declarantEori): Unit = {
     stubFor(post(authUrlMatcher)
       .withRequestBody(equalToJson(authRequestJson(nonCspAuthorisationPredicate, nonCspRetrieval)))
