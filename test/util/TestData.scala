@@ -27,6 +27,7 @@ import uk.gov.hmrc.customs.inventorylinking.export.model._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders._
 import uk.gov.hmrc.customs.inventorylinking.export.services.{UniqueIdsService, UuidService}
+import util.RequestHeaders._
 import util.TestData._
 import util.XMLTestData._
 
@@ -45,6 +46,9 @@ object TestData {
   val validBadgeIdentifierValue = "BADGEID"
   val badgeIdentifier: BadgeIdentifier = BadgeIdentifier(validBadgeIdentifierValue)
 
+  val validEoriIdentifierValue = "EORI1234ID567"
+  lazy val eoriIdentifier: BadgeIdentifier = ??? //TODO MC
+
   val declarantEoriValue = "ZZ123456789000"
   val declarantEori = Eori(declarantEoriValue)
   val dateTime: DateTime = DateTime.now(DateTimeZone.UTC)
@@ -61,11 +65,13 @@ object TestData {
 
   lazy val ValidRequest: FakeRequest[AnyContentAsXml] = FakeRequest("POST", "/")
     .withHeaders(
-      RequestHeaders.X_CLIENT_ID_HEADER,
-      RequestHeaders.ACCEPT_HMRC_XML_HEADER,
-      RequestHeaders.CONTENT_TYPE_HEADER,
-      RequestHeaders.API_SUBSCRIPTION_FIELDS_ID_HEADER,
-      RequestHeaders.X_BADGE_IDENTIFIER_HEADER)
+      X_CLIENT_ID_HEADER,
+      ACCEPT_HMRC_XML_HEADER,
+      CONTENT_TYPE_HEADER,
+      API_SUBSCRIPTION_FIELDS_ID_HEADER,
+      X_BADGE_IDENTIFIER_HEADER,
+      X_EORI_IDENTIFIER_HEADER
+    )
     .withXmlBody(ValidInventoryLinkingMovementRequestXML)
 
   lazy val InvalidRequest: FakeRequest[AnyContentAsXml] = ValidRequest.withXmlBody(InvalidXML)
@@ -77,7 +83,7 @@ object TestData {
   }
 
   // note we can not mock service methods that return value classes - however IMHO it results in cleaner code (less mocking noise)
-  val stubUniqueIdsService = new UniqueIdsService(new UuidService()) {
+  val stubUniqueIdsService: UniqueIdsService = new UniqueIdsService(new UuidService()) {
     override def conversation: ConversationId = conversationId
     override def correlation: CorrelationId = correlationId
   }
@@ -86,7 +92,7 @@ object TestData {
   val TestFakeRequest: FakeRequest[AnyContentAsXml] = FakeRequest().withXmlBody(TestXmlPayload)
 
   def testFakeRequestWithBadgeId(badgeIdString: String = badgeIdentifier.value): FakeRequest[AnyContentAsXml] =
-    FakeRequest().withXmlBody(TestXmlPayload).withHeaders(RequestHeaders.X_BADGE_IDENTIFIER_NAME -> badgeIdString)
+    FakeRequest().withXmlBody(TestXmlPayload).withHeaders(X_BADGE_IDENTIFIER_NAME -> badgeIdString)
 
   val TestConversationIdRequest = ConversationIdRequest(conversationId, TestFakeRequest)
   val TestExtractedHeaders = ExtractedHeadersImpl(VersionOne, ApiSubscriptionFieldsTestData.clientId)
@@ -111,6 +117,10 @@ object RequestHeaders {
   val X_BADGE_IDENTIFIER_NAME = "X-Badge-Identifier"
   val X_BADGE_IDENTIFIER_HEADER: (String, String) = X_BADGE_IDENTIFIER_NAME -> validBadgeIdentifierValue
   val X_BADGE_IDENTIFIER_HEADER_INVALID: (String, String) = X_BADGE_IDENTIFIER_NAME -> "SHORT"
+
+  val X_EORI_IDENTIFIER_NAME = "X-EORI-Identifier"
+  val X_EORI_IDENTIFIER_HEADER: (String, String) = X_EORI_IDENTIFIER_NAME -> validBadgeIdentifierValue
+  val X_EORI_IDENTIFIER_HEADER_INVALID: (String, String) = X_EORI_IDENTIFIER_NAME -> "" //TODO MC clarify if there is a min length
 
   val CONTENT_TYPE_HEADER: (String, String) = CONTENT_TYPE -> (MimeTypes.XML + "; charset=utf-8")
   val CONTENT_TYPE_HEADER_INVALID: (String, String) = CONTENT_TYPE -> "somethinginvalid"

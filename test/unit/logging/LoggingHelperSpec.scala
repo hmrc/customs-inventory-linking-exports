@@ -42,6 +42,7 @@ class LoggingHelperSpec extends UnitSpec with MockitoSugar {
         CustomHeaderNames.XConversationIdHeaderName -> "C",
         CustomHeaderNames.XClientIdHeaderName -> "D",
         CustomHeaderNames.XBadgeIdentifierHeaderName -> "BADGE",
+        CustomHeaderNames.XEoriIdentifierHeaderName -> "EORI1234",
         "IGNORE" -> "IGNORE"
       )
     )

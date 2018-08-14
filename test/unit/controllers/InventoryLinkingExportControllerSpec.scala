@@ -80,6 +80,8 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
 
   private val errorResultBadgeIdentifier = errorBadRequest("X-Badge-Identifier header is missing or invalid").XmlResult.withHeaders(X_CONVERSATION_ID_HEADER)
 
+  private val errorResultEoriIdentifier = errorBadRequest("X-EORI-Identifier header is missing or invalid").XmlResult.withHeaders(X_CONVERSATION_ID_HEADER) //TODO MC
+
   "InventoryLinkingExportController" should {
     "process CSP request when call is authorised for CSP" in new SetUp() {
       authoriseCsp()
@@ -112,6 +114,15 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
       verifyZeroInteractions(mockXmlValidationService)
     }
 
+    "respond with status 400 for a CSP request with a missing X-EORI-Identifier" in new SetUp() {
+      authoriseCsp()
+
+      val result: Result = awaitSubmit(ValidRequest.copyFakeRequest(headers = ValidRequest.headers.remove(X_EORI_IDENTIFIER_NAME)))
+      result shouldBe errorResultEoriIdentifier
+      verifyZeroInteractions(mockBusinessService)
+      verifyZeroInteractions(mockXmlValidationService)
+    }
+
     "respond with status 500 for a request with a missing X-Client-ID" in new SetUp() {
       authoriseCsp()
 
@@ -130,6 +141,18 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
       verifyZeroInteractions(mockBusinessService)
       verifyZeroInteractions(mockXmlValidationService)
     }
+
+    "respond with status 400 for a request with an invalid X-EORI-Identifier" in new SetUp() {
+      authoriseCsp()
+
+      val result: Result = awaitSubmit(ValidRequest.withHeaders((ValidHeaders + X_EORI_IDENTIFIER_HEADER_INVALID).toSeq: _*))
+
+      result shouldBe errorResultEoriIdentifier
+      verifyZeroInteractions(mockBusinessService)
+      verifyZeroInteractions(mockXmlValidationService)
+    }
+
+    //TODO MC scenario when non-CSP submits a request with X-EORI-Identifier, but it does not match the one we get from AUTH
 
     "respond with status 202 and conversationId in header for a processed valid non-CSP request" in new SetUp() {
       authoriseNonCsp(Some(declarantEori))

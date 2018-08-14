@@ -41,6 +41,7 @@ object ActionBuilderModelHelper {
 
   implicit class ValidatedHeadersRequestOps[A](val vhr: ValidatedHeadersRequest[A]) extends AnyVal {
 
+    //TODO MC maybe second parameter = eori here ?
     def toCspAuthorisedRequest(badgeIdentifier: BadgeIdentifier): AuthorisedRequest[A] = toAuthorisedRequest(Csp(badgeIdentifier))
 
     def toNonCspAuthorisedRequest(eori: Eori): AuthorisedRequest[A] = toAuthorisedRequest(NonCsp(eori))

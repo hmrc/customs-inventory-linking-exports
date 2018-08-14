@@ -18,6 +18,7 @@ package uk.gov.hmrc.customs.inventorylinking.export.controllers
 
 object CustomHeaderNames {
   val XConversationIdHeaderName: String = "X-Conversation-ID"
-  val XClientIdHeaderName = "X-Client-ID"
+  val XClientIdHeaderName: String = "X-Client-ID"
   val XBadgeIdentifierHeaderName: String = "X-Badge-Identifier"
+  val XEoriIdentifierHeaderName: String = "X-EORI-Identifier" //TODO MC
 }

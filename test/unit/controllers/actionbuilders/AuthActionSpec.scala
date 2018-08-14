@@ -19,15 +19,13 @@ package unit.controllers.actionbuilders
 import org.scalatest.mockito.MockitoSugar
 import play.api.http.Status
 import play.api.http.Status.UNAUTHORIZED
-import play.api.mvc.{AnyContentAsXml, Result}
-import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.ErrorInternalServerError
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
-import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.{UnauthorizedCode, errorBadRequest}
+import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.{ErrorInternalServerError, UnauthorizedCode, errorBadRequest}
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders.AuthAction
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{AuthorisedRequest, ConversationIdRequest}
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
+import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ConversationIdRequest
 import uk.gov.hmrc.play.test.UnitSpec
 import util.TestData._
 import util.{AuthConnectorStubbing, RequestHeaders}
@@ -57,7 +55,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
     val mockExportsLogger: ExportsLogger = mock[ExportsLogger]
     val authAction: AuthAction = new AuthAction(mockAuthConnector, mockExportsLogger)
   }
-
+//TODO MC eori validation
   "CspAuthAction" should {
     "authorise as CSP when authorised by auth API and badge identifier exists" in new SetUp {
       authoriseCsp()

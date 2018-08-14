@@ -41,6 +41,11 @@ uses:
             type: string
             required: false
             example: ABC123
+        X-EORI-Identfier:
+            description: Required for CSP users. Must be alphanumeric string with a maximum length of 12.
+            type: string
+            required: false
+            example: ABC123
 
       (annotations.scope): "write:customs-inventory-linking-exports"
       securedBy: [ sec.oauth_2_0: { scopes: [ "write:customs-inventory-linking-exports" ] } ]
