@@ -19,13 +19,28 @@ package uk.gov.hmrc.customs.inventorylinking.export.xml
 import javax.inject.Singleton
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
-import uk.gov.hmrc.customs.inventorylinking.export.model.{CorrelationId, Csp, SubscriptionFieldsId}
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
+import uk.gov.hmrc.customs.inventorylinking.export.model.{CorrelationId, Csp, SubscriptionFieldsId}
 
 import scala.xml.NodeSeq
 
 @Singleton
 class PayloadDecorator() {
+
+  //TODO MC populate EORI according to
+/*  <xs:complexType name=“inventoryLinkingGatewayHeader”>
+    <xs:annotation>
+  <xs:documentation>Header for all message types. All elements are valid badgeIdentifier, UUIDs and a time stamp. All are mandatory in all messages</xs:documentation>
+  </xs:annotation>
+  <xs:sequence>
+    <xs:element name=“badgeIdentifier” type=“bid” minOccurs=“0" />
+      <xs:element name=“eori” type=“eoriid” minOccurs=“1” />
+        <xs:element name=“clientID” type=“uuid” minOccurs=“1" />
+          <xs:element name=“conversationID” type=“uuid” minOccurs=“1” />
+            <xs:element name=“correlationID” type=“uuid” minOccurs=“1" />
+              <xs:element name=“dateTimeStamp” type=“xs:dateTime” minOccurs=“1” />
+              </xs:sequence>
+            </xs:complexType>*/
 
   def decorate[A](xml: NodeSeq, clientId: SubscriptionFieldsId, correlationId: CorrelationId, dateTime: DateTime)(implicit vpr: ValidatedPayloadRequest[A]): NodeSeq = {
 
@@ -35,7 +50,7 @@ class PayloadDecorator() {
                                               xmlns:n1="http://www.hmrc.gov.uk/cds/inventorylinking/exportmovement">
       <n1:requestCommon>
         { vpr.authorisedAs match {
-            case Csp(badgeId) => <gw:badgeIdentifier>{badgeId.value}</gw:badgeIdentifier>
+            case Csp(badgeIdEoriPair) => <gw:badgeIdentifier>{badgeIdEoriPair.badgeIdentifier.value}</gw:badgeIdentifier>
             case _ => NodeSeq.Empty
           }
         }

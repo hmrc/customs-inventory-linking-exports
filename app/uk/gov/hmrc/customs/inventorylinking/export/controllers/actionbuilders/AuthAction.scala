@@ -19,18 +19,17 @@ package uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders
 import javax.inject.{Inject, Singleton}
 import play.api.http.Status
 import play.api.http.Status.UNAUTHORIZED
-import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.ErrorInternalServerError
 import play.api.mvc.{ActionRefiner, RequestHeader, Result}
 import uk.gov.hmrc.auth.core.AuthProvider.{GovernmentGateway, PrivilegedApplication}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.Retrievals
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
-import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.{UnauthorizedCode, errorBadRequest}
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames
+import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.{ErrorInternalServerError, UnauthorizedCode, errorBadRequest}
+import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames._
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{AuthorisedRequest, ValidatedHeadersRequest}
-import uk.gov.hmrc.customs.inventorylinking.export.model.{BadgeIdentifier, Eori}
+import uk.gov.hmrc.customs.inventorylinking.export.model.{BadgeIdentifier, BadgeIdentifierEoriPair, Eori}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.play.HeaderCarrierConverter
@@ -49,20 +48,23 @@ class AuthAction @Inject()(
 
   protected val errorResponseUnauthorisedGeneral =
     ErrorResponse(Status.UNAUTHORIZED, UnauthorizedCode, "Unauthorised request")
-  private val errorResponseBadgeIdentifierHeaderMissing = errorBadRequest(s"${CustomHeaderNames.XBadgeIdentifierHeaderName} header is missing or invalid")
+  private val errorResponseBadgeIdentifierHeaderMissing = errorBadRequest(s"$XBadgeIdentifierHeaderName header is missing or invalid")
+  private val errorResponseEoriIdentifierHeaderMissing = errorBadRequest(s"$XEoriIdentifierHeaderName header is missing or invalid")
   private lazy val errorResponseEoriNotFoundInCustomsEnrolment =
     ErrorResponse(UNAUTHORIZED, UnauthorizedCode, "EORI number not found in Customs Enrolment")
   private lazy val xBadgeIdentifierRegex = "^[0-9A-Z]{6,12}$".r
+
+  private lazy val xEoriIdentifierRegex = "^[0-9A-Za-z]{1,17}$".r
 
   override def refine[A](vhr: ValidatedHeadersRequest[A]): Future[Either[Result, AuthorisedRequest[A]]] = {
     implicit val implicitVhr: ValidatedHeadersRequest[A] = vhr
 
     authoriseAsCsp.flatMap{
-      case Right(maybeAuthorisedAsCspWithBadgeId) =>
-        maybeAuthorisedAsCspWithBadgeId.fold{
-          authoriseAsNonCsp
-        }{ badgeId =>
-          Future.successful(Right(vhr.toCspAuthorisedRequest(badgeId)))
+      case Right(maybeAuthorisedAsCspWithBadgeIdAndEori) =>
+        maybeAuthorisedAsCspWithBadgeIdAndEori.fold{
+          authoriseAsNonCsp //TODO MC revisit (what about nonCSPs ?)
+        }{ pair =>
+          Future.successful(Right(vhr.toCspAuthorisedRequest(pair)))
         }
       case Left(result) =>
         Future.successful(Left(result))
@@ -72,17 +74,22 @@ class AuthAction @Inject()(
   // pure function that tames exceptions throw by HMRC auth api into an Either
   // this enables calling function to not worry about recover blocks
   // returns a Future of Left(Result) on error or a Right(AuthorisedRequest) on success
-  private def authoriseAsCsp[A](implicit vhr: ValidatedHeadersRequest[A]): Future[Either[Result, Option[BadgeIdentifier]]] = {
+  private def authoriseAsCsp[A](implicit vhr: ValidatedHeadersRequest[A]): Future[Either[Result, Option[BadgeIdentifierEoriPair]]] = {
     implicit def hc(implicit rh: RequestHeader): HeaderCarrier = HeaderCarrierConverter.fromHeadersAndSession(rh.headers)
 
     authorised(Enrolment("write:customs-inventory-linking-exports") and AuthProviders(PrivilegedApplication)) {
       Future.successful{
-        maybeBadgeIdentifierWithValidation.fold[Either[Result, Option[BadgeIdentifier]]]{
+        maybeBadgeIdentifierWithValidation.fold[Either[Result, Option[BadgeIdentifierEoriPair]]]{
           logger.error("badge identifier invalid or not present for CSP")
           Left(errorResponseBadgeIdentifierHeaderMissing.XmlResult.withConversationId)
         }{ badgeId =>
-          logger.debug("Authorising as CSP")
-          Right(Some(badgeId))
+          maybeEoriIdentifierWithValidation.fold[Either[Result, Option[BadgeIdentifierEoriPair]]]{
+            logger.error("EORI identifier invalid or not present for CSP")
+            Left(errorResponseEoriIdentifierHeaderMissing.XmlResult.withConversationId)
+          } { eori =>
+            logger.debug("Authorising as CSP")
+            Right(Some(BadgeIdentifierEoriPair(badgeId, eori)))
+          }
         }
       }
     }.recover{
@@ -96,8 +103,13 @@ class AuthAction @Inject()(
   }
 
   private def maybeBadgeIdentifierWithValidation[A](implicit vhr: ValidatedHeadersRequest[A]): Option[BadgeIdentifier] = {
-    val maybeBadgeId: Option[String] = vhr.request.headers.toSimpleMap.get(CustomHeaderNames.XBadgeIdentifierHeaderName)
+    val maybeBadgeId: Option[String] = vhr.request.headers.toSimpleMap.get(XBadgeIdentifierHeaderName)
     maybeBadgeId.filter(xBadgeIdentifierRegex.findFirstIn(_).nonEmpty).map(BadgeIdentifier)
+  }
+
+  private def maybeEoriIdentifierWithValidation[A](implicit vhr: ValidatedHeadersRequest[A]): Option[Eori] = {
+    val maybeEoriId: Option[String] = vhr.request.headers.toSimpleMap.get(XEoriIdentifierHeaderName)
+    maybeEoriId.filter(xEoriIdentifierRegex.findFirstIn(_).nonEmpty).map(Eori)
   }
 
 
@@ -107,6 +119,7 @@ class AuthAction @Inject()(
   private def authoriseAsNonCsp[A](implicit vhr: ValidatedHeadersRequest[A]): Future[Either[Result, AuthorisedRequest[A]]] = {
     implicit def hc(implicit rh: RequestHeader): HeaderCarrier = HeaderCarrierConverter.fromHeadersAndSession(rh.headers)
 
+    //TODO MC add maybeEoriIdentifierWithValidation and compare what we get from AUTH
     authorised(Enrolment("HMRC-CUS-ORG") and AuthProviders(GovernmentGateway)).retrieve(Retrievals.authorisedEnrolments) {
       enrolments =>
         val maybeEori: Option[Eori] = findEoriInCustomsEnrolment(enrolments, hc.authorization)
