@@ -46,13 +46,11 @@ object TestData {
   val validBadgeIdentifierValue = "BADGEID"
   val badgeIdentifier: BadgeIdentifier = BadgeIdentifier(validBadgeIdentifierValue)
 
-  val validEoriIdentifierValue = "EORI1234ID567"
-  val eoriIdentifier: Eori = Eori("someValidEori098")
-
-  val badgeEoriPair = BadgeIdentifierEoriPair(badgeIdentifier, eoriIdentifier)
-
   val declarantEoriValue = "ZZ123456789000"
   val declarantEori = Eori(declarantEoriValue)
+
+  val badgeEoriPair = BadgeIdentifierEoriPair(badgeIdentifier, declarantEori)
+
   val dateTime: DateTime = DateTime.now(DateTimeZone.UTC)
   val dateTimeFormat = "YYYY-MM-dd'T'HH:mm:ss'Z'"
 
@@ -96,7 +94,7 @@ object TestData {
   def testFakeRequestWithBadgeId(badgeIdString: String = badgeIdentifier.value): FakeRequest[AnyContentAsXml] =
     FakeRequest().withXmlBody(TestXmlPayload).withHeaders(X_BADGE_IDENTIFIER_NAME -> badgeIdString)
 
-  def testFakeRequestWithBadgeIdAndEoriId(badgeIdString: String = badgeIdentifier.value, eoriIdString: String = eoriIdentifier.value): FakeRequest[AnyContentAsXml] =
+  def testFakeRequestWithBadgeIdAndEoriId(badgeIdString: String = badgeIdentifier.value, eoriIdString: String = declarantEori.value): FakeRequest[AnyContentAsXml] =
     FakeRequest().withXmlBody(TestXmlPayload).withHeaders(X_BADGE_IDENTIFIER_NAME -> badgeIdString, X_EORI_IDENTIFIER_NAME -> eoriIdString)
 
   val TestConversationIdRequest = ConversationIdRequest(conversationId, TestFakeRequest)
