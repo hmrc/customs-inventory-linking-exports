@@ -35,12 +35,9 @@ class PayloadDecorator() {
                                               xmlns:n1="http://www.hmrc.gov.uk/cds/inventorylinking/exportmovement">
       <n1:requestCommon>
         { vpr.authorisedAs match {
-            case Csp(badgeIdEoriPair) => <gw:badgeIdentifier>{badgeIdEoriPair.badgeIdentifier.value}</gw:badgeIdentifier>
-            case _ => NodeSeq.Empty
-          }
-        }
-        { vpr.authorisedAs match {
-            case Csp(badgeIdEoriPair) => <gw:eori>{badgeIdEoriPair.eori.value}</gw:eori>
+            case Csp(badgeIdEoriPair) =>
+              <gw:badgeIdentifier>{badgeIdEoriPair.badgeIdentifier.value}</gw:badgeIdentifier>
+                <gw:eori>{badgeIdEoriPair.eori.value}</gw:eori>
             case _ => NodeSeq.Empty
           }
         }
