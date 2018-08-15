@@ -20,5 +20,5 @@ object CustomHeaderNames {
   val XConversationIdHeaderName: String = "X-Conversation-ID"
   val XClientIdHeaderName: String = "X-Client-ID"
   val XBadgeIdentifierHeaderName: String = "X-Badge-Identifier"
-  val XEoriIdentifierHeaderName: String = "X-EORI-Identifier" //TODO MC
+  val XEoriIdentifierHeaderName: String = "X-EORI-Identifier"
 }

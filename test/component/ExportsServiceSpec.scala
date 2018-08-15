@@ -97,7 +97,7 @@ class ExportsServiceSpec extends ComponentTestSpec
       startApiSubscriptionFieldsService()
 
       When("a valid message is submitted with valid headers")
-      val result: Future[Result] = route(app, ValidRequest.fromCsp).get
+      val result: Future[Result] = route(app, ValidRequestWithEoriHeader.fromCsp).get
 
       And("an Accepted (202) response is returned")
       status(result) shouldBe ACCEPTED
@@ -119,7 +119,7 @@ class ExportsServiceSpec extends ComponentTestSpec
       setupBackendServiceToReturn(NOT_FOUND)
 
       When("a valid message request is submitted")
-      val result = route(app, ValidRequest.fromCsp).get
+      val result = route(app, ValidRequestWithEoriHeader.fromCsp).get
 
       Then("an 500 Internal Server Error response is returned")
       status(result) shouldBe INTERNAL_SERVER_ERROR
@@ -135,7 +135,7 @@ class ExportsServiceSpec extends ComponentTestSpec
       authServiceUnauthorisesCustomsEnrolmentForNonCSP(cspBearerToken)
 
       When("a POST request with data is sent to the API")
-      val result = route(app, ValidRequest.fromCsp)
+      val result = route(app, ValidRequestWithEoriHeader.fromCsp)
 
       Then("a response with a 401 status is returned by the API")
       result shouldBe 'defined

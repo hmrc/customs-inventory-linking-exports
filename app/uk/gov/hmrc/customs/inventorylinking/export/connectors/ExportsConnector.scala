@@ -45,7 +45,6 @@ class ExportsConnector @Inject()(http: HttpClient,
                                     override val configuration: Configuration
                                    ) extends UsingCircuitBreaker with AppName {
 
-  //TODO MC eori header must be populated !!
   def send[A](xml: NodeSeq, date: DateTime, correlationId: UUID)(implicit vpr: ValidatedPayloadRequest[A]): Future[HttpResponse] = {
     val config = Option(serviceConfigProvider.getConfig("mdg-exports")).getOrElse(throw new IllegalArgumentException("config not found"))
     val bearerToken = "Bearer " + config.bearerToken.getOrElse(throw new IllegalStateException("no bearer token was found in config"))

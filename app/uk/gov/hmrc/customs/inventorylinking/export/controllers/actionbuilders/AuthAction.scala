@@ -62,7 +62,7 @@ class AuthAction @Inject()(
     authoriseAsCsp.flatMap{
       case Right(maybeAuthorisedAsCspWithBadgeIdAndEori) =>
         maybeAuthorisedAsCspWithBadgeIdAndEori.fold{
-          authoriseAsNonCsp //TODO MC revisit (what about nonCSPs ?)
+          authoriseAsNonCsp
         }{ pair =>
           Future.successful(Right(vhr.toCspAuthorisedRequest(pair)))
         }
@@ -119,7 +119,6 @@ class AuthAction @Inject()(
   private def authoriseAsNonCsp[A](implicit vhr: ValidatedHeadersRequest[A]): Future[Either[Result, AuthorisedRequest[A]]] = {
     implicit def hc(implicit rh: RequestHeader): HeaderCarrier = HeaderCarrierConverter.fromHeadersAndSession(rh.headers)
 
-    //TODO MC add maybeEoriIdentifierWithValidation and compare what we get from AUTH
     authorised(Enrolment("HMRC-CUS-ORG") and AuthProviders(GovernmentGateway)).retrieve(Retrievals.authorisedEnrolments) {
       enrolments =>
         val maybeEori: Option[Eori] = findEoriInCustomsEnrolment(enrolments, hc.authorization)
@@ -127,8 +126,18 @@ class AuthAction @Inject()(
         maybeEori.fold[Future[Either[Result, AuthorisedRequest[A]]]]{
           Future.successful(Left(errorResponseEoriNotFoundInCustomsEnrolment.XmlResult.withConversationId))
         }{ eori =>
-          logger.debug("Authorising as non-CSP")
-          Future.successful(Right(vhr.toNonCspAuthorisedRequest(eori)))
+          val maybeEoriHeader = vhr.request.headers.toSimpleMap.get(XEoriIdentifierHeaderName)
+          val response: Either[Result, AuthorisedRequest[A]] = maybeEoriHeader match {
+            case Some(value) if value == eori.value =>
+              Right(vhr.toNonCspAuthorisedRequest(eori))
+            case Some(value) =>
+              logger.error(s"EORI provided in header $value didn't match $eori")
+              Left(errorResponseEoriIdentifierHeaderMissing.XmlResult.withConversationId)
+            case None => Right(vhr.toNonCspAuthorisedRequest(eori))
+          }
+
+          if(response.isRight) logger.debug("Authorising as non-CSP")
+          Future.successful(response)
         }
     }.recover{
       case NonFatal(_: AuthorisationException) =>
