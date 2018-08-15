@@ -27,21 +27,6 @@ import scala.xml.NodeSeq
 @Singleton
 class PayloadDecorator() {
 
-  //TODO MC populate EORI according to
-/*  <xs:complexType name=“inventoryLinkingGatewayHeader”>
-    <xs:annotation>
-  <xs:documentation>Header for all message types. All elements are valid badgeIdentifier, UUIDs and a time stamp. All are mandatory in all messages</xs:documentation>
-  </xs:annotation>
-  <xs:sequence>
-    <xs:element name=“badgeIdentifier” type=“bid” minOccurs=“0" />
-      <xs:element name=“eori” type=“eoriid” minOccurs=“1” />
-        <xs:element name=“clientID” type=“uuid” minOccurs=“1" />
-          <xs:element name=“conversationID” type=“uuid” minOccurs=“1” />
-            <xs:element name=“correlationID” type=“uuid” minOccurs=“1" />
-              <xs:element name=“dateTimeStamp” type=“xs:dateTime” minOccurs=“1” />
-              </xs:sequence>
-            </xs:complexType>*/
-
   def decorate[A](xml: NodeSeq, clientId: SubscriptionFieldsId, correlationId: CorrelationId, dateTime: DateTime)(implicit vpr: ValidatedPayloadRequest[A]): NodeSeq = {
 
     <n1:InventoryLinkingExportsInboundRequest xmlns:inv="http://gov.uk/customs/inventoryLinking/v1"
@@ -51,6 +36,11 @@ class PayloadDecorator() {
       <n1:requestCommon>
         { vpr.authorisedAs match {
             case Csp(badgeIdEoriPair) => <gw:badgeIdentifier>{badgeIdEoriPair.badgeIdentifier.value}</gw:badgeIdentifier>
+            case _ => NodeSeq.Empty
+          }
+        }
+        { vpr.authorisedAs match {
+            case Csp(badgeIdEoriPair) => <gw:eori>{badgeIdEoriPair.eori.value}</gw:eori>
             case _ => NodeSeq.Empty
           }
         }
