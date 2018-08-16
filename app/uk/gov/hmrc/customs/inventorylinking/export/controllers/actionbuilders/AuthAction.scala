@@ -59,11 +59,11 @@ class AuthAction @Inject()(
   override def refine[A](vhr: ValidatedHeadersRequest[A]): Future[Either[Result, AuthorisedRequest[A]]] = {
     implicit val implicitVhr: ValidatedHeadersRequest[A] = vhr
 
-    authoriseAsCsp.flatMap{
+    authoriseAsCsp.flatMap {
       case Right(maybeAuthorisedAsCspWithBadgeIdAndEori) =>
-        maybeAuthorisedAsCspWithBadgeIdAndEori.fold{
+        maybeAuthorisedAsCspWithBadgeIdAndEori.fold {
           authoriseAsNonCsp
-        }{ pair =>
+        } { pair =>
           Future.successful(Right(vhr.toCspAuthorisedRequest(pair)))
         }
       case Left(result) =>
@@ -78,21 +78,8 @@ class AuthAction @Inject()(
     implicit def hc(implicit rh: RequestHeader): HeaderCarrier = HeaderCarrierConverter.fromHeadersAndSession(rh.headers)
 
     authorised(Enrolment("write:customs-inventory-linking-exports") and AuthProviders(PrivilegedApplication)) {
-      Future.successful{
-        maybeBadgeIdentifierWithValidation.fold[Either[Result, Option[BadgeIdentifierEoriPair]]]{
-          logger.error("badge identifier invalid or not present for CSP")
-          Left(errorResponseBadgeIdentifierHeaderMissing.XmlResult.withConversationId)
-        }{ badgeId =>
-          maybeEoriIdentifierWithValidation.fold[Either[Result, Option[BadgeIdentifierEoriPair]]]{
-            logger.error("EORI identifier invalid or not present for CSP")
-            Left(errorResponseEoriIdentifierHeaderMissing.XmlResult.withConversationId)
-          } { eori =>
-            logger.debug("Authorising as CSP")
-            Right(Some(BadgeIdentifierEoriPair(badgeId, eori)))
-          }
-        }
-      }
-    }.recover{
+      Future.successful(eitherMaybeBadgeIdentifierEoriPair)
+    }.recover {
       case NonFatal(_: AuthorisationException) =>
         logger.debug("Not authorised as CSP")
         Right(None)
@@ -102,16 +89,33 @@ class AuthAction @Inject()(
     }
   }
 
-  private def maybeBadgeIdentifierWithValidation[A](implicit vhr: ValidatedHeadersRequest[A]): Option[BadgeIdentifier] = {
-    val maybeBadgeId: Option[String] = vhr.request.headers.toSimpleMap.get(XBadgeIdentifierHeaderName)
-    maybeBadgeId.filter(xBadgeIdentifierRegex.findFirstIn(_).nonEmpty).map(BadgeIdentifier)
-  }
-
-  private def maybeEoriIdentifierWithValidation[A](implicit vhr: ValidatedHeadersRequest[A]): Option[Eori] = {
+  private def eitherEoriIdentifierWithValidation[A](implicit vhr: ValidatedHeadersRequest[A]) = {
     val maybeEoriId: Option[String] = vhr.request.headers.toSimpleMap.get(XEoriIdentifierHeaderName)
-    maybeEoriId.filter(xEoriIdentifierRegex.findFirstIn(_).nonEmpty).map(Eori)
+    maybeEoriId.filter(xEoriIdentifierRegex.findFirstIn(_).nonEmpty).map(Eori).fold[Either[Result, Eori]] {
+      logger.error("EORI identifier invalid or not present for CSP")
+      Left(errorResponseEoriIdentifierHeaderMissing.XmlResult.withConversationId)
+    } { eori =>
+      logger.debug("Authorising as CSP")
+      Right(eori)
+    }
   }
 
+  private def eitherBadgeIdentifierWithValidation[A](implicit vhr: ValidatedHeadersRequest[A]) = {
+    val maybeBadgeIdString: Option[String] = vhr.request.headers.toSimpleMap.get(XBadgeIdentifierHeaderName)
+    maybeBadgeIdString.filter(xBadgeIdentifierRegex.findFirstIn(_).nonEmpty).map(BadgeIdentifier).fold[Either[Result, BadgeIdentifier]] {
+      logger.error("badge identifier invalid or not present for CSP")
+      Left(errorResponseBadgeIdentifierHeaderMissing.XmlResult.withConversationId)
+    } { badgeId: BadgeIdentifier => Right(badgeId) }
+  }
+
+
+  private def eitherMaybeBadgeIdentifierEoriPair[A](implicit vhr: ValidatedHeadersRequest[A]): Either[Result, Some[BadgeIdentifierEoriPair]] = {
+    for {
+      badgeId <- eitherBadgeIdentifierWithValidation.right
+      eori <- eitherEoriIdentifierWithValidation.right
+    } yield Some(BadgeIdentifierEoriPair(badgeId, eori))
+
+  }
 
   // pure function that tames exceptions throw by HMRC auth api into an Either
   // this enables calling function to not worry about recover blocks
@@ -123,9 +127,9 @@ class AuthAction @Inject()(
       enrolments =>
         val maybeEori: Option[Eori] = findEoriInCustomsEnrolment(enrolments, hc.authorization)
         logger.debug(s"EORI from Customs enrolment for non-CSP request: $maybeEori")
-        maybeEori.fold[Future[Either[Result, AuthorisedRequest[A]]]]{
+        maybeEori.fold[Future[Either[Result, AuthorisedRequest[A]]]] {
           Future.successful(Left(errorResponseEoriNotFoundInCustomsEnrolment.XmlResult.withConversationId))
-        }{ eori =>
+        } { eori =>
           val maybeEoriHeader = vhr.request.headers.toSimpleMap.get(XEoriIdentifierHeaderName)
           val response: Either[Result, AuthorisedRequest[A]] = maybeEoriHeader match {
             case Some(value) if value == eori.value =>
@@ -136,10 +140,10 @@ class AuthAction @Inject()(
             case None => Right(vhr.toNonCspAuthorisedRequest(eori))
           }
 
-          if(response.isRight) logger.debug("Authorising as non-CSP")
+          if (response.isRight) logger.debug("Authorising as non-CSP")
           Future.successful(response)
         }
-    }.recover{
+    }.recover {
       case NonFatal(_: AuthorisationException) =>
         Left(errorResponseUnauthorisedGeneral.XmlResult.withConversationId)
       case NonFatal(e) =>
