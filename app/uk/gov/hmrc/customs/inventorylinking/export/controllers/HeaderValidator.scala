@@ -37,7 +37,7 @@ class HeaderValidator @Inject()(logger: ExportsLogger) {
   def validateHeaders[A](implicit conversationIdRequest: ConversationIdRequest[A]): Either[ErrorResponse, ExtractedHeadersImpl] = {
     implicit val headers: Headers = conversationIdRequest.headers
 
-    def hasAccept: Either[ErrorResponse, String] = validateHeader(ACCEPT, validAcceptHeaders.contains(_), ErrorAcceptHeaderInvalid)
+    def hasAccept: Either[ErrorResponse, String] = validateHeader(ACCEPT, validAcceptHeaders.contains, ErrorAcceptHeaderInvalid)
 
     def hasContentType: Either[ErrorResponse, String] = validateHeader(CONTENT_TYPE, s => validContentTypeHeaders.contains(s.toLowerCase()), ErrorContentTypeHeaderInvalid)
 

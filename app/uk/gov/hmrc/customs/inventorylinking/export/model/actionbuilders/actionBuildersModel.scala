@@ -41,7 +41,7 @@ object ActionBuilderModelHelper {
 
   implicit class ValidatedHeadersRequestOps[A](val vhr: ValidatedHeadersRequest[A]) extends AnyVal {
 
-    def toCspAuthorisedRequest(badgeIdentifier: BadgeIdentifier): AuthorisedRequest[A] = toAuthorisedRequest(Csp(badgeIdentifier))
+    def toCspAuthorisedRequest(pair: BadgeIdentifierEoriPair): AuthorisedRequest[A] = toAuthorisedRequest(Csp(pair))
 
     def toNonCspAuthorisedRequest(eori: Eori): AuthorisedRequest[A] = toAuthorisedRequest(NonCsp(eori))
 
@@ -103,7 +103,7 @@ case class ConversationIdRequest[A](
   request: Request[A]
 ) extends WrappedRequest[A](request) with HasConversationId
 
-// Available after ValidatedHeadersAction builder
+// Available after ValidateAndExtractHeadersAction builder
 case class ValidatedHeadersRequest[A](
   conversationId: ConversationId,
   requestedApiVersion: ApiVersion,
@@ -111,7 +111,7 @@ case class ValidatedHeadersRequest[A](
   request: Request[A]
 ) extends WrappedRequest[A](request) with HasConversationId with ExtractedHeaders
 
-// Available after ValidatedHeadersAction builder
+// Available after AuthAction builder
 case class AuthorisedRequest[A](
   conversationId: ConversationId,
   requestedApiVersion: ApiVersion,

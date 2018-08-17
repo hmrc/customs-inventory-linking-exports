@@ -87,7 +87,7 @@ class PayloadValidationActionSpec extends UnitSpec with MockitoSugar {
 
     "return 400 error response when XML validation fails" in new SetUp {
       val authorisedRequestWithNonWellFormedXml: AuthorisedRequest[AnyContentAsText] = ConversationIdRequest(conversationId, FakeRequest().withTextBody("<foo><foo>"))
-        .toValidatedHeadersRequest(TestExtractedHeaders).toCspAuthorisedRequest(badgeIdentifier)
+        .toValidatedHeadersRequest(TestExtractedHeaders).toCspAuthorisedRequest(badgeEoriPair)
 
       private val actual = await(payloadValidationAction.refine(authorisedRequestWithNonWellFormedXml))
 

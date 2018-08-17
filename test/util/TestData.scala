@@ -27,6 +27,7 @@ import uk.gov.hmrc.customs.inventorylinking.export.model._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders._
 import uk.gov.hmrc.customs.inventorylinking.export.services.{UniqueIdsService, UuidService}
+import util.RequestHeaders._
 import util.TestData._
 import util.XMLTestData._
 
@@ -47,6 +48,9 @@ object TestData {
 
   val declarantEoriValue = "ZZ123456789000"
   val declarantEori = Eori(declarantEoriValue)
+
+  val badgeEoriPair = BadgeIdentifierEoriPair(badgeIdentifier, declarantEori)
+
   val dateTime: DateTime = DateTime.now(DateTimeZone.UTC)
   val dateTimeFormat = "YYYY-MM-dd'T'HH:mm:ss'Z'"
 
@@ -59,16 +63,28 @@ object TestData {
   val xsdLocations = List(
     "/api/conf/1.0/schemas/exports/request/inventoryLinkingRequestExternal.xsd")
 
-  lazy val ValidRequest: FakeRequest[AnyContentAsXml] = FakeRequest("POST", "/")
+  lazy val ValidRequestWithEoriHeader: FakeRequest[AnyContentAsXml] = FakeRequest("POST", "/")
     .withHeaders(
-      RequestHeaders.X_CLIENT_ID_HEADER,
-      RequestHeaders.ACCEPT_HMRC_XML_HEADER,
-      RequestHeaders.CONTENT_TYPE_HEADER,
-      RequestHeaders.API_SUBSCRIPTION_FIELDS_ID_HEADER,
-      RequestHeaders.X_BADGE_IDENTIFIER_HEADER)
+      X_CLIENT_ID_HEADER,
+      ACCEPT_HMRC_XML_HEADER,
+      CONTENT_TYPE_HEADER,
+      API_SUBSCRIPTION_FIELDS_ID_HEADER,
+      X_BADGE_IDENTIFIER_HEADER,
+      X_EORI_IDENTIFIER_HEADER
+    )
     .withXmlBody(ValidInventoryLinkingMovementRequestXML)
 
-  lazy val InvalidRequest: FakeRequest[AnyContentAsXml] = ValidRequest.withXmlBody(InvalidXML)
+  lazy val ValidRequestWithoutEoriHeader: FakeRequest[AnyContentAsXml] = FakeRequest("POST", "/")
+    .withHeaders(
+      X_CLIENT_ID_HEADER,
+      ACCEPT_HMRC_XML_HEADER,
+      CONTENT_TYPE_HEADER,
+      API_SUBSCRIPTION_FIELDS_ID_HEADER,
+      X_BADGE_IDENTIFIER_HEADER
+    )
+    .withXmlBody(ValidInventoryLinkingMovementRequestXML)
+
+  lazy val InvalidRequest: FakeRequest[AnyContentAsXml] = ValidRequestWithEoriHeader.withXmlBody(InvalidXML)
 
   implicit class FakeRequestOps[R](val fakeRequest: FakeRequest[R]) extends AnyVal {
     def fromCsp: FakeRequest[R] = fakeRequest.withHeaders(AUTHORIZATION -> s"Bearer $cspBearerToken")
@@ -77,7 +93,7 @@ object TestData {
   }
 
   // note we can not mock service methods that return value classes - however IMHO it results in cleaner code (less mocking noise)
-  val stubUniqueIdsService = new UniqueIdsService(new UuidService()) {
+  val stubUniqueIdsService: UniqueIdsService = new UniqueIdsService(new UuidService()) {
     override def conversation: ConversationId = conversationId
     override def correlation: CorrelationId = correlationId
   }
@@ -85,14 +101,20 @@ object TestData {
   val TestXmlPayload: Elem = <foo>bar</foo>
   val TestFakeRequest: FakeRequest[AnyContentAsXml] = FakeRequest().withXmlBody(TestXmlPayload)
 
+  def testFakeRequestWithEoriId(eoriId: String): FakeRequest[AnyContentAsXml] =
+    FakeRequest().withXmlBody(TestXmlPayload).withHeaders(X_EORI_IDENTIFIER_NAME -> eoriId)
+
   def testFakeRequestWithBadgeId(badgeIdString: String = badgeIdentifier.value): FakeRequest[AnyContentAsXml] =
-    FakeRequest().withXmlBody(TestXmlPayload).withHeaders(RequestHeaders.X_BADGE_IDENTIFIER_NAME -> badgeIdString)
+    FakeRequest().withXmlBody(TestXmlPayload).withHeaders(X_BADGE_IDENTIFIER_NAME -> badgeIdString)
+
+  def testFakeRequestWithBadgeIdAndEoriId(badgeIdString: String = badgeIdentifier.value, eoriIdString: String = declarantEori.value): FakeRequest[AnyContentAsXml] =
+    FakeRequest().withXmlBody(TestXmlPayload).withHeaders(X_BADGE_IDENTIFIER_NAME -> badgeIdString, X_EORI_IDENTIFIER_NAME -> eoriIdString)
 
   val TestConversationIdRequest = ConversationIdRequest(conversationId, TestFakeRequest)
   val TestExtractedHeaders = ExtractedHeadersImpl(VersionOne, ApiSubscriptionFieldsTestData.clientId)
   val TestValidatedHeadersRequest: ValidatedHeadersRequest[AnyContentAsXml] = TestConversationIdRequest.toValidatedHeadersRequest(TestExtractedHeaders)
-  val TestCspAuthorisedRequest: AuthorisedRequest[AnyContentAsXml] = TestValidatedHeadersRequest.toCspAuthorisedRequest(badgeIdentifier)
-  val TestCspValidatedPayloadRequest: ValidatedPayloadRequest[AnyContentAsXml] = TestValidatedHeadersRequest.toCspAuthorisedRequest(badgeIdentifier).toValidatedPayloadRequest(xmlBody = TestXmlPayload)
+  val TestCspAuthorisedRequest: AuthorisedRequest[AnyContentAsXml] = TestValidatedHeadersRequest.toCspAuthorisedRequest(badgeEoriPair)
+  val TestCspValidatedPayloadRequest: ValidatedPayloadRequest[AnyContentAsXml] = TestValidatedHeadersRequest.toCspAuthorisedRequest(badgeEoriPair).toValidatedPayloadRequest(xmlBody = TestXmlPayload)
   val TestNonCspValidatedPayloadRequest: ValidatedPayloadRequest[AnyContentAsXml] = TestValidatedHeadersRequest.toNonCspAuthorisedRequest(declarantEori).toValidatedPayloadRequest(xmlBody = TestXmlPayload)
 }
 
@@ -111,6 +133,10 @@ object RequestHeaders {
   val X_BADGE_IDENTIFIER_NAME = "X-Badge-Identifier"
   val X_BADGE_IDENTIFIER_HEADER: (String, String) = X_BADGE_IDENTIFIER_NAME -> validBadgeIdentifierValue
   val X_BADGE_IDENTIFIER_HEADER_INVALID: (String, String) = X_BADGE_IDENTIFIER_NAME -> "SHORT"
+
+  val X_EORI_IDENTIFIER_NAME = "X-EORI-Identifier"
+  val X_EORI_IDENTIFIER_HEADER: (String, String) = X_EORI_IDENTIFIER_NAME -> validBadgeIdentifierValue
+  val X_EORI_IDENTIFIER_HEADER_INVALID: (String, String) = X_EORI_IDENTIFIER_NAME -> ""
 
   val CONTENT_TYPE_HEADER: (String, String) = CONTENT_TYPE -> (MimeTypes.XML + "; charset=utf-8")
   val CONTENT_TYPE_HEADER_INVALID: (String, String) = CONTENT_TYPE -> "somethinginvalid"

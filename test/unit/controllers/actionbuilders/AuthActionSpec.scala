@@ -19,15 +19,13 @@ package unit.controllers.actionbuilders
 import org.scalatest.mockito.MockitoSugar
 import play.api.http.Status
 import play.api.http.Status.UNAUTHORIZED
-import play.api.mvc.{AnyContentAsXml, Result}
-import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.ErrorInternalServerError
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
-import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.{UnauthorizedCode, errorBadRequest}
+import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.{ErrorInternalServerError, UnauthorizedCode, errorBadRequest}
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders.AuthAction
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{AuthorisedRequest, ConversationIdRequest}
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
+import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ConversationIdRequest
 import uk.gov.hmrc.play.test.UnitSpec
 import util.TestData._
 import util.{AuthConnectorStubbing, RequestHeaders}
@@ -38,20 +36,41 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
     ErrorResponse(Status.UNAUTHORIZED, UnauthorizedCode, "Unauthorised request")
   private val errorResponseBadgeIdentifierHeaderMissing =
     errorBadRequest(s"${CustomHeaderNames.XBadgeIdentifierHeaderName} header is missing or invalid")
+  private val errorResponseEoriIdentifierHeaderMissing =
+    errorBadRequest(s"${CustomHeaderNames.XEoriIdentifierHeaderName} header is missing or invalid")
+
   private lazy val errorResponseEoriNotFoundInCustomsEnrolment =
     ErrorResponse(UNAUTHORIZED, UnauthorizedCode, "EORI number not found in Customs Enrolment")
 
-  private lazy val validatedHeadersRequestWithValidBadgeId =
+  private lazy val validatedHeadersRequestWithValidBadgeIdButNoEoriIdentifier =
     ConversationIdRequest(conversationId, testFakeRequestWithBadgeId()).toValidatedHeadersRequest(TestExtractedHeaders)
+
+  private lazy val validatedHeadersRequestWithValidBadgeIdAndEoriIdentifier =
+    ConversationIdRequest(conversationId, testFakeRequestWithBadgeIdAndEoriId()).toValidatedHeadersRequest(TestExtractedHeaders)
+
+  private lazy val validatedHeadersRequestWithValidBadgeIdAndEoriIdTooLong =
+    ConversationIdRequest(conversationId, testFakeRequestWithBadgeIdAndEoriId(eoriIdString = "abcTBN1234567890987")).toValidatedHeadersRequest(TestExtractedHeaders)
+
+  private lazy val validatedHeadersRequestWithValidBadgeIdAndEoriIdTooShort =
+    ConversationIdRequest(conversationId, testFakeRequestWithBadgeIdAndEoriId(eoriIdString = "")).toValidatedHeadersRequest(TestExtractedHeaders)
+
   private lazy val validatedHeadersRequestWithInValidBadgeIdTooLong =
     ConversationIdRequest(conversationId, testFakeRequestWithBadgeId(badgeIdString = "INVALID_BADGE_IDENTIFIER_TOO_LONG")).toValidatedHeadersRequest(TestExtractedHeaders)
+
   private lazy val validatedHeadersRequestWithInValidBadgeIdLowerCase =
     ConversationIdRequest(conversationId, testFakeRequestWithBadgeId(badgeIdString = "lowercase")).toValidatedHeadersRequest(TestExtractedHeaders)
+
   private lazy val validatedHeadersRequestWithInValidBadgeIdTooShort =
     ConversationIdRequest(conversationId, testFakeRequestWithBadgeId(badgeIdString = "SHORT")).toValidatedHeadersRequest(TestExtractedHeaders)
+
   private lazy val validatedHeadersRequestWithInValidBadgeIdInvalidChars =
     ConversationIdRequest(conversationId, testFakeRequestWithBadgeId(badgeIdString = "(*&*(^&*&%")).toValidatedHeadersRequest(TestExtractedHeaders)
 
+  private lazy val validatedHeadersRequestWithValidEoriId =
+    ConversationIdRequest(conversationId, testFakeRequestWithEoriId(eoriId = declarantEori.value)).toValidatedHeadersRequest(TestExtractedHeaders)
+
+  private lazy val validatedHeadersRequestWithInvalidEoriId =
+    ConversationIdRequest(conversationId, testFakeRequestWithEoriId(eoriId = "eeee")).toValidatedHeadersRequest(TestExtractedHeaders)
 
   trait SetUp extends AuthConnectorStubbing {
     val mockExportsLogger: ExportsLogger = mock[ExportsLogger]
@@ -59,15 +78,15 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
   }
 
   "CspAuthAction" should {
-    "authorise as CSP when authorised by auth API and badge identifier exists" in new SetUp {
+    "authorise as CSP when authorised by auth API and both badge identifier and eori headers exist" in new SetUp {
       authoriseCsp()
 
-      private val actual = await(authAction.refine(validatedHeadersRequestWithValidBadgeId))
-      actual shouldBe Right(validatedHeadersRequestWithValidBadgeId.toCspAuthorisedRequest(badgeIdentifier))
+      private val actual = await(authAction.refine(validatedHeadersRequestWithValidBadgeIdAndEoriIdentifier))
+      actual shouldBe Right(validatedHeadersRequestWithValidBadgeIdAndEoriIdentifier.toCspAuthorisedRequest(badgeEoriPair))
       verifyNonCspAuthorisationNotCalled
     }
 
-    "return 401 response with ConversationId when authorised by auth API but badge identifier does not exist" in new SetUp {
+    "return 400 response with ConversationId when authorised by auth API but badge identifier does not exist" in new SetUp {
       authoriseCsp()
 
       private val actual = await(authAction.refine(TestValidatedHeadersRequest))
@@ -76,7 +95,17 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       verifyNonCspAuthorisationNotCalled
     }
 
-    "return 401 response with ConversationId when authorised by auth API but badge identifier exists but is too long" in new SetUp {
+    "return 400 response with ConversationId when authorised by auth API and badge identifier exists, but eori header doesn't" in new SetUp {
+      authoriseCsp()
+
+      private val actual = await(authAction.refine(validatedHeadersRequestWithValidBadgeIdButNoEoriIdentifier))
+
+      actual shouldBe Left(errorResponseEoriIdentifierHeaderMissing.XmlResult.withHeaders(RequestHeaders.X_CONVERSATION_ID_NAME -> conversationId.toString))
+      verifyNonCspAuthorisationNotCalled
+    }
+
+
+    "return 400 response with ConversationId when authorised by auth API but badge identifier exists but is too long" in new SetUp {
       authoriseCsp()
 
       private val actual = await(authAction.refine(validatedHeadersRequestWithInValidBadgeIdTooLong))
@@ -85,7 +114,25 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       verifyNonCspAuthorisationNotCalled
     }
 
-    "return 401 response with ConversationId when authorised by auth API but badge identifier exists but is too short" in new SetUp {
+    "return 400 response with ConversationId when authorised by auth API and badge identifier exists but is too long but eori identifier is too long" in new SetUp {
+      authoriseCsp()
+
+      private val actual = await(authAction.refine(validatedHeadersRequestWithValidBadgeIdAndEoriIdTooLong))
+
+      actual shouldBe Left(errorResponseEoriIdentifierHeaderMissing.XmlResult.withHeaders(RequestHeaders.X_CONVERSATION_ID_NAME -> conversationId.toString))
+      verifyNonCspAuthorisationNotCalled
+    }
+
+    "return 400 response with ConversationId when authorised by auth API but badge identifier exists but is too short" in new SetUp {
+      authoriseCsp()
+
+      private val actual = await(authAction.refine(validatedHeadersRequestWithValidBadgeIdAndEoriIdTooShort))
+
+      actual shouldBe Left(errorResponseEoriIdentifierHeaderMissing.XmlResult.withHeaders(RequestHeaders.X_CONVERSATION_ID_NAME -> conversationId.toString))
+      verifyNonCspAuthorisationNotCalled
+    }
+
+    "return 400 response with ConversationId when authorised by auth API, badge identifier exists but eori identifier is too short" in new SetUp {
       authoriseCsp()
 
       private val actual = await(authAction.refine(validatedHeadersRequestWithInValidBadgeIdTooShort))
@@ -94,7 +141,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       verifyNonCspAuthorisationNotCalled
     }
 
-    "return 401 response with ConversationId when authorised by auth API but badge identifier exists but contains invalid chars" in new SetUp {
+    "return 400 response with ConversationId when authorised by auth API but badge identifier exists but contains invalid chars" in new SetUp {
       authoriseCsp()
 
       private val actual = await(authAction.refine(validatedHeadersRequestWithInValidBadgeIdInvalidChars))
@@ -103,7 +150,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       verifyNonCspAuthorisationNotCalled
     }
 
-    "return 401 response with ConversationId when authorised by auth API but badge identifier exists but contains all lowercase chars" in new SetUp {
+    "return 400 response with ConversationId when authorised by auth API but badge identifier exists but contains all lowercase chars" in new SetUp {
       authoriseCsp()
 
       private val actual = await(authAction.refine(validatedHeadersRequestWithInValidBadgeIdLowerCase))
@@ -124,12 +171,32 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
   }
 
   "NonCspAuthAction" should {
-    "authorise as non-CSP when authorised by auth API " in new SetUp {
+    "authorise as non-CSP when authorised by auth API (without eori header in request) " in new SetUp {
       authoriseNonCsp(Some(declarantEori))
 
       private val actual = await(authAction.refine(TestValidatedHeadersRequest))
 
       actual shouldBe Right(TestValidatedHeadersRequest.toNonCspAuthorisedRequest(declarantEori))
+      verifyCspAuthorisationCalled(1)
+      verifyNonCspAuthorisationCalled(1)
+    }
+
+    "authorise as non-CSP when authorised by auth API (with eori header matching our records) " in new SetUp {
+      authoriseNonCsp(Some(declarantEori))
+
+      private val actual = await(authAction.refine(validatedHeadersRequestWithValidEoriId))
+
+      actual shouldBe Right(validatedHeadersRequestWithValidEoriId.toNonCspAuthorisedRequest(declarantEori))
+      verifyCspAuthorisationCalled(1)
+      verifyNonCspAuthorisationCalled(1)
+    }
+
+    "return 400 response with ConversationId when authorised by auth API but Eori doesn't match" in new SetUp {
+      authoriseNonCsp(Some(declarantEori))
+
+      private val actual = await(authAction.refine(validatedHeadersRequestWithInvalidEoriId))
+
+      actual shouldBe Left(errorResponseEoriIdentifierHeaderMissing.XmlResult.withHeaders(RequestHeaders.X_CONVERSATION_ID_NAME -> conversationId.toString))
       verifyCspAuthorisationCalled(1)
       verifyNonCspAuthorisationCalled(1)
     }
