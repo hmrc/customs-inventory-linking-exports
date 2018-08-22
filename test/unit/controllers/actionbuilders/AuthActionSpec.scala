@@ -49,7 +49,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
     ConversationIdRequest(conversationId, testFakeRequestWithBadgeIdAndEoriId()).toValidatedHeadersRequest(TestExtractedHeaders)
 
   private lazy val validatedHeadersRequestWithValidBadgeIdAndEoriIdTooLong =
-    ConversationIdRequest(conversationId, testFakeRequestWithBadgeIdAndEoriId(eoriIdString = "abcTBN1234567890987")).toValidatedHeadersRequest(TestExtractedHeaders)
+    ConversationIdRequest(conversationId, testFakeRequestWithBadgeIdAndEoriId(eoriIdString = "GB9988776655787656")).toValidatedHeadersRequest(TestExtractedHeaders)
 
   private lazy val validatedHeadersRequestWithValidBadgeIdAndEoriIdTooShort =
     ConversationIdRequest(conversationId, testFakeRequestWithBadgeIdAndEoriId(eoriIdString = "")).toValidatedHeadersRequest(TestExtractedHeaders)
@@ -195,6 +195,16 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       authoriseNonCsp(Some(declarantEori))
 
       private val actual = await(authAction.refine(validatedHeadersRequestWithInvalidEoriId))
+
+      actual shouldBe Left(errorResponseEoriIdentifierHeaderMissing.XmlResult.withHeaders(RequestHeaders.X_CONVERSATION_ID_NAME -> conversationId.toString))
+      verifyCspAuthorisationCalled(1)
+      verifyNonCspAuthorisationCalled(1)
+    }
+
+    "return 400 response with ConversationId when authorised by auth API but Eori is too long" in new SetUp {
+      authoriseNonCsp(Some(declarantEori))
+
+      private val actual = await(authAction.refine(validatedHeadersRequestWithValidBadgeIdAndEoriIdTooLong))
 
       actual shouldBe Left(errorResponseEoriIdentifierHeaderMissing.XmlResult.withHeaders(RequestHeaders.X_CONVERSATION_ID_NAME -> conversationId.toString))
       verifyCspAuthorisationCalled(1)
