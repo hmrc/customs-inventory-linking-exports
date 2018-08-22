@@ -90,7 +90,7 @@ class AuthAction @Inject()(
   }
 
   private def eitherEoriIdentifierWithValidation[A](implicit vhr: ValidatedHeadersRequest[A]) = {
-    val maybeEoriId: Option[String] = vhr.request.headers.toSimpleMap.get(XEoriIdentifierHeaderName)
+    val maybeEoriId: Option[String] = maybeHeaderCaseInsensitive(XEoriIdentifierHeaderName)
     maybeEoriId.filter(xEoriIdentifierRegex.findFirstIn(_).nonEmpty).map(Eori).fold[Either[Result, Eori]] {
       logger.error("EORI identifier invalid or not present for CSP")
       Left(errorResponseEoriIdentifierHeaderMissing.XmlResult.withConversationId)
@@ -101,7 +101,7 @@ class AuthAction @Inject()(
   }
 
   private def eitherBadgeIdentifierWithValidation[A](implicit vhr: ValidatedHeadersRequest[A]) = {
-    val maybeBadgeIdString: Option[String] = vhr.request.headers.toSimpleMap.get(XBadgeIdentifierHeaderName)
+    val maybeBadgeIdString: Option[String] = maybeHeaderCaseInsensitive(XBadgeIdentifierHeaderName)
     maybeBadgeIdString.filter(xBadgeIdentifierRegex.findFirstIn(_).nonEmpty).map(BadgeIdentifier).fold[Either[Result, BadgeIdentifier]] {
       logger.error("badge identifier invalid or not present for CSP")
       Left(errorResponseBadgeIdentifierHeaderMissing.XmlResult.withConversationId)
@@ -130,7 +130,7 @@ class AuthAction @Inject()(
         maybeEori.fold[Future[Either[Result, AuthorisedRequest[A]]]] {
           Future.successful(Left(errorResponseEoriNotFoundInCustomsEnrolment.XmlResult.withConversationId))
         } { eori =>
-          val maybeEoriHeader = vhr.request.headers.toSimpleMap.get(XEoriIdentifierHeaderName)
+          val maybeEoriHeader = maybeHeaderCaseInsensitive(XEoriIdentifierHeaderName)
           val response: Either[Result, AuthorisedRequest[A]] = maybeEoriHeader match {
             case Some(value) if value == eori.value =>
               Right(vhr.toNonCspAuthorisedRequest(eori))
@@ -150,6 +150,10 @@ class AuthAction @Inject()(
         logger.error("Error authorising Non CSP", e)
         Left(ErrorInternalServerError.XmlResult.withConversationId)
     }
+  }
+
+  private def maybeHeaderCaseInsensitive[A](headerName: String)(implicit vhr: ValidatedHeadersRequest[A]) = {
+    vhr.request.headers.toSimpleMap.map{ e => (e._1.toLowerCase, e._2) }.get(headerName.toLowerCase)
   }
 
   private def findEoriInCustomsEnrolment[A](enrolments: Enrolments, authHeader: Option[Authorization])(implicit vhr: ValidatedHeadersRequest[A], hc: HeaderCarrier): Option[Eori] = {
