@@ -74,6 +74,17 @@ object TestData {
     )
     .withXmlBody(ValidInventoryLinkingMovementRequestXML)
 
+  lazy val ValidRequestWithEoriHeaderCamelCase: FakeRequest[AnyContentAsXml] = FakeRequest("POST", "/")
+    .withHeaders(
+      X_CLIENT_ID_HEADER,
+      ACCEPT_HMRC_XML_HEADER,
+      CONTENT_TYPE_HEADER,
+      API_SUBSCRIPTION_FIELDS_ID_HEADER,
+      X_BADGE_IDENTIFIER_HEADER,
+      X_EORI_IDENTIFIER_HEADER_CAMEL_CASE
+    )
+    .withXmlBody(ValidInventoryLinkingMovementRequestXML)
+
   lazy val ValidRequestWithoutEoriHeader: FakeRequest[AnyContentAsXml] = FakeRequest("POST", "/")
     .withHeaders(
       X_CLIENT_ID_HEADER,
@@ -135,7 +146,10 @@ object RequestHeaders {
   val X_BADGE_IDENTIFIER_HEADER_INVALID: (String, String) = X_BADGE_IDENTIFIER_NAME -> "SHORT"
 
   val X_EORI_IDENTIFIER_NAME = "X-EORI-Identifier"
-  val X_EORI_IDENTIFIER_HEADER: (String, String) = X_EORI_IDENTIFIER_NAME -> validBadgeIdentifierValue
+  val X_EORI_IDENTIFIER_NAME_CAMEL_CASE = "X-Eori-Identifier"
+
+  val X_EORI_IDENTIFIER_HEADER: (String, String) = X_EORI_IDENTIFIER_NAME -> declarantEoriValue
+  val X_EORI_IDENTIFIER_HEADER_CAMEL_CASE: (String, String) = X_EORI_IDENTIFIER_NAME_CAMEL_CASE -> declarantEoriValue
   val X_EORI_IDENTIFIER_HEADER_INVALID: (String, String) = X_EORI_IDENTIFIER_NAME -> ""
 
   val CONTENT_TYPE_HEADER: (String, String) = CONTENT_TYPE -> (MimeTypes.XML + "; charset=utf-8")

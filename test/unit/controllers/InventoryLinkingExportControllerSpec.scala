@@ -153,6 +153,16 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
       verifyZeroInteractions(mockXmlValidationService)
     }
 
+    "respond with status 400 for a request with an invalid X-EORI-Identifier (camel case)" in new SetUp() {
+      authoriseCsp()
+
+      val result: Result = awaitSubmit(ValidRequestWithEoriHeader.withHeaders((ValidHeaders + X_EORI_IDENTIFIER_HEADER_INVALID).toSeq: _*))
+
+      result shouldBe errorResultEoriIdentifier
+      verifyZeroInteractions(mockBusinessService)
+      verifyZeroInteractions(mockXmlValidationService)
+    }
+
     "respond with status 202 and conversationId in header for a processed valid non-CSP request (without eori id)" in new SetUp() {
       authoriseNonCsp(Some(declarantEori))
 
@@ -165,7 +175,16 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
     "respond with status 202 and conversationId in header for a processed valid non-CSP request with eori id that matches our records" in new SetUp() {
       authoriseNonCsp(Some(declarantEori))
 
-      val result: Future[Result] = submit(ValidRequestWithoutEoriHeader)
+      val result: Future[Result] = submit(ValidRequestWithEoriHeader)
+
+      status(result) shouldBe ACCEPTED
+      header(X_CONVERSATION_ID_NAME, result) shouldBe Some(conversationIdValue)
+    }
+
+    "respond with status 202 and conversationId in header for a processed valid non-CSP request with eori id that matches our records and header name is camel case" in new SetUp() {
+      authoriseNonCsp(Some(declarantEori))
+
+      val result: Future[Result] = submit(ValidRequestWithEoriHeaderCamelCase)
 
       status(result) shouldBe ACCEPTED
       header(X_CONVERSATION_ID_NAME, result) shouldBe Some(conversationIdValue)

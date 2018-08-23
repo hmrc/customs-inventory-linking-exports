@@ -19,6 +19,7 @@ package unit.controllers.actionbuilders
 import org.scalatest.mockito.MockitoSugar
 import play.api.http.Status
 import play.api.http.Status.UNAUTHORIZED
+import play.api.test.FakeRequest
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.{ErrorInternalServerError, UnauthorizedCode, errorBadRequest}
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames
@@ -27,6 +28,7 @@ import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ConversationIdRequest
 import uk.gov.hmrc.play.test.UnitSpec
+import util.RequestHeaders.X_EORI_IDENTIFIER_NAME_CAMEL_CASE
 import util.TestData._
 import util.{AuthConnectorStubbing, RequestHeaders}
 
@@ -66,11 +68,17 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
   private lazy val validatedHeadersRequestWithInValidBadgeIdInvalidChars =
     ConversationIdRequest(conversationId, testFakeRequestWithBadgeId(badgeIdString = "(*&*(^&*&%")).toValidatedHeadersRequest(TestExtractedHeaders)
 
+  private lazy val validatedHeadersRequestWithValidEoriIdCamelCase =
+    ConversationIdRequest(conversationId, FakeRequest().withXmlBody(TestXmlPayload).withHeaders(X_EORI_IDENTIFIER_NAME_CAMEL_CASE -> declarantEori.value)).toValidatedHeadersRequest(TestExtractedHeaders)
+
   private lazy val validatedHeadersRequestWithValidEoriId =
     ConversationIdRequest(conversationId, testFakeRequestWithEoriId(eoriId = declarantEori.value)).toValidatedHeadersRequest(TestExtractedHeaders)
 
   private lazy val validatedHeadersRequestWithInvalidEoriId =
     ConversationIdRequest(conversationId, testFakeRequestWithEoriId(eoriId = "eeee")).toValidatedHeadersRequest(TestExtractedHeaders)
+
+  private lazy val validatedHeadersRequestWithInvalidEoriIdCamelCase =
+    ConversationIdRequest(conversationId, FakeRequest().withXmlBody(TestXmlPayload).withHeaders(X_EORI_IDENTIFIER_NAME_CAMEL_CASE -> "aaaaa")).toValidatedHeadersRequest(TestExtractedHeaders)
 
   trait SetUp extends AuthConnectorStubbing {
     val mockExportsLogger: ExportsLogger = mock[ExportsLogger]
@@ -191,11 +199,31 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       verifyNonCspAuthorisationCalled(1)
     }
 
+
+    "authorise as non-CSP when authorised by auth API (with eori header matching our records and header name is camel case) " in new SetUp {
+      authoriseNonCsp(Some(declarantEori))
+
+      private val actual = await(authAction.refine(validatedHeadersRequestWithValidEoriIdCamelCase))
+
+      actual shouldBe Right(validatedHeadersRequestWithValidEoriId.toNonCspAuthorisedRequest(declarantEori))
+      verifyCspAuthorisationCalled(1)
+      verifyNonCspAuthorisationCalled(1)
+    }
+
     "return 400 response with ConversationId when authorised by auth API but Eori doesn't match" in new SetUp {
       authoriseNonCsp(Some(declarantEori))
 
       private val actual = await(authAction.refine(validatedHeadersRequestWithInvalidEoriId))
 
+      actual shouldBe Left(errorResponseEoriIdentifierHeaderMissing.XmlResult.withHeaders(RequestHeaders.X_CONVERSATION_ID_NAME -> conversationId.toString))
+      verifyCspAuthorisationCalled(1)
+      verifyNonCspAuthorisationCalled(1)
+    }
+
+    "return 400 response with ConversationId when authorised by auth API but Eori doesn't match and header name is camel case" in new SetUp {
+      authoriseNonCsp(Some(declarantEori))
+
+      private val actual = await(authAction.refine(validatedHeadersRequestWithInvalidEoriIdCamelCase))
       actual shouldBe Left(errorResponseEoriIdentifierHeaderMissing.XmlResult.withHeaders(RequestHeaders.X_CONVERSATION_ID_NAME -> conversationId.toString))
       verifyCspAuthorisationCalled(1)
       verifyNonCspAuthorisationCalled(1)
