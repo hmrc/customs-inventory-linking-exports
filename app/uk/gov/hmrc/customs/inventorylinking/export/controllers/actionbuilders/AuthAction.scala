@@ -153,7 +153,7 @@ class AuthAction @Inject()(
   }
 
   private def maybeHeaderCaseInsensitive[A](headerName: String)(implicit vhr: ValidatedHeadersRequest[A]) = {
-    vhr.request.headers.toSimpleMap.map{ e => (e._1.toLowerCase, e._2) }.get(headerName.toLowerCase)
+    vhr.request.headers.toSimpleMap.get(headerName)
   }
 
   private def findEoriInCustomsEnrolment[A](enrolments: Enrolments, authHeader: Option[Authorization])(implicit vhr: ValidatedHeadersRequest[A], hc: HeaderCarrier): Option[Eori] = {
