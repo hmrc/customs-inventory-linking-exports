@@ -89,10 +89,10 @@ class AuthAction @Inject()(
     }
   }
 
-  private def eitherEoriIdentifierWithValidation[A](implicit vhr: ValidatedHeadersRequest[A]) = {
+  private def eitherEoriIdentifierWithValidationCSP[A](implicit vhr: ValidatedHeadersRequest[A]) = {
     val maybeEoriId: Option[String] = maybeHeaderCaseInsensitive(XEoriIdentifierHeaderName)
-    maybeEoriId.filter(xEoriIdentifierRegex.findFirstIn(_).nonEmpty).map(Eori).fold[Either[Result, Eori]] {
-      logger.error("EORI identifier invalid or not present for CSP")
+    maybeValidEori(maybeEoriId).fold[Either[Result, Eori]] {
+      logger.error(s"EORI identifier invalid or not present for CSP ($maybeEoriId)")
       Left(errorResponseEoriIdentifierHeaderMissing.XmlResult.withConversationId)
     } { eori =>
       logger.debug("Authorising as CSP")
@@ -109,10 +109,14 @@ class AuthAction @Inject()(
   }
 
 
+  private def maybeValidEori(maybeValue: Option[String]) = {
+    maybeValue.filter(xEoriIdentifierRegex.findFirstIn(_).nonEmpty).map(Eori)
+  }
+
   private def eitherMaybeBadgeIdentifierEoriPair[A](implicit vhr: ValidatedHeadersRequest[A]): Either[Result, Some[BadgeIdentifierEoriPair]] = {
     for {
       badgeId <- eitherBadgeIdentifierWithValidation.right
-      eori <- eitherEoriIdentifierWithValidation.right
+      eori <- eitherEoriIdentifierWithValidationCSP.right
     } yield Some(BadgeIdentifierEoriPair(badgeId, eori))
 
   }
@@ -132,10 +136,10 @@ class AuthAction @Inject()(
         } { eori =>
           val maybeEoriHeader = maybeHeaderCaseInsensitive(XEoriIdentifierHeaderName)
           val response: Either[Result, AuthorisedRequest[A]] = maybeEoriHeader match {
-            case Some(value) if value == eori.value =>
+            case Some(value) if value == eori.value && maybeValidEori(maybeEoriHeader).isDefined =>
               Right(vhr.toNonCspAuthorisedRequest(eori))
             case Some(value) =>
-              logger.error(s"EORI provided in header $value didn't match $eori")
+              logger.error(s"EORI provided in header $value didn't match $eori or was invalid")
               Left(errorResponseEoriIdentifierHeaderMissing.XmlResult.withConversationId)
             case None => Right(vhr.toNonCspAuthorisedRequest(eori))
           }

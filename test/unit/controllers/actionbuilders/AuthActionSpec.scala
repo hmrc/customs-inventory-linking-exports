@@ -25,6 +25,7 @@ import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.{ErrorInternalSe
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders.AuthAction
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
+import uk.gov.hmrc.customs.inventorylinking.export.model.Eori
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ConversationIdRequest
 import uk.gov.hmrc.play.test.UnitSpec
@@ -50,8 +51,10 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
   private lazy val validatedHeadersRequestWithValidBadgeIdAndEoriIdentifier =
     ConversationIdRequest(conversationId, testFakeRequestWithBadgeIdAndEoriId()).toValidatedHeadersRequest(TestExtractedHeaders)
 
+  private val eoriTooLong = "GB9988776655787656"
+
   private lazy val validatedHeadersRequestWithValidBadgeIdAndEoriIdTooLong =
-    ConversationIdRequest(conversationId, testFakeRequestWithBadgeIdAndEoriId(eoriIdString = "GB9988776655787656")).toValidatedHeadersRequest(TestExtractedHeaders)
+    ConversationIdRequest(conversationId, testFakeRequestWithBadgeIdAndEoriId(eoriIdString = eoriTooLong)).toValidatedHeadersRequest(TestExtractedHeaders)
 
   private lazy val validatedHeadersRequestWithValidBadgeIdAndEoriIdTooShort =
     ConversationIdRequest(conversationId, testFakeRequestWithBadgeIdAndEoriId(eoriIdString = "")).toValidatedHeadersRequest(TestExtractedHeaders)
@@ -229,8 +232,8 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       verifyNonCspAuthorisationCalled(1)
     }
 
-    "return 400 response with ConversationId when authorised by auth API but Eori is too long" in new SetUp {
-      authoriseNonCsp(Some(declarantEori))
+    "return 400 response with ConversationId when authorised by auth API but Eori (provided in header) is too long" in new SetUp {
+      authoriseNonCsp(Some(Eori(eoriTooLong)))
 
       private val actual = await(authAction.refine(validatedHeadersRequestWithValidBadgeIdAndEoriIdTooLong))
 
