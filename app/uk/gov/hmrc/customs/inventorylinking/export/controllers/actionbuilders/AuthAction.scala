@@ -49,7 +49,10 @@ class AuthAction @Inject()(
   protected val errorResponseUnauthorisedGeneral =
     ErrorResponse(Status.UNAUTHORIZED, UnauthorizedCode, "Unauthorised request")
   private val errorResponseBadgeIdentifierHeaderMissing = errorBadRequest(s"$XBadgeIdentifierHeaderName header is missing or invalid")
+
   private val errorResponseEoriIdentifierHeaderMissing = errorBadRequest(s"$XEoriIdentifierHeaderName header is missing or invalid")
+  private val errorResponseEoriIdentifierHeaderInvalid = errorBadRequest(s"$XEoriIdentifierHeaderName header is invalid")
+
   private lazy val errorResponseEoriNotFoundInCustomsEnrolment =
     ErrorResponse(UNAUTHORIZED, UnauthorizedCode, "EORI number not found in Customs Enrolment")
   private lazy val xBadgeIdentifierRegex = "^[0-9A-Z]{6,12}$".r
@@ -134,18 +137,27 @@ class AuthAction @Inject()(
         maybeEori.fold[Future[Either[Result, AuthorisedRequest[A]]]] {
           Future.successful(Left(errorResponseEoriNotFoundInCustomsEnrolment.XmlResult.withConversationId))
         } { eori =>
+
           val maybeEoriHeader = maybeHeaderCaseInsensitive(XEoriIdentifierHeaderName)
-          val response: Either[Result, AuthorisedRequest[A]] = maybeEoriHeader match {
-            case Some(value) if value == eori.value && maybeValidEori(maybeEoriHeader).isDefined =>
-              Right(vhr.toNonCspAuthorisedRequest(eori))
-            case Some(value) =>
-              logger.error(s"EORI provided in header $value didn't match $eori or was invalid")
-              Left(errorResponseEoriIdentifierHeaderMissing.XmlResult.withConversationId)
-            case None => Right(vhr.toNonCspAuthorisedRequest(eori))
+
+          def logAndRight(anEori: Eori): Future[Either[Result, AuthorisedRequest[A]]] = {
+            logger.debug("Authorising as non-CSP")
+            Future.successful(Right(vhr.toNonCspAuthorisedRequest(anEori)))
           }
 
-          if (response.isRight) logger.debug("Authorising as non-CSP")
-          Future.successful(response)
+          maybeEoriHeader match {
+            case Some(eoriFromHeader) => maybeValidEori(maybeEoriHeader) match {
+              case Some(validEoriFromHeader) =>
+                logger.debug(s"Eori passed in header was in a valid format: $validEoriFromHeader")
+                logAndRight(eori)
+              case None =>
+                logger.error(s"Eori passed in header was in an invalid format: $eoriFromHeader")
+                Future.successful(Left(errorResponseEoriIdentifierHeaderInvalid.XmlResult.withConversationId))
+            }
+            case None =>
+              logger.debug("No Eori passed in header")
+              logAndRight(eori)
+          }
         }
     }.recover {
       case NonFatal(_: AuthorisationException) =>
