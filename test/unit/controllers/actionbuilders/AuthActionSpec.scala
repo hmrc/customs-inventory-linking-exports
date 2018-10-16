@@ -215,7 +215,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       verifyNonCspAuthorisationCalled(1)
     }
 
-    "authorise as non-CSP when authorised by auth API when authorised by auth API but Eori doesn't match" in new SetUp {
+    "authorise as non-CSP when authorised by auth API when authorised by auth API and ignore Eori in the header that doesn't match" in new SetUp {
       authoriseNonCsp(Some(declarantEori))
 
       private val actual = await(authAction.refine(validatedHeadersRequestWithInvalidEoriId))
@@ -225,7 +225,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       verifyNonCspAuthorisationCalled(1)
     }
 
-    "authorise as non-CSP when authorised by auth API when authorised by auth API but Eori doesn't match and header name is camel case" in new SetUp {
+    "authorise as non-CSP when authorised by auth API when authorised by auth API and ignore Eori in the header that doesn't match and header name is camel case" in new SetUp {
       authoriseNonCsp(Some(declarantEori))
 
       private val actual = await(authAction.refine(validatedHeadersRequestWithInvalidEoriIdCamelCase))

@@ -191,7 +191,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
     }
 
 
-    "respond with status 202 and conversationId in header for a processed valid non-CSP request with eori id that doesn't match our records" in new SetUp() {
+    "respond with status 202 and conversationId in header for a processed valid non-CSP request and ignoring the eori id in the header that doesn't match our records" in new SetUp() {
       authoriseNonCsp(Some(Eori("whatever")))
 
       val result: Result = awaitSubmit(ValidRequestWithEoriHeader)
