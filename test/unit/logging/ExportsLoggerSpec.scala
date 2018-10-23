@@ -17,6 +17,7 @@
 package unit.logging
 
 import org.scalatest.mockito.MockitoSugar
+import play.api.mvc.AnyContentAsXml
 import play.api.test.FakeRequest
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
@@ -33,6 +34,11 @@ class ExportsLoggerSpec extends UnitSpec with MockitoSugar {
     val logger = new ExportsLogger(mockCdsLogger)
     implicit val implicitVpr = ConversationIdRequest(conversationId, FakeRequest()
       .withXmlBody(TestXmlPayload).withHeaders("Content-Type" -> "Some-Content-Type"))
+  }
+
+  trait SetUpWithMixedCaseHeader extends SetUp {
+    override implicit val implicitVpr =  ConversationIdRequest(conversationId, FakeRequest()
+      .withXmlBody(TestXmlPayload).withHeaders("ConTenT-Type" -> "Some-Content-Type"))
   }
 
   "ExportsLogger" should {
@@ -58,6 +64,14 @@ class ExportsLoggerSpec extends UnitSpec with MockitoSugar {
 
       PassByNameVerifier(mockCdsLogger, "debug")
         .withByNameParam("[conversationId=28e5aa87-3f89-4f12-b1b1-60f2b2de66f1] msg headers=Map(Content-Type -> Some-Content-Type)")
+        .verify()
+    }
+
+    "debugFull(s: => String) mixed case headers" in new SetUpWithMixedCaseHeader {
+      logger.debugFull("msg")
+
+      PassByNameVerifier(mockCdsLogger, "debug")
+        .withByNameParam("[conversationId=28e5aa87-3f89-4f12-b1b1-60f2b2de66f1] msg headers=Map(ConTenT-Type -> Some-Content-Type)")
         .verify()
     }
 
