@@ -17,10 +17,11 @@
 package uk.gov.hmrc.customs.inventorylinking.export.xml
 
 import javax.inject.Singleton
+
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
-import uk.gov.hmrc.customs.inventorylinking.export.model.{CorrelationId, Csp, SubscriptionFieldsId}
+import uk.gov.hmrc.customs.inventorylinking.export.model.{CorrelationId, Csp, NonCsp, SubscriptionFieldsId}
 
 import scala.xml.NodeSeq
 
@@ -38,7 +39,7 @@ class PayloadDecorator() {
             case Csp(badgeIdEoriPair) =>
               <gw:badgeIdentifier>{badgeIdEoriPair.badgeIdentifier.value}</gw:badgeIdentifier>
                 <gw:eori>{badgeIdEoriPair.eori.value}</gw:eori>
-            case _ => NodeSeq.Empty
+            case NonCsp(eori) => <gw:eori>{eori.value}</gw:eori>
           }
         }
         <gw:clientID>{clientId.value}</gw:clientID>

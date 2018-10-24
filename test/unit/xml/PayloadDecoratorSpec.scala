@@ -169,6 +169,13 @@ class PayloadDecoratorSpec extends UnitSpec with MockitoSugar{
 
       rd.isEmpty shouldBe true
     }
-  }
 
+    "set the Eori identifier when present" in {
+      val result =  wrapPayloadWithoutBadgeIdentifier()
+
+      val rd = result \\ "eori"
+
+      rd.head.text shouldBe declarantEori.value
+    }
+  }
 }
