@@ -46,6 +46,20 @@ class LoggingHelperSpec extends UnitSpec with MockitoSugar {
         "IGNORE" -> "IGNORE"
       )
     )
+
+  private val conversationIdRequestMixedCaseHeaders =
+    ConversationIdRequest(
+      conversationId,
+      FakeRequest().withHeaders(
+        CONTENT_TYPE -> "A",
+        ACCEPT -> "B",
+        "X-ConVerSaTion-ID" -> "C",
+        "X-CliEnT-ID" -> "D",
+        "X-BaDge-IdeNtiFier" -> "BADGE",
+        "X-EORI-IdeNtiFier" -> "EORI1234",
+        "IGNORE" -> "IGNORE"
+      )
+    )
   private val validatedHeadersRequest = ValidatedHeadersRequest(conversationId, VersionOne, ClientId("some-client-id"), requestMock)
 
   "LoggingHelper" should {
@@ -69,6 +83,10 @@ class LoggingHelperSpec extends UnitSpec with MockitoSugar {
 
     "testFormatDebugFull" in {
       LoggingHelper.formatDebugFull("Debug message.", conversationIdRequest) shouldBe s"[conversationId=$conversationId] Debug message. headers=Map(Accept -> B, X-Client-ID -> D, Content-Type -> A, X-Conversation-ID -> C, X-Badge-Identifier -> BADGE)"
+    }
+
+    "testFormatDebugFull with mixed case headernames" in {
+      LoggingHelper.formatDebugFull("Debug message.", conversationIdRequestMixedCaseHeaders) shouldBe s"[conversationId=$conversationId] Debug message. headers=Map(Accept -> B, X-CliEnT-ID -> D, Content-Type -> A, X-ConVerSaTion-ID -> C, X-BaDge-IdeNtiFier -> BADGE)"
     }
   }
 }

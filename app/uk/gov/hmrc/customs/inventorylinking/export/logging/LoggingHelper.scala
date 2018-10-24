@@ -21,7 +21,7 @@ import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ConversationIdRequest, ExtractedHeaders, HasAuthorisedAs, HasConversationId}
 
 object LoggingHelper {
-  private val headerSet = Set(CONTENT_TYPE, ACCEPT, XConversationIdHeaderName, XClientIdHeaderName, XBadgeIdentifierHeaderName)
+  private val headerSet = Set(CONTENT_TYPE.toLowerCase, ACCEPT.toLowerCase, XConversationIdHeaderName.toLowerCase, XClientIdHeaderName.toLowerCase, XBadgeIdentifierHeaderName.toLowerCase)
 
   def formatError(msg: String, r: HasConversationId): String = {
     formatMessage(msg, r)
@@ -65,7 +65,7 @@ object LoggingHelper {
 
   def formatMessageFull(msg: String, r: ConversationIdRequest[_]): String = {
 
-    val filteredHeaders = r.request.headers.toSimpleMap.filter(keyValTuple => headerSet.contains(keyValTuple._1))
+    val filteredHeaders = r.request.headers.toSimpleMap.filter(keyValTuple => headerSet.contains(keyValTuple._1.toLowerCase))
 
     s"[conversationId=${r.conversationId}] $msg headers=$filteredHeaders"
   }
