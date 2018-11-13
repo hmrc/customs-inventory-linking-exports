@@ -1,4 +1,4 @@
-# Customs Declarations Curl Commmands
+# Inventory Linking Exports Curl Commands
 ---
 ### Endpoints Summary
 
@@ -6,8 +6,6 @@
 |-----------------------------------------------|--------|--------------------------------------------|
 | [`/`](#user-content-post-export-payload)      | `POST` | Allows submission of an inventory linking export payload |
 
-#### Useful CURL commands for local testing
-[link to curl commands](docs/curl-commands.md)
 --- 
  
 ### POST export payload 
@@ -18,11 +16,11 @@ Allows submission of an inventory linking export payload
 ```
 curl -v -X POST "http://localhost:9823/" \
   -H 'Accept: application/vnd.hmrc.1.0+xml' \
-  -H 'Authorization: Bearer {ADD VALID TOKEN}' \
+  -H 'Authorization: Bearer {TOKEN}' \
   -H 'Content-Type: application/xml;charset=utf-8' \
   -H 'X-Badge-Identifier: {Badge Id}' \
-  -H 'X-Client-ID: {Valid Client Id}' \
-  -H 'X-EORI-Identifier: {Valid EORI}' \
+  -H 'X-Client-ID: {Client Id}' \
+  -H 'X-EORI-Identifier: {EORI}' \
   -d '<?xml version="1.0" encoding="UTF-8"?>
 <inv:inventoryLinkingQueryRequest xmlns:inv="http://gov.uk/customs/inventoryLinking/v1">
     <inv:queryUCR>
