@@ -8,7 +8,6 @@
 
 --- 
  
-### POST export payload 
 #### `POST /`
 Allows submission of an inventory linking export payload
  
