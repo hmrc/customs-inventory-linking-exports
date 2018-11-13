@@ -11,6 +11,9 @@ The objective of the service POST API is as follows:
 
 It is assumed that the underlying MDG process is asynchronous, and that the only response to the declarant from this API is to indicate the success (or otherwise) of the validation and submission to downstream system.
 
+## Useful CURL commands for local testing
+[link to curl commands](docs/curl-commands.md)
+
 # Custom SBT Task for generating ZIP file containing schemas
 There is an SBT task `zipXsds` that generates a ZIP file containing schemas, for each version under `/public/api/conf` 
 during the packaging phase (so are not generated during normal development). These ZIP files are referenced by the RAML. 
