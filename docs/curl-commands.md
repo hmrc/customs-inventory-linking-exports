@@ -4,7 +4,7 @@
 
 | Path                                          | Method | Description                                |
 |-----------------------------------------------|--------|--------------------------------------------|
-| [`/`](#user-content-post-export-payload)      | `POST` | Allows submission of an inventory linking export payload |
+| [`/`](#user-content-post-/)      | `POST` | Allows submission of an inventory linking export payload |
 
 --- 
  
