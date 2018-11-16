@@ -65,7 +65,8 @@ class ApiDefinitionSpec extends ComponentTestSpec with Matchers {
           |        "status": "BETA",
           |        "endpointsEnabled": true,
           |        "access": {
-          |          "type": "PUBLIC"
+          |          "type": "PRIVATE",
+          |          "whitelistedApplicationIds": []
           |        },
           |        "fieldDefinitions": [
           |          {

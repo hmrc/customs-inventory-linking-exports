@@ -38,7 +38,10 @@ class ExportsConfigService @Inject()(configuration: Configuration,
   private val unavailablePeriodDurationInMillisNel = root.int("circuitBreaker.unavailablePeriodDurationInMillis")
   private val unstablePeriodDurationInMillisNel = root.int("circuitBreaker.unstablePeriodDurationInMillis")
 
-  private val validatedExportsConfig: CustomsValidatedNel[ExportsConfig] = apiSubscriptionFieldsServiceUrlNel.map(ExportsConfig.apply)
+  private val validatedExportsConfig: CustomsValidatedNel[ExportsConfig] = (
+    whiteListedCspApplicationIds, apiSubscriptionFieldsServiceUrlNel
+  ) mapN ExportsConfig.apply
+
 
   private val validatedExportsCircuitBreakerConfig: CustomsValidatedNel[ExportsCircuitBreakerConfig] = (
     numberOfCallsToTriggerStateChangeNel, unavailablePeriodDurationInMillisNel, unstablePeriodDurationInMillisNel

@@ -18,7 +18,7 @@
         "status": "BETA",
         "endpointsEnabled": true,
         "access": {
-          "type": "PRIVATE"
+          "type": "PRIVATE",
           "whitelistedApplicationIds": @Json.toJson(whitelistedApplicationIds)
         },
         "fieldDefinitions": [
