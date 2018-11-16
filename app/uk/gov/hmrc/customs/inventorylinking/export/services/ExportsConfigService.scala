@@ -30,6 +30,7 @@ class ExportsConfigService @Inject()(configuration: Configuration,
                                      logger: ExportsLogger) {
 
   private val root = configValidatedNel.root
+  private val whiteListedCspApplicationIds = root.stringSeq("api.access.version-1.0.whitelistedApplicationIds")
 
   private val apiSubscriptionFieldsService = configValidatedNel.service("api-subscription-fields")
   private val apiSubscriptionFieldsServiceUrlNel = apiSubscriptionFieldsService.serviceUrl
