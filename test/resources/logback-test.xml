@@ -9,8 +9,15 @@
         </encoder>
     </appender>
 
+
+    <appender name="FILE_JSON" class="ch.qos.logback.core.FileAppender">
+        <file>logs/customs-inventory-linking-exports-json.log</file>
+        <encoder class="uk.gov.hmrc.play.logging.JsonEncoder"/>
+    </appender>
+
     <root level="DEBUG">
         <appender-ref ref="STDOUT" />
+        <appender-ref ref="FILE_JSON" />
     </root>
 
 </configuration>
