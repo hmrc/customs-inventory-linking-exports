@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,17 @@
 package uk.gov.hmrc.customs.inventorylinking.export.controllers
 
 import javax.inject.{Inject, Singleton}
-
 import play.api.http.HttpErrorHandler
 import play.api.mvc.{Action, AnyContent}
+import uk.gov.hmrc.customs.api.common.controllers.DocumentationController
 import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
 import uk.gov.hmrc.customs.inventorylinking.export.views._
 
 @Singleton
-class DocumentationController @Inject()(httpErrorHandler: HttpErrorHandler, configService: ExportsConfigService)
-  extends uk.gov.hmrc.api.controllers.DocumentationController(httpErrorHandler) {
+class ApiDocumentationController @Inject()(httpErrorHandler: HttpErrorHandler, configService: ExportsConfigService)
+  extends DocumentationController(httpErrorHandler) {
 
-  override def definition(): Action[AnyContent] = Action {
+  def definition(): Action[AnyContent] = Action {
     Ok(txt.definition(configService.exportsConfig.whiteListedCspApplicationIds)).withHeaders(CONTENT_TYPE -> JSON)
   }
 }

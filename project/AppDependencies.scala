@@ -5,11 +5,11 @@ object AppDependencies {
   val hmrcTestVersion = "3.3.0"
   val scalaTestVersion = "3.0.5"
   val scalatestplusVersion = "2.0.1"
-  val mockitoVersion = "2.21.0"
+  val mockitoVersion = "2.23.4"
   val pegdownVersion = "1.6.0"
-  val wireMockVersion = "2.18.0"
+  val wireMockVersion = "2.20.0"
   val customsApiCommonVersion = "1.36.0"
-  val circuitBreakerVersion = "3.2.0"
+  val circuitBreakerVersion = "3.3.0"
   val testScope = "test,it"
 
   val hmrcTest = "uk.gov.hmrc" %% "hmrctest" % hmrcTestVersion % testScope
@@ -27,8 +27,6 @@ object AppDependencies {
   val customsApiCommon = "uk.gov.hmrc" %% "customs-api-common" % customsApiCommonVersion withSources()
 
   val customsApiCommonTests = "uk.gov.hmrc" %% "customs-api-common" % customsApiCommonVersion % testScope classifier "tests"
-
-  val hmrcApi = "uk.gov.hmrc" %% "play-hmrc-api" % "3.2.0"
 
   val circuitBreaker = "uk.gov.hmrc" %% "reactive-circuit-breaker" % circuitBreakerVersion
 }
