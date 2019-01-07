@@ -28,6 +28,6 @@ class ApiDocumentationController @Inject()(httpErrorHandler: HttpErrorHandler, c
   extends DocumentationController(httpErrorHandler) {
 
   def definition(): Action[AnyContent] = Action {
-    Ok(txt.definition(configService.exportsConfig.whiteListedCspApplicationIds)).withHeaders(CONTENT_TYPE -> JSON)
+    Ok(txt.definition()).withHeaders(CONTENT_TYPE -> JSON)
   }
 }
