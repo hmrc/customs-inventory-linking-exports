@@ -87,7 +87,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
     "process CSP request when call is authorised for CSP" in new SetUp() {
       authoriseCsp()
 
-      val result: Future[Result] = submit(ValidRequestWithEoriHeader)
+      val result: Future[Result] = submit(ValidRequestWithSubmitterHeader)
 
       status(result) shouldBe ACCEPTED
       header(X_CONVERSATION_ID_NAME, result) shouldBe Some(conversationIdValue)
@@ -98,7 +98,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
     "process a non-CSP request when call is unauthorised for CSP but authorised for non-CSP" in new SetUp() {
       authoriseNonCsp(Some(declarantEori))
 
-      val result: Future[Result] = submit(ValidRequestWithoutEoriHeader)
+      val result: Future[Result] = submit(ValidRequestWithoutSubmitterHeader)
 
       status(result) shouldBe ACCEPTED
       header(X_CONVERSATION_ID_NAME, result) shouldBe Some(conversationIdValue)
@@ -109,7 +109,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
     "respond with status 400 for a CSP request with a missing X-Badge-Identifier" in new SetUp() {
       authoriseCsp()
 
-      val result: Result = awaitSubmit(ValidRequestWithEoriHeader.copyFakeRequest(headers = ValidRequestWithEoriHeader.headers.remove(X_BADGE_IDENTIFIER_NAME)))
+      val result: Result = awaitSubmit(ValidRequestWithSubmitterHeader.copyFakeRequest(headers = ValidRequestWithSubmitterHeader.headers.remove(X_BADGE_IDENTIFIER_NAME)))
       result shouldBe errorResultBadgeIdentifier
       verifyZeroInteractions(mockBusinessService)
       verifyZeroInteractions(mockXmlValidationService)
@@ -118,7 +118,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
     "respond with status 400 for a CSP request with a missing X-Submitter-Identifier" in new SetUp() {
       authoriseCsp()
 
-      val result: Result = awaitSubmit(ValidRequestWithEoriHeader.copyFakeRequest(headers = ValidRequestWithEoriHeader.headers.remove(X_SUBMITTER_IDENTIFIER_NAME)))
+      val result: Result = awaitSubmit(ValidRequestWithSubmitterHeader.copyFakeRequest(headers = ValidRequestWithSubmitterHeader.headers.remove(X_SUBMITTER_IDENTIFIER_NAME)))
       result shouldBe errorResultSubmitterIdentifier
       verifyZeroInteractions(mockBusinessService)
       verifyZeroInteractions(mockXmlValidationService)
@@ -127,7 +127,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
     "respond with status 500 for a request with a missing X-Client-ID" in new SetUp() {
       authoriseCsp()
 
-      val result: Result = awaitSubmit(ValidRequestWithEoriHeader.copyFakeRequest(headers = ValidRequestWithEoriHeader.headers.remove(X_CLIENT_ID_NAME)))
+      val result: Result = awaitSubmit(ValidRequestWithSubmitterHeader.copyFakeRequest(headers = ValidRequestWithSubmitterHeader.headers.remove(X_CLIENT_ID_NAME)))
       status(result) shouldBe INTERNAL_SERVER_ERROR
       verifyZeroInteractions(mockBusinessService)
       verifyZeroInteractions(mockXmlValidationService)
@@ -136,7 +136,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
     "respond with status 400 for a request with an invalid X-Badge-Identifier" in new SetUp() {
       authoriseCsp()
 
-      val result: Result = awaitSubmit(ValidRequestWithEoriHeader.withHeaders((ValidHeaders + X_BADGE_IDENTIFIER_HEADER_INVALID).toSeq: _*))
+      val result: Result = awaitSubmit(ValidRequestWithSubmitterHeader.withHeaders((ValidHeaders + X_BADGE_IDENTIFIER_HEADER_INVALID).toSeq: _*))
 
       result shouldBe errorResultBadgeIdentifier
       verifyZeroInteractions(mockBusinessService)
@@ -146,7 +146,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
     "respond with status 400 for a request with an invalid X-Submitter-Identifier" in new SetUp() {
       authoriseCsp()
 
-      val result: Result = awaitSubmit(ValidRequestWithEoriHeader.withHeaders((ValidHeaders + X_SUBMITTER_IDENTIFIER_HEADER_INVALID).toSeq: _*))
+      val result: Result = awaitSubmit(ValidRequestWithSubmitterHeader.withHeaders((ValidHeaders + X_SUBMITTER_IDENTIFIER_HEADER_INVALID).toSeq: _*))
 
       result shouldBe errorResultSubmitterIdentifier
       verifyZeroInteractions(mockBusinessService)
@@ -156,45 +156,45 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
     "respond with status 400 for a request with an invalid X-Submitter-Identifier (camel case)" in new SetUp() {
       authoriseCsp()
 
-      val result: Result = awaitSubmit(ValidRequestWithEoriHeader.withHeaders((ValidHeaders + X_SUBMITTER_IDENTIFIER_HEADER_INVALID).toSeq: _*))
+      val result: Result = awaitSubmit(ValidRequestWithSubmitterHeader.withHeaders((ValidHeaders + X_SUBMITTER_IDENTIFIER_HEADER_INVALID).toSeq: _*))
 
       result shouldBe errorResultSubmitterIdentifier
       verifyZeroInteractions(mockBusinessService)
       verifyZeroInteractions(mockXmlValidationService)
     }
 
-    "respond with status 202 and conversationId in header for a processed valid non-CSP request (without eori id)" in new SetUp() {
+    "respond with status 202 and conversationId in header for a processed valid non-CSP request (without submitter id)" in new SetUp() {
       authoriseNonCsp(Some(declarantEori))
 
-      val result: Future[Result] = submit(ValidRequestWithoutEoriHeader)
+      val result: Future[Result] = submit(ValidRequestWithoutSubmitterHeader)
 
       status(result) shouldBe ACCEPTED
       header(X_CONVERSATION_ID_NAME, result) shouldBe Some(conversationIdValue)
     }
 
-    "respond with status 202 and conversationId in header for a processed valid non-CSP request with eori id that matches our records" in new SetUp() {
+    "respond with status 202 and conversationId in header for a processed valid non-CSP request with submitter id that matches our records" in new SetUp() {
       authoriseNonCsp(Some(declarantEori))
 
-      val result: Future[Result] = submit(ValidRequestWithEoriHeader)
+      val result: Future[Result] = submit(ValidRequestWithSubmitterHeader)
 
       status(result) shouldBe ACCEPTED
       header(X_CONVERSATION_ID_NAME, result) shouldBe Some(conversationIdValue)
     }
 
-    "respond with status 202 and conversationId in header for a processed valid non-CSP request with eori id that matches our records and header name is camel case" in new SetUp() {
+    "respond with status 202 and conversationId in header for a processed valid non-CSP request with submitter id that matches our records and header name is camel case" in new SetUp() {
       authoriseNonCsp(Some(declarantEori))
 
-      val result: Future[Result] = submit(ValidRequestWithEoriHeaderCamelCase)
+      val result: Future[Result] = submit(ValidRequestWithSubmitterHeaderCamelCase)
 
       status(result) shouldBe ACCEPTED
       header(X_CONVERSATION_ID_NAME, result) shouldBe Some(conversationIdValue)
     }
 
 
-    "respond with status 202 and conversationId in header for a processed valid non-CSP request and ignoring the eori id in the header that doesn't match our records" in new SetUp() {
+    "respond with status 202 and conversationId in header for a processed valid non-CSP request and ignoring the submitter id in the header that doesn't match our records" in new SetUp() {
       authoriseNonCsp(Some(Eori("whatever")))
 
-      val result: Result = awaitSubmit(ValidRequestWithEoriHeader)
+      val result: Result = awaitSubmit(ValidRequestWithSubmitterHeader)
 
       status(result) shouldBe ACCEPTED
       header(X_CONVERSATION_ID_NAME, result) shouldBe Some(conversationIdValue)
@@ -204,7 +204,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
       unauthoriseCsp()
       unauthoriseNonCspOnly()
 
-      val result: Future[Result] = submit(ValidRequestWithEoriHeader)
+      val result: Future[Result] = submit(ValidRequestWithSubmitterHeader)
 
       await(result) shouldBe errorResultUnauthorised
       header(X_CONVERSATION_ID_NAME, result) shouldBe Some(conversationIdValue)
@@ -216,7 +216,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
       unauthoriseCsp()
       authoriseNonCspButDontRetrieveCustomsEnrolment()
 
-      val result: Future[Result] = submit(ValidRequestWithEoriHeader.fromNonCsp)
+      val result: Future[Result] = submit(ValidRequestWithSubmitterHeader.fromNonCsp)
 
       await(result) shouldBe errorResultEoriNotFoundInCustomsEnrolment
       header(X_CONVERSATION_ID_NAME, result) shouldBe Some(conversationIdValue)
@@ -228,7 +228,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
       unauthoriseCsp()
       authoriseNonCsp(maybeEori = None)
 
-      val result: Future[Result] = submit(ValidRequestWithEoriHeader)
+      val result: Future[Result] = submit(ValidRequestWithSubmitterHeader)
 
       await(result) shouldBe errorResultEoriNotFoundInCustomsEnrolment
       header(X_CONVERSATION_ID_NAME, result) shouldBe Some(conversationIdValue)
@@ -241,7 +241,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
         .thenReturn(Future.successful(Left(mockResult)))
       authoriseCsp()
 
-      val result: Result = awaitSubmit(ValidRequestWithEoriHeader)
+      val result: Result = awaitSubmit(ValidRequestWithSubmitterHeader)
 
       result shouldBe mockResult
     }

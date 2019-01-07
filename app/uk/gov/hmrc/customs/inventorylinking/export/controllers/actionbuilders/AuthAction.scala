@@ -93,9 +93,9 @@ class AuthAction @Inject()(
   }
 
   private def eitherSubmitterIdentifierWithValidationCSP[A](implicit vhr: ValidatedHeadersRequest[A]) = {
-    val maybeEoriId: Option[String] = maybeHeaderCaseInsensitive(XSubmitterIdentifierHeaderName)
-    maybeValidEori(maybeEoriId).fold[Either[Result, Eori]] {
-      logger.error(s"Submitter identifier invalid or not present for CSP ($maybeEoriId)")
+    val maybeSubmitterId: Option[String] = maybeHeaderCaseInsensitive(XSubmitterIdentifierHeaderName)
+    maybeValidEori(maybeSubmitterId).fold[Either[Result, Eori]] {
+      logger.error(s"Submitter identifier invalid or not present for CSP ($maybeSubmitterId)")
       Left(errorResponseSubmitterIdentifierHeaderMissing.XmlResult.withConversationId)
     } { eori =>
       logger.debug("Authorising as CSP")
@@ -138,24 +138,24 @@ class AuthAction @Inject()(
           Future.successful(Left(errorResponseEoriNotFoundInCustomsEnrolment.XmlResult.withConversationId))
         } { eori =>
 
-          val maybeEoriHeader = maybeHeaderCaseInsensitive(XSubmitterIdentifierHeaderName)
+          val maybeSubmitterHeader = maybeHeaderCaseInsensitive(XSubmitterIdentifierHeaderName)
 
           def logAndRight(anEori: Eori): Future[Either[Result, AuthorisedRequest[A]]] = {
             logger.debug("Authorising as non-CSP")
             Future.successful(Right(vhr.toNonCspAuthorisedRequest(anEori)))
           }
 
-          maybeEoriHeader match {
-            case Some(eoriFromHeader) => maybeValidEori(maybeEoriHeader) match {
-              case Some(validEoriFromHeader) =>
-                logger.debug(s"Eori passed in header was in a valid format: $validEoriFromHeader")
+          maybeSubmitterHeader match {
+            case Some(submitterFromHeader) => maybeValidEori(maybeSubmitterHeader) match {
+              case Some(validSubmitterFromHeader) =>
+                logger.debug(s"Submitter passed in header was in a valid format: $validSubmitterFromHeader")
                 logAndRight(eori)
               case None =>
-                logger.error(s"Eori passed in header was in an invalid format: $eoriFromHeader")
+                logger.error(s"Submitter passed in header was in an invalid format: $submitterFromHeader")
                 Future.successful(Left(errorResponseSubmitterIdentifierHeaderInvalid.XmlResult.withConversationId))
             }
             case None =>
-              logger.debug("No Eori passed in header")
+              logger.debug("No Submitter passed in header")
               logAndRight(eori)
           }
         }

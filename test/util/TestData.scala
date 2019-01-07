@@ -63,7 +63,7 @@ object TestData {
   val xsdLocations = List(
     "/api/conf/1.0/schemas/exports/request/inventoryLinkingRequestExternal.xsd")
 
-  lazy val ValidRequestWithEoriHeader: FakeRequest[AnyContentAsXml] = FakeRequest("POST", "/")
+  lazy val ValidRequestWithSubmitterHeader: FakeRequest[AnyContentAsXml] = FakeRequest("POST", "/")
     .withHeaders(
       X_CLIENT_ID_HEADER,
       ACCEPT_HMRC_XML_HEADER,
@@ -74,7 +74,7 @@ object TestData {
     )
     .withXmlBody(ValidInventoryLinkingMovementRequestXML)
 
-  lazy val ValidRequestWithEoriHeaderCamelCase: FakeRequest[AnyContentAsXml] = FakeRequest("POST", "/")
+  lazy val ValidRequestWithSubmitterHeaderCamelCase: FakeRequest[AnyContentAsXml] = FakeRequest("POST", "/")
     .withHeaders(
       X_CLIENT_ID_HEADER,
       ACCEPT_HMRC_XML_HEADER,
@@ -85,7 +85,7 @@ object TestData {
     )
     .withXmlBody(ValidInventoryLinkingMovementRequestXML)
 
-  lazy val ValidRequestWithoutEoriHeader: FakeRequest[AnyContentAsXml] = FakeRequest("POST", "/")
+  lazy val ValidRequestWithoutSubmitterHeader: FakeRequest[AnyContentAsXml] = FakeRequest("POST", "/")
     .withHeaders(
       X_CLIENT_ID_HEADER,
       ACCEPT_HMRC_XML_HEADER,
@@ -95,7 +95,7 @@ object TestData {
     )
     .withXmlBody(ValidInventoryLinkingMovementRequestXML)
 
-  lazy val InvalidRequest: FakeRequest[AnyContentAsXml] = ValidRequestWithEoriHeader.withXmlBody(InvalidXML)
+  lazy val InvalidRequest: FakeRequest[AnyContentAsXml] = ValidRequestWithSubmitterHeader.withXmlBody(InvalidXML)
 
   implicit class FakeRequestOps[R](val fakeRequest: FakeRequest[R]) extends AnyVal {
     def fromCsp: FakeRequest[R] = fakeRequest.withHeaders(AUTHORIZATION -> s"Bearer $cspBearerToken")
@@ -112,14 +112,14 @@ object TestData {
   val TestXmlPayload: Elem = <foo>bar</foo>
   val TestFakeRequest: FakeRequest[AnyContentAsXml] = FakeRequest().withXmlBody(TestXmlPayload)
 
-  def testFakeRequestWithEoriId(eoriId: String): FakeRequest[AnyContentAsXml] =
-    FakeRequest().withXmlBody(TestXmlPayload).withHeaders(X_SUBMITTER_IDENTIFIER_NAME -> eoriId)
+  def testFakeRequestWithSubmitterId(submitterId: String): FakeRequest[AnyContentAsXml] =
+    FakeRequest().withXmlBody(TestXmlPayload).withHeaders(X_SUBMITTER_IDENTIFIER_NAME -> submitterId)
 
   def testFakeRequestWithBadgeId(badgeIdString: String = badgeIdentifier.value): FakeRequest[AnyContentAsXml] =
     FakeRequest().withXmlBody(TestXmlPayload).withHeaders(X_BADGE_IDENTIFIER_NAME -> badgeIdString)
 
-  def testFakeRequestWithBadgeIdAndEoriId(badgeIdString: String = badgeIdentifier.value, eoriIdString: String = declarantEori.value): FakeRequest[AnyContentAsXml] =
-    FakeRequest().withXmlBody(TestXmlPayload).withHeaders(X_BADGE_IDENTIFIER_NAME -> badgeIdString, X_SUBMITTER_IDENTIFIER_NAME -> eoriIdString)
+  def testFakeRequestWithBadgeIdAndSubmitterId(badgeIdString: String = badgeIdentifier.value, submitterIdString: String = declarantEori.value): FakeRequest[AnyContentAsXml] =
+    FakeRequest().withXmlBody(TestXmlPayload).withHeaders(X_BADGE_IDENTIFIER_NAME -> badgeIdString, X_SUBMITTER_IDENTIFIER_NAME -> submitterIdString)
 
   val TestConversationIdRequest = ConversationIdRequest(conversationId, TestFakeRequest)
   val TestExtractedHeaders = ExtractedHeadersImpl(VersionOne, ApiSubscriptionFieldsTestData.clientId)
