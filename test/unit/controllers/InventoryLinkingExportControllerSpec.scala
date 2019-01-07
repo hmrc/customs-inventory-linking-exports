@@ -81,7 +81,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
 
   private val errorResultBadgeIdentifier = errorBadRequest("X-Badge-Identifier header is missing or invalid").XmlResult.withHeaders(X_CONVERSATION_ID_HEADER)
 
-  private val errorResultEoriIdentifier = errorBadRequest("X-EORI-Identifier header is missing or invalid").XmlResult.withHeaders(X_CONVERSATION_ID_HEADER)
+  private val errorResultSubmitterIdentifier = errorBadRequest("X-Submitter-Identifier header is missing or invalid").XmlResult.withHeaders(X_CONVERSATION_ID_HEADER)
 
   "InventoryLinkingExportController" should {
     "process CSP request when call is authorised for CSP" in new SetUp() {
@@ -115,11 +115,11 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
       verifyZeroInteractions(mockXmlValidationService)
     }
 
-    "respond with status 400 for a CSP request with a missing X-EORI-Identifier" in new SetUp() {
+    "respond with status 400 for a CSP request with a missing X-Submitter-Identifier" in new SetUp() {
       authoriseCsp()
 
-      val result: Result = awaitSubmit(ValidRequestWithEoriHeader.copyFakeRequest(headers = ValidRequestWithEoriHeader.headers.remove(X_EORI_IDENTIFIER_NAME)))
-      result shouldBe errorResultEoriIdentifier
+      val result: Result = awaitSubmit(ValidRequestWithEoriHeader.copyFakeRequest(headers = ValidRequestWithEoriHeader.headers.remove(X_SUBMITTER_IDENTIFIER_NAME)))
+      result shouldBe errorResultSubmitterIdentifier
       verifyZeroInteractions(mockBusinessService)
       verifyZeroInteractions(mockXmlValidationService)
     }
@@ -143,22 +143,22 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
       verifyZeroInteractions(mockXmlValidationService)
     }
 
-    "respond with status 400 for a request with an invalid X-EORI-Identifier" in new SetUp() {
+    "respond with status 400 for a request with an invalid X-Submitter-Identifier" in new SetUp() {
       authoriseCsp()
 
-      val result: Result = awaitSubmit(ValidRequestWithEoriHeader.withHeaders((ValidHeaders + X_EORI_IDENTIFIER_HEADER_INVALID).toSeq: _*))
+      val result: Result = awaitSubmit(ValidRequestWithEoriHeader.withHeaders((ValidHeaders + X_SUBMITTER_IDENTIFIER_HEADER_INVALID).toSeq: _*))
 
-      result shouldBe errorResultEoriIdentifier
+      result shouldBe errorResultSubmitterIdentifier
       verifyZeroInteractions(mockBusinessService)
       verifyZeroInteractions(mockXmlValidationService)
     }
 
-    "respond with status 400 for a request with an invalid X-EORI-Identifier (camel case)" in new SetUp() {
+    "respond with status 400 for a request with an invalid X-Submitter-Identifier (camel case)" in new SetUp() {
       authoriseCsp()
 
-      val result: Result = awaitSubmit(ValidRequestWithEoriHeader.withHeaders((ValidHeaders + X_EORI_IDENTIFIER_HEADER_INVALID).toSeq: _*))
+      val result: Result = awaitSubmit(ValidRequestWithEoriHeader.withHeaders((ValidHeaders + X_SUBMITTER_IDENTIFIER_HEADER_INVALID).toSeq: _*))
 
-      result shouldBe errorResultEoriIdentifier
+      result shouldBe errorResultSubmitterIdentifier
       verifyZeroInteractions(mockBusinessService)
       verifyZeroInteractions(mockXmlValidationService)
     }

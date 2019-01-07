@@ -19,7 +19,7 @@ curl -v -X POST "http://localhost:9823/" \
   -H 'Content-Type: application/xml;charset=utf-8' \
   -H 'X-Badge-Identifier: {Badge Id}' \
   -H 'X-Client-ID: {Client Id}' \
-  -H 'X-EORI-Identifier: {EORI}' \
+  -H 'X-Submitter-Identifier: {EORI}' \
   -d '<?xml version="1.0" encoding="UTF-8"?>
 <inv:inventoryLinkingQueryRequest xmlns:inv="http://gov.uk/customs/inventoryLinking/v1">
     <inv:queryUCR>

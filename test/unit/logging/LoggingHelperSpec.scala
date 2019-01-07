@@ -42,7 +42,7 @@ class LoggingHelperSpec extends UnitSpec with MockitoSugar {
         CustomHeaderNames.XConversationIdHeaderName -> "C",
         CustomHeaderNames.XClientIdHeaderName -> "D",
         CustomHeaderNames.XBadgeIdentifierHeaderName -> "BADGE",
-        CustomHeaderNames.XEoriIdentifierHeaderName -> "EORI1234",
+        CustomHeaderNames.XSubmitterIdentifierHeaderName -> "EORI1234",
         "IGNORE" -> "IGNORE"
       )
     )
@@ -56,7 +56,7 @@ class LoggingHelperSpec extends UnitSpec with MockitoSugar {
         "X-ConVerSaTion-ID" -> "C",
         "X-CliEnT-ID" -> "D",
         "X-BaDge-IdeNtiFier" -> "BADGE",
-        "X-EORI-IdeNtiFier" -> "EORI1234",
+        "X-Submitter-IdeNtiFier" -> "EORI1234",
         "IGNORE" -> "IGNORE"
       )
     )

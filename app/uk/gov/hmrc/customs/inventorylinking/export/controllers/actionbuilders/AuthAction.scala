@@ -50,14 +50,14 @@ class AuthAction @Inject()(
     ErrorResponse(Status.UNAUTHORIZED, UnauthorizedCode, "Unauthorised request")
   private val errorResponseBadgeIdentifierHeaderMissing = errorBadRequest(s"$XBadgeIdentifierHeaderName header is missing or invalid")
 
-  private val errorResponseEoriIdentifierHeaderMissing = errorBadRequest(s"$XEoriIdentifierHeaderName header is missing or invalid")
-  private val errorResponseEoriIdentifierHeaderInvalid = errorBadRequest(s"$XEoriIdentifierHeaderName header is invalid")
+  private val errorResponseSubmitterIdentifierHeaderMissing = errorBadRequest(s"$XSubmitterIdentifierHeaderName header is missing or invalid")
+  private val errorResponseSubmitterIdentifierHeaderInvalid = errorBadRequest(s"$XSubmitterIdentifierHeaderName header is invalid")
 
   private lazy val errorResponseEoriNotFoundInCustomsEnrolment =
     ErrorResponse(UNAUTHORIZED, UnauthorizedCode, "EORI number not found in Customs Enrolment")
   private lazy val xBadgeIdentifierRegex = "^[0-9A-Z]{6,12}$".r
 
-  private lazy val xEoriIdentifierRegex = "^[0-9A-Za-z]{1,17}$".r
+  private lazy val xSubmitterIdentifierRegex = "^[0-9A-Za-z]{1,17}$".r
 
   override def refine[A](vhr: ValidatedHeadersRequest[A]): Future[Either[Result, AuthorisedRequest[A]]] = {
     implicit val implicitVhr: ValidatedHeadersRequest[A] = vhr
@@ -92,11 +92,11 @@ class AuthAction @Inject()(
     }
   }
 
-  private def eitherEoriIdentifierWithValidationCSP[A](implicit vhr: ValidatedHeadersRequest[A]) = {
-    val maybeEoriId: Option[String] = maybeHeaderCaseInsensitive(XEoriIdentifierHeaderName)
+  private def eitherSubmitterIdentifierWithValidationCSP[A](implicit vhr: ValidatedHeadersRequest[A]) = {
+    val maybeEoriId: Option[String] = maybeHeaderCaseInsensitive(XSubmitterIdentifierHeaderName)
     maybeValidEori(maybeEoriId).fold[Either[Result, Eori]] {
-      logger.error(s"EORI identifier invalid or not present for CSP ($maybeEoriId)")
-      Left(errorResponseEoriIdentifierHeaderMissing.XmlResult.withConversationId)
+      logger.error(s"Submitter identifier invalid or not present for CSP ($maybeEoriId)")
+      Left(errorResponseSubmitterIdentifierHeaderMissing.XmlResult.withConversationId)
     } { eori =>
       logger.debug("Authorising as CSP")
       Right(eori)
@@ -113,13 +113,13 @@ class AuthAction @Inject()(
 
 
   private def maybeValidEori(maybeValue: Option[String]) = {
-    maybeValue.filter(xEoriIdentifierRegex.findFirstIn(_).nonEmpty).map(Eori)
+    maybeValue.filter(xSubmitterIdentifierRegex.findFirstIn(_).nonEmpty).map(Eori)
   }
 
   private def eitherMaybeBadgeIdentifierEoriPair[A](implicit vhr: ValidatedHeadersRequest[A]): Either[Result, Some[BadgeIdentifierEoriPair]] = {
     for {
       badgeId <- eitherBadgeIdentifierWithValidation.right
-      eori <- eitherEoriIdentifierWithValidationCSP.right
+      eori <- eitherSubmitterIdentifierWithValidationCSP.right
     } yield Some(BadgeIdentifierEoriPair(badgeId, eori))
 
   }
@@ -138,7 +138,7 @@ class AuthAction @Inject()(
           Future.successful(Left(errorResponseEoriNotFoundInCustomsEnrolment.XmlResult.withConversationId))
         } { eori =>
 
-          val maybeEoriHeader = maybeHeaderCaseInsensitive(XEoriIdentifierHeaderName)
+          val maybeEoriHeader = maybeHeaderCaseInsensitive(XSubmitterIdentifierHeaderName)
 
           def logAndRight(anEori: Eori): Future[Either[Result, AuthorisedRequest[A]]] = {
             logger.debug("Authorising as non-CSP")
@@ -152,7 +152,7 @@ class AuthAction @Inject()(
                 logAndRight(eori)
               case None =>
                 logger.error(s"Eori passed in header was in an invalid format: $eoriFromHeader")
-                Future.successful(Left(errorResponseEoriIdentifierHeaderInvalid.XmlResult.withConversationId))
+                Future.successful(Left(errorResponseSubmitterIdentifierHeaderInvalid.XmlResult.withConversationId))
             }
             case None =>
               logger.debug("No Eori passed in header")
@@ -179,8 +179,8 @@ class AuthAction @Inject()(
     }
     for {
       customsEnrolment <- maybeCustomsEnrolment
-      eoriIdentifier <- customsEnrolment.getIdentifier("EORINumber")
-    } yield Eori(eoriIdentifier.value)
+      eori <- customsEnrolment.getIdentifier("EORINumber")
+    } yield Eori(eori.value)
   }
 
 }

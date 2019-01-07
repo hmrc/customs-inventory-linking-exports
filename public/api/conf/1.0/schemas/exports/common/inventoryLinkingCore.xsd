@@ -66,7 +66,6 @@
 	    </xs:annotation>
         <xs:sequence>
             <xs:element name="messageCode" type="messageCodeConsolidation" minOccurs="1" />
-            <xs:element name="transactionType" type="consolidationTransaction" minOccurs="1" />
             <xs:element name="masterUCR" type="ucr" minOccurs="0">
                 <xs:annotation>
                     <xs:documentation>Mandatory for a CST message, if not supplied in an EAC message the current association is removed</xs:documentation>

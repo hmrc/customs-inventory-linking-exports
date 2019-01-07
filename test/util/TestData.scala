@@ -70,7 +70,7 @@ object TestData {
       CONTENT_TYPE_HEADER,
       API_SUBSCRIPTION_FIELDS_ID_HEADER,
       X_BADGE_IDENTIFIER_HEADER,
-      X_EORI_IDENTIFIER_HEADER
+      X_SUBMITTER_IDENTIFIER_HEADER
     )
     .withXmlBody(ValidInventoryLinkingMovementRequestXML)
 
@@ -81,7 +81,7 @@ object TestData {
       CONTENT_TYPE_HEADER,
       API_SUBSCRIPTION_FIELDS_ID_HEADER,
       X_BADGE_IDENTIFIER_HEADER,
-      X_EORI_IDENTIFIER_HEADER_CAMEL_CASE
+      X_SUBMITTER_IDENTIFIER_HEADER_CAMEL_CASE
     )
     .withXmlBody(ValidInventoryLinkingMovementRequestXML)
 
@@ -113,13 +113,13 @@ object TestData {
   val TestFakeRequest: FakeRequest[AnyContentAsXml] = FakeRequest().withXmlBody(TestXmlPayload)
 
   def testFakeRequestWithEoriId(eoriId: String): FakeRequest[AnyContentAsXml] =
-    FakeRequest().withXmlBody(TestXmlPayload).withHeaders(X_EORI_IDENTIFIER_NAME -> eoriId)
+    FakeRequest().withXmlBody(TestXmlPayload).withHeaders(X_SUBMITTER_IDENTIFIER_NAME -> eoriId)
 
   def testFakeRequestWithBadgeId(badgeIdString: String = badgeIdentifier.value): FakeRequest[AnyContentAsXml] =
     FakeRequest().withXmlBody(TestXmlPayload).withHeaders(X_BADGE_IDENTIFIER_NAME -> badgeIdString)
 
   def testFakeRequestWithBadgeIdAndEoriId(badgeIdString: String = badgeIdentifier.value, eoriIdString: String = declarantEori.value): FakeRequest[AnyContentAsXml] =
-    FakeRequest().withXmlBody(TestXmlPayload).withHeaders(X_BADGE_IDENTIFIER_NAME -> badgeIdString, X_EORI_IDENTIFIER_NAME -> eoriIdString)
+    FakeRequest().withXmlBody(TestXmlPayload).withHeaders(X_BADGE_IDENTIFIER_NAME -> badgeIdString, X_SUBMITTER_IDENTIFIER_NAME -> eoriIdString)
 
   val TestConversationIdRequest = ConversationIdRequest(conversationId, TestFakeRequest)
   val TestExtractedHeaders = ExtractedHeadersImpl(VersionOne, ApiSubscriptionFieldsTestData.clientId)
@@ -145,12 +145,12 @@ object RequestHeaders {
   val X_BADGE_IDENTIFIER_HEADER: (String, String) = X_BADGE_IDENTIFIER_NAME -> validBadgeIdentifierValue
   val X_BADGE_IDENTIFIER_HEADER_INVALID: (String, String) = X_BADGE_IDENTIFIER_NAME -> "SHORT"
 
-  val X_EORI_IDENTIFIER_NAME = "X-EORI-Identifier"
-  val X_EORI_IDENTIFIER_NAME_CAMEL_CASE = "X-Eori-Identifier"
+  val X_SUBMITTER_IDENTIFIER_NAME = "X-Submitter-Identifier"
+  val X_SUBMITTER_IDENTIFIER_NAME_CAMEL_CASE = "X-Submitter-Identifier"
 
-  val X_EORI_IDENTIFIER_HEADER: (String, String) = X_EORI_IDENTIFIER_NAME -> declarantEoriValue
-  val X_EORI_IDENTIFIER_HEADER_CAMEL_CASE: (String, String) = X_EORI_IDENTIFIER_NAME_CAMEL_CASE -> declarantEoriValue
-  val X_EORI_IDENTIFIER_HEADER_INVALID: (String, String) = X_EORI_IDENTIFIER_NAME -> ""
+  val X_SUBMITTER_IDENTIFIER_HEADER: (String, String) = X_SUBMITTER_IDENTIFIER_NAME -> declarantEoriValue
+  val X_SUBMITTER_IDENTIFIER_HEADER_CAMEL_CASE: (String, String) = X_SUBMITTER_IDENTIFIER_NAME_CAMEL_CASE -> declarantEoriValue
+  val X_SUBMITTER_IDENTIFIER_HEADER_INVALID: (String, String) = X_SUBMITTER_IDENTIFIER_NAME -> ""
 
   val CONTENT_TYPE_HEADER: (String, String) = CONTENT_TYPE -> (MimeTypes.XML + "; charset=utf-8")
   val CONTENT_TYPE_HEADER_INVALID: (String, String) = CONTENT_TYPE -> "somethinginvalid"
