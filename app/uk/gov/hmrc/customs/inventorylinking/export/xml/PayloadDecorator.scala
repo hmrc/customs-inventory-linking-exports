@@ -38,8 +38,9 @@ class PayloadDecorator() {
         { vpr.authorisedAs match {
             case Csp(badgeIdEoriPair) =>
               <gw:badgeIdentifier>{badgeIdEoriPair.badgeIdentifier.value}</gw:badgeIdentifier>
-                <gw:eori>{badgeIdEoriPair.eori.value}</gw:eori>
-            case NonCsp(eori) => <gw:eori>{eori.value}</gw:eori>
+              <gw:submitter>{badgeIdEoriPair.eori.value}</gw:submitter>
+            case NonCsp(eori) =>
+              <gw:submitter>{eori.value}</gw:submitter>
           }
         }
         <gw:clientID>{clientId.value}</gw:clientID>

@@ -32,7 +32,7 @@ trait AuthConnectorStubbing extends UnitSpec with MockitoSugar {
   val mockAuthConnector: AuthConnector = mock[AuthConnector]
   private val apiScope = "write:customs-inventory-linking-exports"
   private val customsEnrolmentName = "HMRC-CUS-ORG"
-  private val eoriIdentifier = "EORINumber"
+  private val eoriEnrolmentIdentifier = "EORINumber"
   private val cspAuthPredicate = Enrolment(apiScope) and AuthProviders(PrivilegedApplication)
   private val nonCspAuthPredicate = Enrolment(customsEnrolmentName) and AuthProviders(GovernmentGateway)
 
@@ -54,7 +54,7 @@ trait AuthConnectorStubbing extends UnitSpec with MockitoSugar {
   def authoriseNonCsp(maybeEori: Option[Eori]): Unit = {
     unauthoriseCsp()
     val customsEnrolment = maybeEori.fold(ifEmpty = Enrolment(customsEnrolmentName)) { eori =>
-      Enrolment(customsEnrolmentName).withIdentifier(eoriIdentifier, eori.value)
+      Enrolment(customsEnrolmentName).withIdentifier(eoriEnrolmentIdentifier, eori.value)
     }
     when(mockAuthConnector.authorise(ameq(nonCspAuthPredicate), ameq(Retrievals.authorisedEnrolments))(any[HeaderCarrier], any[ExecutionContext]))
       .thenReturn(Enrolments(Set(customsEnrolment)))

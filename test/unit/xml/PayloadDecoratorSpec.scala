@@ -98,10 +98,10 @@ class PayloadDecoratorSpec extends UnitSpec with MockitoSugar{
       rd.head.text shouldBe badgeIdentifier.value
     }
 
-    "set the Eori identifier when present" in {
+    "set the submitter identifier when present" in {
       val result = wrapPayloadWithBadgeIdentifierAndEori()
 
-      val rd = result \\ "eori"
+      val rd = result \\ "submitter"
 
       rd.head.text shouldBe declarantEori.value
     }
@@ -170,10 +170,10 @@ class PayloadDecoratorSpec extends UnitSpec with MockitoSugar{
       rd.isEmpty shouldBe true
     }
 
-    "set the Eori identifier when present" in {
+    "set the submitter identifier when present" in {
       val result =  wrapPayloadWithoutBadgeIdentifier()
 
-      val rd = result \\ "eori"
+      val rd = result \\ "submitter"
 
       rd.head.text shouldBe declarantEori.value
     }

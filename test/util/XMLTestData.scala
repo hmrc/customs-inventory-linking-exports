@@ -68,7 +68,6 @@ object XMLTestData {
   val ValidInventoryLinkingConsolidationRequestXML: Elem =
     <inventoryLinkingConsolidationRequest xmlns="http://gov.uk/customs/inventoryLinking/v1">
       <messageCode>EAC</messageCode>
-      <transactionType>Disassociate</transactionType>
       <masterUCR>GB/AAAA-00000</masterUCR>
       <ucrBlock>
         <ucr>GB/BBBB-00000</ucr>
@@ -93,7 +92,7 @@ object XMLTestData {
                                                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:inv="http://gov.uk/customs/inventoryLinking/v1">
         <n1:requestCommon>
           <gw:badgeIdentifier>{validBadgeIdentifierValue}</gw:badgeIdentifier>
-          <gw:eori>{declarantEoriValue}</gw:eori>
+          <gw:submitter>{declarantEoriValue}</gw:submitter>
           <gw:clientID>{TestSubscriptionFieldsId.value}</gw:clientID>
           <gw:conversationID>{conversationIdValue}</gw:conversationID>
           <gw:correlationID>{correlationIdValue}</gw:correlationID>
