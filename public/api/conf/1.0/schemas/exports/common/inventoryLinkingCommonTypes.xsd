@@ -115,7 +115,7 @@
 			<xs:element name="errorCode" minOccurs="1">
 			<xs:simpleType>
 					<xs:restriction base="xs:string">
-						<xs:maxLength value="2" />
+						<xs:maxLength value="1024" />
 						<xs:minLength value="1" />
 					</xs:restriction>
 				</xs:simpleType>
