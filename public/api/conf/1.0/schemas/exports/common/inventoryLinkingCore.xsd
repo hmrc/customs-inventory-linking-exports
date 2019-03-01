@@ -66,6 +66,7 @@
 	    </xs:annotation>
         <xs:sequence>
             <xs:element name="messageCode" type="messageCodeConsolidation" minOccurs="1" />
+            <xs:element name="transactionType" type="consolidationTransaction" minOccurs="1" />
             <xs:element name="masterUCR" type="ucr" minOccurs="0">
                 <xs:annotation>
                     <xs:documentation>Mandatory for a CST message, if not supplied in an EAC message the current association is removed</xs:documentation>
@@ -107,7 +108,7 @@
             <!-- Traders movement reference as additional return reference, if appropriate -->
             <xs:element name="movementReference" type="movementReference" minOccurs="0" maxOccurs="1" nillable="true" />
             <!-- Error block only included if action code is 3 -->
-            <xs:element name="error" type="errorBlock" minOccurs="0" maxOccurs="1" />
+            <xs:element name="error" type="errorBlock" minOccurs="0" maxOccurs="unbounded" />
         </xs:sequence>
 	</xs:complexType>
 
