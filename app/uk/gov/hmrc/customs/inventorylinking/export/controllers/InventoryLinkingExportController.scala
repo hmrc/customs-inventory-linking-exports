@@ -63,8 +63,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 @Singleton
 class InventoryLinkingExportController @Inject()(
                                                   conversationIdAction: ConversationIdAction,
-                                                  authAction: AuthAction,
                                                   validateAndExtractHeadersAction: ValidateAndExtractHeadersAction,
+                                                  fieldsAction: ApiSubscriptionFieldsAction,
+                                                  authAction: AuthAction,
                                                   payloadValidationAction: PayloadValidationAction,
                                                   businessService: BusinessService,
                                                   logger: ExportsLogger)
@@ -81,6 +82,7 @@ class InventoryLinkingExportController @Inject()(
     Action andThen
     conversationIdAction andThen
     validateAndExtractHeadersAction andThen
+    fieldsAction andThen
     authAction andThen
     payloadValidationAction
     )

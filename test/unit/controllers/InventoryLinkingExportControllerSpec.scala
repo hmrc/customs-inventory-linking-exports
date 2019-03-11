@@ -16,6 +16,7 @@
 
 package unit.controllers
 
+import akka.stream.Materializer
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
@@ -24,18 +25,20 @@ import play.api.mvc._
 import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
-import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.errorBadRequest
+import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.{ErrorInternalServerError, errorBadRequest}
+import uk.gov.hmrc.customs.inventorylinking.export.connectors.ApiSubscriptionFieldsConnector
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders._
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.{HeaderValidator, InventoryLinkingExportController}
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model.Eori
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
+import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
+import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ValidatedHeadersRequest, ValidatedPayloadRequest}
+import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionKey, Eori}
 import uk.gov.hmrc.customs.inventorylinking.export.services.{BusinessService, XmlValidationService}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
-import util.AuthConnectorStubbing
 import util.RequestHeaders._
 import util.TestData._
+import util.{ApiSubscriptionFieldsTestData, AuthConnectorStubbing}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
@@ -51,14 +54,16 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
     protected val mockErrorResponse: ErrorResponse = mock[ErrorResponse]
     protected val mockResult: Result = mock[Result]
     protected val mockXmlValidationService: XmlValidationService = mock[XmlValidationService]
+    protected val mockApiSubscriptionFieldsConnector = mock[ApiSubscriptionFieldsConnector]
 
     protected val stubConversationIdAction: ConversationIdAction = new ConversationIdAction(stubUniqueIdsService, mockExportsLogger)
+    protected val stubFieldsAction: ApiSubscriptionFieldsAction = new ApiSubscriptionFieldsAction(mockApiSubscriptionFieldsConnector, mockExportsLogger)
     protected val stubAuthAction: AuthAction = new AuthAction(mockAuthConnector, mockExportsLogger)
     protected val stubValidateAndExtractHeadersAction: ValidateAndExtractHeadersAction = new ValidateAndExtractHeadersAction(new HeaderValidator(mockExportsLogger), mockExportsLogger)
     protected val stubPayloadValidationAction: PayloadValidationAction = new PayloadValidationAction(mockXmlValidationService, mockExportsLogger)
 
     protected val controller: InventoryLinkingExportController = new InventoryLinkingExportController(
-      stubConversationIdAction, stubAuthAction, stubValidateAndExtractHeadersAction, stubPayloadValidationAction,
+      stubConversationIdAction, stubValidateAndExtractHeadersAction, stubFieldsAction, stubAuthAction, stubPayloadValidationAction,
       mockBusinessService, mockExportsLogger)
 
     protected def awaitSubmit(request: Request[AnyContent]): Result = {
@@ -71,6 +76,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
 
     when(mockXmlValidationService.validate(any[NodeSeq])(any[ExecutionContext])).thenReturn(Future.successful(()))
     when(mockBusinessService.send(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])).thenReturn(Future.successful(Right(())))
+    when(mockApiSubscriptionFieldsConnector.getSubscriptionFields(any[ApiSubscriptionKey])(any[ValidatedHeadersRequest[_]])).thenReturn(Future.successful(ApiSubscriptionFieldsTestData.apiSubscriptionFields))
   }
 
   private val errorResultEoriNotFoundInCustomsEnrolment = ErrorResponse(UNAUTHORIZED, errorCode = "UNAUTHORIZED",
@@ -81,13 +87,26 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
 
   private val errorResultBadgeIdentifier = errorBadRequest("X-Badge-Identifier header is missing or invalid").XmlResult.withHeaders(X_CONVERSATION_ID_HEADER)
 
-  private val errorResultSubmitterIdentifier = errorBadRequest("X-Submitter-Identifier header is missing or invalid").XmlResult.withHeaders(X_CONVERSATION_ID_HEADER)
+  private val internalServerError = ErrorInternalServerError.XmlResult.withConversationId(TestConversationIdRequest)
+
+  private val errorResultSubmitterIdentifierInvalid = errorBadRequest("X-Submitter-Identifier header is invalid").XmlResult.withHeaders(X_CONVERSATION_ID_HEADER)
 
   "InventoryLinkingExportController" should {
-    "process CSP request when call is authorised for CSP" in new SetUp() {
+    "process CSP request when call is authorised for CSP (valid badge and submitter id headers present)" in new SetUp() {
       authoriseCsp()
 
       val result: Future[Result] = submit(ValidRequestWithSubmitterHeader)
+
+      status(result) shouldBe ACCEPTED
+      header(X_CONVERSATION_ID_NAME, result) shouldBe Some(conversationIdValue)
+      verifyCspAuthorisationCalled(numberOfTimes = 1)
+      verifyNonCspAuthorisationCalled(numberOfTimes = 0)
+    }
+
+    "process CSP request when call is authorised for CSP (valid badge present but submitter missing and authenticated EORI present)" in new SetUp() {
+      authoriseCsp()
+
+      val result: Future[Result] = submit(ValidRequestWithoutSubmitterHeader)
 
       status(result) shouldBe ACCEPTED
       header(X_CONVERSATION_ID_NAME, result) shouldBe Some(conversationIdValue)
@@ -110,16 +129,20 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
       authoriseCsp()
 
       val result: Result = awaitSubmit(ValidRequestWithSubmitterHeader.copyFakeRequest(headers = ValidRequestWithSubmitterHeader.headers.remove(X_BADGE_IDENTIFIER_NAME)))
+
       result shouldBe errorResultBadgeIdentifier
+      bodyAsString(result) shouldBe bodyAsString(errorResultBadgeIdentifier)
       verifyZeroInteractions(mockBusinessService)
       verifyZeroInteractions(mockXmlValidationService)
     }
 
-    "respond with status 400 for a CSP request with a missing X-Submitter-Identifier" in new SetUp() {
+    "respond with status 500 for a CSP request with a missing X-Submitter-Identifier and no authenticated EORI" in new SetUp() {
+      when(mockApiSubscriptionFieldsConnector.getSubscriptionFields(any[ApiSubscriptionKey])(any[ValidatedHeadersRequest[_]])).thenReturn(Future.successful(ApiSubscriptionFieldsTestData.apiSubscriptionFieldsNoAuthenticatedEori))
       authoriseCsp()
 
       val result: Result = awaitSubmit(ValidRequestWithSubmitterHeader.copyFakeRequest(headers = ValidRequestWithSubmitterHeader.headers.remove(X_SUBMITTER_IDENTIFIER_NAME)))
-      result shouldBe errorResultSubmitterIdentifier
+
+      result shouldBe internalServerError
       verifyZeroInteractions(mockBusinessService)
       verifyZeroInteractions(mockXmlValidationService)
     }
@@ -128,7 +151,8 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
       authoriseCsp()
 
       val result: Result = awaitSubmit(ValidRequestWithSubmitterHeader.copyFakeRequest(headers = ValidRequestWithSubmitterHeader.headers.remove(X_CLIENT_ID_NAME)))
-      status(result) shouldBe INTERNAL_SERVER_ERROR
+
+      result shouldBe internalServerError
       verifyZeroInteractions(mockBusinessService)
       verifyZeroInteractions(mockXmlValidationService)
     }
@@ -139,6 +163,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
       val result: Result = awaitSubmit(ValidRequestWithSubmitterHeader.withHeaders((ValidHeaders + X_BADGE_IDENTIFIER_HEADER_INVALID).toSeq: _*))
 
       result shouldBe errorResultBadgeIdentifier
+      bodyAsString(result) shouldBe bodyAsString(errorResultBadgeIdentifier)
       verifyZeroInteractions(mockBusinessService)
       verifyZeroInteractions(mockXmlValidationService)
     }
@@ -148,7 +173,8 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
 
       val result: Result = awaitSubmit(ValidRequestWithSubmitterHeader.withHeaders((ValidHeaders + X_SUBMITTER_IDENTIFIER_HEADER_INVALID).toSeq: _*))
 
-      result shouldBe errorResultSubmitterIdentifier
+      result shouldBe errorResultSubmitterIdentifierInvalid
+      bodyAsString(result) shouldBe bodyAsString(errorResultSubmitterIdentifierInvalid)
       verifyZeroInteractions(mockBusinessService)
       verifyZeroInteractions(mockXmlValidationService)
     }
@@ -158,7 +184,8 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
 
       val result: Result = awaitSubmit(ValidRequestWithSubmitterHeader.withHeaders((ValidHeaders + X_SUBMITTER_IDENTIFIER_HEADER_INVALID).toSeq: _*))
 
-      result shouldBe errorResultSubmitterIdentifier
+      result shouldBe errorResultSubmitterIdentifierInvalid
+      bodyAsString(result) shouldBe bodyAsString(errorResultSubmitterIdentifierInvalid)
       verifyZeroInteractions(mockBusinessService)
       verifyZeroInteractions(mockXmlValidationService)
     }
@@ -207,6 +234,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
       val result: Future[Result] = submit(ValidRequestWithSubmitterHeader)
 
       await(result) shouldBe errorResultUnauthorised
+      bodyAsString(result) shouldBe bodyAsString(errorResultUnauthorised)
       header(X_CONVERSATION_ID_NAME, result) shouldBe Some(conversationIdValue)
       verifyZeroInteractions(mockBusinessService)
       verifyZeroInteractions(mockXmlValidationService)
@@ -219,6 +247,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
       val result: Future[Result] = submit(ValidRequestWithSubmitterHeader.fromNonCsp)
 
       await(result) shouldBe errorResultEoriNotFoundInCustomsEnrolment
+      bodyAsString(result) shouldBe bodyAsString(errorResultEoriNotFoundInCustomsEnrolment)
       header(X_CONVERSATION_ID_NAME, result) shouldBe Some(conversationIdValue)
       verifyZeroInteractions(mockBusinessService)
       verifyZeroInteractions(mockXmlValidationService)
@@ -231,6 +260,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
       val result: Future[Result] = submit(ValidRequestWithSubmitterHeader)
 
       await(result) shouldBe errorResultEoriNotFoundInCustomsEnrolment
+      bodyAsString(result) shouldBe bodyAsString(errorResultEoriNotFoundInCustomsEnrolment)
       header(X_CONVERSATION_ID_NAME, result) shouldBe Some(conversationIdValue)
       verifyZeroInteractions(mockBusinessService)
       verifyZeroInteractions(mockXmlValidationService)
@@ -246,6 +276,10 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
       result shouldBe mockResult
     }
 
+  }
+
+  private def bodyAsString(r: Result) = {
+    bodyOf(r)(mock[Materializer])
   }
 
 }

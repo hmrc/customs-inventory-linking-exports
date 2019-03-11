@@ -18,10 +18,16 @@ package model
 
 import java.util.UUID
 
-import play.api.libs.json.Json
+import play.api.libs.json.{Format, Json}
 
-case class ApiSubscriptionFieldsResponse(fieldsId: UUID)
+case class ApiSubscriptionFieldsFields(authenticatedEori: Option[String])
 
-object ApiSubscriptionFieldsResponse {
-  implicit val format = Json.format[ApiSubscriptionFieldsResponse]
+object ApiSubscriptionFieldsFields {
+  implicit val format: Format[ApiSubscriptionFieldsFields] = Json.format[ApiSubscriptionFieldsFields]
+}
+
+case class ApiSubscriptionFields(fieldsId: UUID, fields: ApiSubscriptionFieldsFields)
+
+object ApiSubscriptionFields {
+  implicit val format = Json.format[ApiSubscriptionFields]
 }

@@ -17,10 +17,10 @@
 package uk.gov.hmrc.customs.inventorylinking.export.connectors
 
 import javax.inject.{Inject, Singleton}
-import model.ApiSubscriptionFieldsResponse
+import model.ApiSubscriptionFields
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.ApiSubscriptionKey
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
+import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedHeadersRequest
 import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
 import uk.gov.hmrc.http.{HeaderCarrier, HttpException}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
@@ -33,15 +33,16 @@ class ApiSubscriptionFieldsConnector @Inject()(http: HttpClient,
                                                logger: ExportsLogger,
                                                config: ExportsConfigService) {
 
-  def getSubscriptionFields[A](apiSubsKey: ApiSubscriptionKey)(implicit vpr: ValidatedPayloadRequest[A], hc: HeaderCarrier): Future[ApiSubscriptionFieldsResponse] = {
+  def getSubscriptionFields[A](apiSubsKey: ApiSubscriptionKey)(implicit vhr: ValidatedHeadersRequest[A]): Future[ApiSubscriptionFields] = {
     val url = ApiSubscriptionFieldsPath.url(config.exportsConfig.apiSubscriptionFieldsBaseUrl, apiSubsKey)
     get(url)
   }
 
-  private def get[A](url: String)(implicit vpr: ValidatedPayloadRequest[A], hc: HeaderCarrier): Future[ApiSubscriptionFieldsResponse] = {
+  private def get[A](url: String)(implicit vhr: ValidatedHeadersRequest[A]): Future[ApiSubscriptionFields] = {
     logger.debug(s"Getting fields id from api-subscription-fields service. url = $url")
+    implicit val hc = HeaderCarrier()
 
-    http.GET[ApiSubscriptionFieldsResponse](url)
+    http.GET[ApiSubscriptionFields](url)
       .recoverWith {
         case httpError: HttpException => Future.failed(new RuntimeException(httpError))
       }
@@ -51,5 +52,4 @@ class ApiSubscriptionFieldsConnector @Inject()(http: HttpClient,
           Future.failed(e)
       }
   }
-
 }

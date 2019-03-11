@@ -17,7 +17,7 @@
 package unit.connectors
 
 import com.typesafe.config.Config
-import model.ApiSubscriptionFieldsResponse
+import model.ApiSubscriptionFields
 import org.mockito.ArgumentMatchers.{eq => ameq, _}
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
@@ -26,13 +26,12 @@ import org.scalatest.mockito.MockitoSugar
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.ApiSubscriptionFieldsConnector
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.ExportsConfig
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
 import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
 import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, NotFoundException}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.play.test.UnitSpec
-import util.externalservices.ExportsExternalServicesConfig._
 import util.ExternalServicesConfig._
+import util.externalservices.ExportsExternalServicesConfig._
 import util.{ApiSubscriptionFieldsTestData, TestData}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -54,7 +53,7 @@ class ApiSubscriptionFieldsConnectorSpec extends UnitSpec
   private val httpException = new NotFoundException("Emulated 404 response from a web call")
   private val expectedUrl = s"http://$Host:$Port$ApiSubscriptionFieldsContext/application/SOME_X_CLIENT_ID/context/some/api/context/version/1.0"
 
-  private implicit val vpr = TestData.TestCspValidatedPayloadRequest
+  private implicit val vhr = TestData.TestValidatedHeadersRequest
 
   override protected def beforeEach() {
     reset(mockExportsLogger, mockWSGetImpl, mockExportsConfigService)
@@ -65,8 +64,8 @@ class ApiSubscriptionFieldsConnectorSpec extends UnitSpec
   "ApiSubscriptionFieldsConnector" can {
     "when making a successful request" should {
       "use the correct URL for valid path parameters and config" in {
-        returnResponseForRequest(Future.successful(apiSubscriptionFieldsResponse))
-        awaitSubscriptionFields shouldBe apiSubscriptionFieldsResponse
+        returnResponseForRequest(Future.successful(apiSubscriptionFields))
+        awaitSubscriptionFields shouldBe apiSubscriptionFields
       }
     }
 
@@ -93,13 +92,13 @@ class ApiSubscriptionFieldsConnectorSpec extends UnitSpec
     }
   }
 
-  private def awaitSubscriptionFields[A](implicit vpr: ValidatedPayloadRequest[A]) = {
+  private def awaitSubscriptionFields = {
     await(connector.getSubscriptionFields(apiSubscriptionKey))
   }
 
-  private def returnResponseForRequest(eventualResponse: Future[ApiSubscriptionFieldsResponse], url: String = expectedUrl) = {
-    when(mockWSGetImpl.GET[ApiSubscriptionFieldsResponse](ameq(url))
-      (any[HttpReads[ApiSubscriptionFieldsResponse]](), any[HeaderCarrier](), any[ExecutionContext])).thenReturn(eventualResponse)
+  private def returnResponseForRequest(eventualResponse: Future[ApiSubscriptionFields], url: String = expectedUrl) = {
+    when(mockWSGetImpl.GET[ApiSubscriptionFields](ameq(url))
+      (any[HttpReads[ApiSubscriptionFields]](), any[HeaderCarrier](), any[ExecutionContext])).thenReturn(eventualResponse)
   }
 
   private def connectorWithConfig(config: Config) = new ApiSubscriptionFieldsConnector(mockWSGetImpl, mockExportsLogger, mockExportsConfigService)

@@ -28,7 +28,7 @@ import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.{ErrorInternalSe
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames._
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{AuthorisedRequest, ValidatedHeadersRequest}
+import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ApiSubscriptionFieldsRequest, AuthorisedRequest, ValidatedHeadersRequest}
 import uk.gov.hmrc.customs.inventorylinking.export.model.{BadgeIdentifier, BadgeIdentifierEoriPair, Eori}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.logging.Authorization
@@ -43,14 +43,12 @@ import scala.util.control.NonFatal
 class AuthAction @Inject()(
                             override val authConnector: AuthConnector,
                             logger: ExportsLogger
-                          ) extends ActionRefiner[ValidatedHeadersRequest, AuthorisedRequest] with AuthorisedFunctions {
+                          ) extends ActionRefiner[ApiSubscriptionFieldsRequest, AuthorisedRequest] with AuthorisedFunctions {
   protected type EitherResultOrAuthRequest[A] = Either[Result, AuthorisedRequest[A]]
 
   protected val errorResponseUnauthorisedGeneral =
     ErrorResponse(Status.UNAUTHORIZED, UnauthorizedCode, "Unauthorised request")
   private val errorResponseBadgeIdentifierHeaderMissing = errorBadRequest(s"$XBadgeIdentifierHeaderName header is missing or invalid")
-
-  private val errorResponseSubmitterIdentifierHeaderMissing = errorBadRequest(s"$XSubmitterIdentifierHeaderName header is missing or invalid")
   private val errorResponseSubmitterIdentifierHeaderInvalid = errorBadRequest(s"$XSubmitterIdentifierHeaderName header is invalid")
 
   private lazy val errorResponseEoriNotFoundInCustomsEnrolment =
@@ -59,15 +57,15 @@ class AuthAction @Inject()(
 
   private lazy val xSubmitterIdentifierRegex = "^[0-9A-Za-z]{1,17}$".r
 
-  override def refine[A](vhr: ValidatedHeadersRequest[A]): Future[Either[Result, AuthorisedRequest[A]]] = {
-    implicit val implicitVhr: ValidatedHeadersRequest[A] = vhr
+  override def refine[A](asf: ApiSubscriptionFieldsRequest[A]): Future[Either[Result, AuthorisedRequest[A]]] = {
+    implicit val implicitAsf: ApiSubscriptionFieldsRequest[A] = asf
 
     authoriseAsCsp.flatMap {
       case Right(maybeAuthorisedAsCspWithBadgeIdAndEori) =>
         maybeAuthorisedAsCspWithBadgeIdAndEori.fold {
           authoriseAsNonCsp
         } { pair =>
-          Future.successful(Right(vhr.toCspAuthorisedRequest(pair)))
+          Future.successful(Right(asf.toCspAuthorisedRequest(pair)))
         }
       case Left(result) =>
         Future.successful(Left(result))
@@ -77,12 +75,12 @@ class AuthAction @Inject()(
   // pure function that tames exceptions throw by HMRC auth api into an Either
   // this enables calling function to not worry about recover blocks
   // returns a Future of Left(Result) on error or a Right(AuthorisedRequest) on success
-  private def authoriseAsCsp[A](implicit vhr: ValidatedHeadersRequest[A]): Future[Either[Result, Option[BadgeIdentifierEoriPair]]] = {
+  private def authoriseAsCsp[A](implicit asf: ApiSubscriptionFieldsRequest[A]): Future[Either[Result, Option[BadgeIdentifierEoriPair]]] = {
     implicit def hc(implicit rh: RequestHeader): HeaderCarrier = HeaderCarrierConverter.fromHeadersAndSession(rh.headers)
 
     authorised(Enrolment("write:customs-inventory-linking-exports") and AuthProviders(PrivilegedApplication)) {
       Future.successful(eitherMaybeBadgeIdentifierEoriPair)
-    }.recover {
+    }.recover[Either[Result, Option[BadgeIdentifierEoriPair]]] {
       case NonFatal(_: AuthorisationException) =>
         logger.debug("Not authorised as CSP")
         Right(None)
@@ -92,18 +90,31 @@ class AuthAction @Inject()(
     }
   }
 
-  private def eitherSubmitterIdentifierWithValidationCSP[A](implicit vhr: ValidatedHeadersRequest[A]) = {
+  private def eitherSubmitterIdentifierWithValidationCSP[A](implicit asf: ApiSubscriptionFieldsRequest[A]) = {
     val maybeSubmitterId: Option[String] = maybeHeaderCaseInsensitive(XSubmitterIdentifierHeaderName)
-    maybeValidEori(maybeSubmitterId).fold[Either[Result, Eori]] {
-      logger.error(s"Submitter identifier invalid or not present for CSP ($maybeSubmitterId)")
-      Left(errorResponseSubmitterIdentifierHeaderMissing.XmlResult.withConversationId)
-    } { eori =>
-      logger.debug("Authorising as CSP")
-      Right(eori)
+    maybeSubmitterId.fold[Either[Result, Eori]] {
+      asf.apiSubscriptionFields.fields.authenticatedEori.fold[Either[Result, Eori]] {
+        logger.error(s"Submitter identifier and Authenticated EORI not present for CSP")
+        Left(ErrorInternalServerError.XmlResult.withConversationId)
+      } { eoriFromFields =>
+        if (eoriFromFields.trim.nonEmpty) {
+          Right(Eori(eoriFromFields))
+        } else {
+          logger.error(s"Authenticated EORI ($eoriFromFields) invalid for CSP")
+          Left(ErrorInternalServerError.XmlResult.withConversationId)
+        }
+      }
+    }{eoriFromHeader =>
+      if (validEori(eoriFromHeader)) {
+        Right(Eori(eoriFromHeader))
+      } else {
+        logger.error(s"Submitter identifier ($eoriFromHeader) invalid for CSP")
+        Left(errorResponseSubmitterIdentifierHeaderInvalid.XmlResult.withConversationId)
+      }
     }
   }
 
-  private def eitherBadgeIdentifierWithValidation[A](implicit vhr: ValidatedHeadersRequest[A]) = {
+  private def eitherBadgeIdentifierWithValidation[A](implicit asf: ApiSubscriptionFieldsRequest[A]) = {
     val maybeBadgeIdString: Option[String] = maybeHeaderCaseInsensitive(XBadgeIdentifierHeaderName)
     maybeBadgeIdString.filter(xBadgeIdentifierRegex.findFirstIn(_).nonEmpty).map(BadgeIdentifier).fold[Either[Result, BadgeIdentifier]] {
       logger.error("badge identifier invalid or not present for CSP")
@@ -112,11 +123,15 @@ class AuthAction @Inject()(
   }
 
 
-  private def maybeValidEori(maybeValue: Option[String]) = {
-    maybeValue.filter(xSubmitterIdentifierRegex.findFirstIn(_).nonEmpty).map(Eori)
+  private def validEori(eori: String): Boolean = {
+    xSubmitterIdentifierRegex.findFirstIn(eori).nonEmpty
   }
 
-  private def eitherMaybeBadgeIdentifierEoriPair[A](implicit vhr: ValidatedHeadersRequest[A]): Either[Result, Some[BadgeIdentifierEoriPair]] = {
+  private def maybeValidEori(maybeValue: Option[String]) = {
+    maybeValue.filter(validEori).map(Eori)
+  }
+
+  private def eitherMaybeBadgeIdentifierEoriPair[A](implicit asf: ApiSubscriptionFieldsRequest[A]): Either[Result, Some[BadgeIdentifierEoriPair]] = {
     for {
       badgeId <- eitherBadgeIdentifierWithValidation.right
       eori <- eitherSubmitterIdentifierWithValidationCSP.right
@@ -127,7 +142,7 @@ class AuthAction @Inject()(
   // pure function that tames exceptions throw by HMRC auth api into an Either
   // this enables calling function to not worry about recover blocks
   // returns a Future of Left(Result) on error or a Right(AuthorisedRequest) on success
-  private def authoriseAsNonCsp[A](implicit vhr: ValidatedHeadersRequest[A]): Future[Either[Result, AuthorisedRequest[A]]] = {
+  private def authoriseAsNonCsp[A](implicit asf: ApiSubscriptionFieldsRequest[A]): Future[Either[Result, AuthorisedRequest[A]]] = {
     implicit def hc(implicit rh: RequestHeader): HeaderCarrier = HeaderCarrierConverter.fromHeadersAndSession(rh.headers)
 
     authorised(Enrolment("HMRC-CUS-ORG") and AuthProviders(GovernmentGateway)).retrieve(Retrievals.authorisedEnrolments) {
@@ -142,7 +157,7 @@ class AuthAction @Inject()(
 
           def logAndRight(anEori: Eori): Future[Either[Result, AuthorisedRequest[A]]] = {
             logger.debug("Authorising as non-CSP")
-            Future.successful(Right(vhr.toNonCspAuthorisedRequest(anEori)))
+            Future.successful(Right(asf.toNonCspAuthorisedRequest(anEori)))
           }
 
           maybeSubmitterHeader match {
@@ -168,11 +183,11 @@ class AuthAction @Inject()(
     }
   }
 
-  private def maybeHeaderCaseInsensitive[A](headerName: String)(implicit vhr: ValidatedHeadersRequest[A]) = {
-    vhr.request.headers.toSimpleMap.get(headerName)
+  private def maybeHeaderCaseInsensitive[A](headerName: String)(implicit asf: ApiSubscriptionFieldsRequest[A]) = {
+    asf.request.headers.toSimpleMap.get(headerName)
   }
 
-  private def findEoriInCustomsEnrolment[A](enrolments: Enrolments, authHeader: Option[Authorization])(implicit vhr: ValidatedHeadersRequest[A], hc: HeaderCarrier): Option[Eori] = {
+  private def findEoriInCustomsEnrolment[A](enrolments: Enrolments, authHeader: Option[Authorization])(implicit asf: ApiSubscriptionFieldsRequest[A], hc: HeaderCarrier): Option[Eori] = {
     val maybeCustomsEnrolment = enrolments.getEnrolment("HMRC-CUS-ORG")
     if (maybeCustomsEnrolment.isEmpty) {
       logger.warn(s"Customs enrolment HMRC-CUS-ORG not retrieved for authorised non-CSP call")

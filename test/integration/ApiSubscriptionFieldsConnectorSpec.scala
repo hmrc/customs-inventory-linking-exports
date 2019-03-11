@@ -16,7 +16,7 @@
 
 package integration
 
-import model.ApiSubscriptionFieldsResponse
+import model.ApiSubscriptionFields
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -24,12 +24,11 @@ import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.ApiSubscriptionFieldsConnector
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
 import uk.gov.hmrc.http._
 import util.ExternalServicesConfig.{Host, Port}
+import util.TestData._
 import util._
 import util.externalservices.{ApiSubscriptionFieldsService, ExportsExternalServicesConfig}
-import util.TestData._
 
 import scala.concurrent.Future
 
@@ -40,7 +39,7 @@ class ApiSubscriptionFieldsConnectorSpec extends IntegrationTestSpec with GuiceO
 
   private implicit val hc = HeaderCarrier()
 
-  private implicit val vpr = TestCspValidatedPayloadRequest
+  private implicit val vhr = TestValidatedHeadersRequest
 
   override protected def beforeAll() {
     startMockServer()
@@ -68,7 +67,7 @@ class ApiSubscriptionFieldsConnectorSpec extends IntegrationTestSpec with GuiceO
 
       val response = await(getApiSubscriptionFields)
 
-      response shouldBe apiSubscriptionFieldsResponse
+      response shouldBe apiSubscriptionFields
       verifyGetSubscriptionFieldsCalled()
     }
 
@@ -101,7 +100,7 @@ class ApiSubscriptionFieldsConnectorSpec extends IntegrationTestSpec with GuiceO
 
   }
 
-  private def getApiSubscriptionFields[A](implicit vpr: ValidatedPayloadRequest[A]): Future[ApiSubscriptionFieldsResponse] = {
+  private def getApiSubscriptionFields: Future[ApiSubscriptionFields] = {
     connector.getSubscriptionFields(apiSubscriptionKey)
   }
 }

@@ -19,9 +19,10 @@ package util
 import java.util.UUID
 
 import com.typesafe.config.{Config, ConfigFactory}
-import model.ApiSubscriptionFieldsResponse
+import model.{ApiSubscriptionFields, ApiSubscriptionFieldsFields}
 import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionKey, ClientId, SubscriptionFieldsId, VersionOne}
 import util.ExternalServicesConfig.{Host, Port}
+import util.TestData.authenticatedEoriValue
 import util.externalservices.ExportsExternalServicesConfig._
 
 trait ApiSubscriptionFieldsTestData {
@@ -34,7 +35,10 @@ trait ApiSubscriptionFieldsTestData {
   val apiVersion = "1.0"
   val apiSubscriptionKey = ApiSubscriptionKey(clientId, apiContext, VersionOne)
   val apiSubscriptionKeyWithEncodedContext: ApiSubscriptionKey = apiSubscriptionKey.copy(context = apiContextEncoded)
-  val apiSubscriptionFieldsResponse = ApiSubscriptionFieldsResponse(UUID.fromString(fieldsId))
+  val apiSubscriptionFieldsFields = ApiSubscriptionFieldsFields(authenticatedEori = Some(authenticatedEoriValue))
+  val apiSubscriptionFields = ApiSubscriptionFields(UUID.fromString(fieldsId), apiSubscriptionFieldsFields)
+  val apiSubscriptionFieldsNoAuthenticatedEori = ApiSubscriptionFields(UUID.fromString(fieldsId), apiSubscriptionFieldsFields.copy(authenticatedEori = None))
+  val apiSubscriptionFieldsBlankAuthenticatedEori = ApiSubscriptionFields(UUID.fromString(fieldsId), apiSubscriptionFieldsFields.copy(authenticatedEori = Some("")))
   val responseJsonString: String =
     s"""{
        |  "clientId": "afsdknbw34ty4hebdv",
@@ -43,7 +47,8 @@ trait ApiSubscriptionFieldsTestData {
        |  "fieldsId":"$fieldsId",
        |  "fields":{
        |    "callback-id":"http://localhost",
-       |    "token":"abc123"
+       |    "token":"abc123",
+       |    "authenticatedEori":"$authenticatedEoriValue"
        |  }
        |}""".stripMargin
 

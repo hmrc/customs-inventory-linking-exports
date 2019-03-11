@@ -47,9 +47,12 @@ object TestData {
   val badgeIdentifier: BadgeIdentifier = BadgeIdentifier(validBadgeIdentifierValue)
 
   val declarantEoriValue = "ZZ123456789000"
+  val authenticatedEoriValue = "AA123456789000"
   val declarantEori = Eori(declarantEoriValue)
+  val authenticatedEori = Eori(authenticatedEoriValue)
 
   val badgeEoriPair = BadgeIdentifierEoriPair(badgeIdentifier, declarantEori)
+  val badgeAuthenticatedEoriPair = BadgeIdentifierEoriPair(badgeIdentifier, authenticatedEori)
 
   val dateTime: DateTime = DateTime.now(DateTimeZone.UTC)
   val dateTimeFormat = "YYYY-MM-dd'T'HH:mm:ss'Z'"
@@ -124,9 +127,10 @@ object TestData {
   val TestConversationIdRequest = ConversationIdRequest(conversationId, TestFakeRequest)
   val TestExtractedHeaders = ExtractedHeadersImpl(VersionOne, ApiSubscriptionFieldsTestData.clientId)
   val TestValidatedHeadersRequest: ValidatedHeadersRequest[AnyContentAsXml] = TestConversationIdRequest.toValidatedHeadersRequest(TestExtractedHeaders)
-  val TestCspAuthorisedRequest: AuthorisedRequest[AnyContentAsXml] = TestValidatedHeadersRequest.toCspAuthorisedRequest(badgeEoriPair)
-  val TestCspValidatedPayloadRequest: ValidatedPayloadRequest[AnyContentAsXml] = TestValidatedHeadersRequest.toCspAuthorisedRequest(badgeEoriPair).toValidatedPayloadRequest(xmlBody = TestXmlPayload)
-  val TestNonCspValidatedPayloadRequest: ValidatedPayloadRequest[AnyContentAsXml] = TestValidatedHeadersRequest.toNonCspAuthorisedRequest(declarantEori).toValidatedPayloadRequest(xmlBody = TestXmlPayload)
+  val TestApiSubscriptionFieldsRequest: ApiSubscriptionFieldsRequest[AnyContentAsXml] = TestValidatedHeadersRequest.toApiSubscriptionFieldsRequest(ApiSubscriptionFieldsTestData.apiSubscriptionFields)
+  val TestCspAuthorisedRequest: AuthorisedRequest[AnyContentAsXml] = TestApiSubscriptionFieldsRequest.toCspAuthorisedRequest(badgeEoriPair)
+  val TestCspValidatedPayloadRequest: ValidatedPayloadRequest[AnyContentAsXml] = TestApiSubscriptionFieldsRequest.toCspAuthorisedRequest(badgeEoriPair).toValidatedPayloadRequest(xmlBody = TestXmlPayload)
+  val TestNonCspValidatedPayloadRequest: ValidatedPayloadRequest[AnyContentAsXml] = TestApiSubscriptionFieldsRequest.toNonCspAuthorisedRequest(declarantEori).toValidatedPayloadRequest(xmlBody = TestXmlPayload)
 }
 
 object RequestHeaders {
@@ -150,7 +154,7 @@ object RequestHeaders {
 
   val X_SUBMITTER_IDENTIFIER_HEADER: (String, String) = X_SUBMITTER_IDENTIFIER_NAME -> declarantEoriValue
   val X_SUBMITTER_IDENTIFIER_HEADER_CAMEL_CASE: (String, String) = X_SUBMITTER_IDENTIFIER_NAME_CAMEL_CASE -> declarantEoriValue
-  val X_SUBMITTER_IDENTIFIER_HEADER_INVALID: (String, String) = X_SUBMITTER_IDENTIFIER_NAME -> ""
+  val X_SUBMITTER_IDENTIFIER_HEADER_INVALID: (String, String) = X_SUBMITTER_IDENTIFIER_NAME -> "X_SUBMITTER_IDENTIFIER_TOO_LONG"
 
   val CONTENT_TYPE_HEADER: (String, String) = CONTENT_TYPE -> (MimeTypes.XML + "; charset=utf-8")
   val CONTENT_TYPE_HEADER_INVALID: (String, String) = CONTENT_TYPE -> "somethinginvalid"
