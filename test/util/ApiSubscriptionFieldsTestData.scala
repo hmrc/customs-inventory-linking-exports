@@ -19,7 +19,7 @@ package util
 import java.util.UUID
 
 import com.typesafe.config.{Config, ConfigFactory}
-import model.{ApiSubscriptionFields, ApiSubscriptionFieldsFields}
+import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionFields, DeclarantCallbackData}
 import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionKey, ClientId, SubscriptionFieldsId, VersionOne}
 import util.ExternalServicesConfig.{Host, Port}
 import util.TestData.authenticatedEoriValue
@@ -35,7 +35,7 @@ trait ApiSubscriptionFieldsTestData {
   val apiVersion = "1.0"
   val apiSubscriptionKey = ApiSubscriptionKey(clientId, apiContext, VersionOne)
   val apiSubscriptionKeyWithEncodedContext: ApiSubscriptionKey = apiSubscriptionKey.copy(context = apiContextEncoded)
-  val apiSubscriptionFieldsFields = ApiSubscriptionFieldsFields(authenticatedEori = Some(authenticatedEoriValue))
+  val apiSubscriptionFieldsFields = DeclarantCallbackData(authenticatedEori = Some(authenticatedEoriValue))
   val apiSubscriptionFields = ApiSubscriptionFields(UUID.fromString(fieldsId), apiSubscriptionFieldsFields)
   val apiSubscriptionFieldsNoAuthenticatedEori = ApiSubscriptionFields(UUID.fromString(fieldsId), apiSubscriptionFieldsFields.copy(authenticatedEori = None))
   val apiSubscriptionFieldsBlankAuthenticatedEori = ApiSubscriptionFields(UUID.fromString(fieldsId), apiSubscriptionFieldsFields.copy(authenticatedEori = Some("")))

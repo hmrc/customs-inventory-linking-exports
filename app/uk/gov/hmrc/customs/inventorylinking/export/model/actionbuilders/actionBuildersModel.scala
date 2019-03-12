@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders
 
-import model.ApiSubscriptionFields
 import play.api.mvc.{Request, Result, WrappedRequest}
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames.XConversationIdHeaderName
 import uk.gov.hmrc.customs.inventorylinking.export.model.{AuthorisedAs, _}

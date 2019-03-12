@@ -100,7 +100,7 @@ class AuthAction @Inject()(
         if (eoriFromFields.trim.nonEmpty) {
           Right(Eori(eoriFromFields))
         } else {
-          logger.error(s"Authenticated EORI ($eoriFromFields) invalid for CSP")
+          logger.error(s"Authenticated EORI ($eoriFromFields) missing for CSP")
           Left(ErrorInternalServerError.XmlResult.withConversationId)
         }
       }
@@ -108,7 +108,7 @@ class AuthAction @Inject()(
       if (validEori(eoriFromHeader)) {
         Right(Eori(eoriFromHeader))
       } else {
-        logger.error(s"Submitter identifier ($eoriFromHeader) invalid for CSP")
+        logger.error(s"Submitter identifier ($eoriFromHeader) missing or invalid for CSP")
         Left(errorResponseSubmitterIdentifierHeaderInvalid.XmlResult.withConversationId)
       }
     }

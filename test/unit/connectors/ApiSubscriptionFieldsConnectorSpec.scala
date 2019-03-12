@@ -17,7 +17,7 @@
 package unit.connectors
 
 import com.typesafe.config.Config
-import model.ApiSubscriptionFields
+import uk.gov.hmrc.customs.inventorylinking.export.model.ApiSubscriptionFields
 import org.mockito.ArgumentMatchers.{eq => ameq, _}
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach

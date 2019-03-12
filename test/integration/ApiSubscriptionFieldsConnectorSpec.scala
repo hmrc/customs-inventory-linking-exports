@@ -16,7 +16,6 @@
 
 package integration
 
-import model.ApiSubscriptionFields
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -24,6 +23,7 @@ import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.ApiSubscriptionFieldsConnector
+import uk.gov.hmrc.customs.inventorylinking.export.model.ApiSubscriptionFields
 import uk.gov.hmrc.http._
 import util.ExternalServicesConfig.{Host, Port}
 import util.TestData._

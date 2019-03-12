@@ -16,7 +16,7 @@
 
 package unit.controllers.actionbuilders
 
-import model.ApiSubscriptionFields
+import uk.gov.hmrc.customs.inventorylinking.export.model.ApiSubscriptionFields
 import org.scalatest.mockito.MockitoSugar
 import play.api.http.Status
 import play.api.http.Status.UNAUTHORIZED

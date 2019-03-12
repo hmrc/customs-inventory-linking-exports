@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package model
+package uk.gov.hmrc.customs.inventorylinking.export.model
 
 import java.util.UUID
 
 import play.api.libs.json.{Format, Json}
 
-case class ApiSubscriptionFieldsFields(authenticatedEori: Option[String])
+case class DeclarantCallbackData(authenticatedEori: Option[String])
 
-object ApiSubscriptionFieldsFields {
-  implicit val format: Format[ApiSubscriptionFieldsFields] = Json.format[ApiSubscriptionFieldsFields]
+object DeclarantCallbackData {
+  implicit val format: Format[DeclarantCallbackData] = Json.format[DeclarantCallbackData]
 }
 
-case class ApiSubscriptionFields(fieldsId: UUID, fields: ApiSubscriptionFieldsFields)
+case class ApiSubscriptionFields(fieldsId: UUID, fields: DeclarantCallbackData)
 
 object ApiSubscriptionFields {
   implicit val format = Json.format[ApiSubscriptionFields]
