@@ -19,10 +19,11 @@ There is an SBT task `zipXsds` that generates a ZIP file containing schemas, for
 during the packaging phase (so are not generated during normal development). These ZIP files are referenced by the RAML. 
  These references are rendered as HTML links to generated ZIP in the deployed service. 
 
-# Lookup of `fieldsId` UUID from `api-subscription-fields` service
+# Lookup of `fieldsId` UUID and `authenticatedEori` from `api-subscription-fields` service
 The `X-Client-ID` header, together with the application context and version are used
  to call the `api-subscription-fields` service to get the unique `fieldsId` UUID and to put this value in the `api-subscription-fields-id`
- header.    
+ header. Note if the user is a CSP and the X-Submitter-Identifier header is not supplied, then it is assumed that the 
+ CSP is submitting a direct transaction that has originated with the CSP, and the `authenticatedEori` field is used instead.
 
 So there is now a direct dependency on the `api-subscription-fields` service. Note the service to get the `fieldsId` is not currently stubbed. 
 

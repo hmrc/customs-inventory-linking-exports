@@ -43,6 +43,7 @@ import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBu
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{AuthorisedRequest, ConversationIdRequest, ValidatedPayloadRequest}
 import uk.gov.hmrc.customs.inventorylinking.export.services.XmlValidationService
 import uk.gov.hmrc.play.test.UnitSpec
+import util.ApiSubscriptionFieldsTestData
 import util.TestData._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -87,7 +88,9 @@ class PayloadValidationActionSpec extends UnitSpec with MockitoSugar {
 
     "return 400 error response when XML validation fails" in new SetUp {
       val authorisedRequestWithNonWellFormedXml: AuthorisedRequest[AnyContentAsText] = ConversationIdRequest(conversationId, FakeRequest().withTextBody("<foo><foo>"))
-        .toValidatedHeadersRequest(TestExtractedHeaders).toCspAuthorisedRequest(badgeEoriPair)
+        .toValidatedHeadersRequest(TestExtractedHeaders)
+        .toApiSubscriptionFieldsRequest(ApiSubscriptionFieldsTestData.apiSubscriptionFields)
+        .toCspAuthorisedRequest(badgeEoriPair)
 
       private val actual = await(payloadValidationAction.refine(authorisedRequestWithNonWellFormedXml))
 

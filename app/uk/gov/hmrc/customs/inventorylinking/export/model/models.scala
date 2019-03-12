@@ -18,7 +18,9 @@ package uk.gov.hmrc.customs.inventorylinking.export.model
 
 import java.util.UUID
 
-case class Eori(value: String) extends AnyVal
+case class Eori(value: String) extends AnyVal {
+  override def toString: String = value
+}
 
 case class ClientId(value: String) extends AnyVal
 
