@@ -33,17 +33,16 @@ import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.play.bootstrap.config.AppName
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
 
 @Singleton
-class ExportsConnector @Inject()(http: HttpClient,
-                                    logger: ExportsLogger,
-                                    serviceConfigProvider: ServiceConfigProvider,
-                                    config: ExportsConfigService,
-                                    override val configuration: Configuration
-                                   ) extends UsingCircuitBreaker with AppName {
+class ExportsConnector @Inject() (http: HttpClient,
+                                  logger: ExportsLogger,
+                                  serviceConfigProvider: ServiceConfigProvider,
+                                  config: ExportsConfigService,
+                                  override val configuration: Configuration)
+                                 (implicit ec: ExecutionContext) extends UsingCircuitBreaker with AppName {
 
   def send[A](xml: NodeSeq, date: DateTime, correlationId: UUID)(implicit vpr: ValidatedPayloadRequest[A]): Future[HttpResponse] = {
     val config = Option(serviceConfigProvider.getConfig("mdg-exports")).getOrElse(throw new IllegalArgumentException("config not found"))

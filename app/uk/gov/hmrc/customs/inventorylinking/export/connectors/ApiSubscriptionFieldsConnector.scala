@@ -24,13 +24,13 @@ import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
 import uk.gov.hmrc.http.{HeaderCarrier, HttpException}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class ApiSubscriptionFieldsConnector @Inject()(http: HttpClient,
                                                logger: ExportsLogger,
-                                               config: ExportsConfigService) {
+                                               config: ExportsConfigService)
+                                              (implicit ec: ExecutionContext) {
 
   def getSubscriptionFields[A](apiSubsKey: ApiSubscriptionKey)(implicit vhr: ValidatedHeadersRequest[A]): Future[ApiSubscriptionFields] = {
     val url = ApiSubscriptionFieldsPath.url(config.exportsConfig.apiSubscriptionFieldsBaseUrl, apiSubsKey)

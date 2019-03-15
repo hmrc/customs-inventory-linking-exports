@@ -16,10 +16,10 @@
 
 package unit.controllers.actionbuilders
 
-import uk.gov.hmrc.customs.inventorylinking.export.model.ApiSubscriptionFields
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status
 import play.api.http.Status.UNAUTHORIZED
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc.AnyContentAsXml
 import play.api.test.FakeRequest
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
@@ -27,7 +27,7 @@ import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.{ErrorInternalSe
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders.AuthAction
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model.Eori
+import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionFields, Eori}
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ApiSubscriptionFieldsRequest, ConversationIdRequest}
 import uk.gov.hmrc.play.test.UnitSpec
@@ -41,8 +41,6 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
     ErrorResponse(Status.UNAUTHORIZED, UnauthorizedCode, "Unauthorised request")
   private val errorResponseBadgeIdentifierHeaderMissing =
     errorBadRequest(s"${CustomHeaderNames.XBadgeIdentifierHeaderName} header is missing or invalid")
-  private val errorResponseSubmitterIdentifierHeaderMissing =
-    errorBadRequest(s"${CustomHeaderNames.XSubmitterIdentifierHeaderName} header is missing or invalid")
   private val errorResponseSubmitterIdentifierHeaderInvalid =
     errorBadRequest(s"${CustomHeaderNames.XSubmitterIdentifierHeaderName} header is invalid")
 

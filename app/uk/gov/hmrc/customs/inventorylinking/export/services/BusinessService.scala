@@ -32,8 +32,7 @@ import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.Validate
 import uk.gov.hmrc.customs.inventorylinking.export.xml.PayloadDecorator
 import uk.gov.hmrc.http.HeaderCarrier
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Left
 import scala.util.control.NonFatal
 import scala.xml.NodeSeq
@@ -44,7 +43,8 @@ class BusinessService @Inject()(logger: ExportsLogger,
                                 wrapper: PayloadDecorator,
                                 dateTimeProvider: DateTimeService,
                                 uniqueIdsService: UniqueIdsService,
-                                customsConfigService: ExportsConfigService) {
+                                customsConfigService: ExportsConfigService)
+                               (implicit ec: ExecutionContext) {
 
   private val errorResponseServiceUnavailable = errorInternalServerError("This service is currently unavailable")
 

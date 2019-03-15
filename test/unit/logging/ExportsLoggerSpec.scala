@@ -16,8 +16,7 @@
 
 package unit.logging
 
-import org.scalatest.mockito.MockitoSugar
-import play.api.mvc.AnyContentAsXml
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.test.FakeRequest
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger

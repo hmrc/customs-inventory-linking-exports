@@ -34,16 +34,14 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.play.HeaderCarrierConverter
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Left
 import scala.util.control.NonFatal
 
 @Singleton
-class AuthAction @Inject()(
-                            override val authConnector: AuthConnector,
-                            logger: ExportsLogger
-                          ) extends ActionRefiner[ApiSubscriptionFieldsRequest, AuthorisedRequest] with AuthorisedFunctions {
+class AuthAction @Inject()(override val authConnector: AuthConnector,
+                           logger: ExportsLogger)
+                          (implicit ec: ExecutionContext) extends ActionRefiner[ApiSubscriptionFieldsRequest, AuthorisedRequest] with AuthorisedFunctions {
   protected type EitherResultOrAuthRequest[A] = Either[Result, AuthorisedRequest[A]]
 
   protected val errorResponseUnauthorisedGeneral =

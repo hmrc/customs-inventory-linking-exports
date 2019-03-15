@@ -33,7 +33,6 @@
 package uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders
 
 import javax.inject.{Inject, Singleton}
-
 import play.api.mvc.{ActionRefiner, AnyContent, Result}
 import uk.gov.hmrc.customs.api.common.controllers.{ErrorResponse, ResponseContents}
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
@@ -42,13 +41,14 @@ import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{Authori
 import uk.gov.hmrc.customs.inventorylinking.export.services.XmlValidationService
 
 import scala.collection.Seq
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 import scala.xml.{NodeSeq, SAXException}
 
 @Singleton
-class PayloadValidationAction @Inject() (xmlValidationService: XmlValidationService, logger: ExportsLogger) extends ActionRefiner[AuthorisedRequest, ValidatedPayloadRequest] {
+class PayloadValidationAction @Inject() (xmlValidationService: XmlValidationService,
+                                         logger: ExportsLogger)
+                                        (implicit ec: ExecutionContext) extends ActionRefiner[AuthorisedRequest, ValidatedPayloadRequest] {
 
   override def refine[A](ar: AuthorisedRequest[A]): Future[Either[Result, ValidatedPayloadRequest[A]]] = {
     implicit val implicitAr = ar
@@ -60,8 +60,8 @@ class PayloadValidationAction @Inject() (xmlValidationService: XmlValidationServ
     lazy val errorMessage = "Request body does not contain a well-formed XML document."
     lazy val errorNotWellFormed = ErrorResponse.errorBadRequest(errorMessage).XmlResult.withConversationId
 
-    def validate(xml: NodeSeq): Future[Either[Result, ValidatedPayloadRequest[A]] with Product with Serializable] =
-      xmlValidationService.validate(xml).map{ _ =>
+    def validate(xml: NodeSeq): Future[Either[Result, ValidatedPayloadRequest[A]]] =
+      xmlValidationService.validate(xml).map[Either[Result, ValidatedPayloadRequest[A]]] { _ =>
         logger.debug("XML payload validated.")
         Right(ar.toValidatedPayloadRequest(xml))
       }
