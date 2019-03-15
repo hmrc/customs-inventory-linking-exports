@@ -27,13 +27,14 @@ import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBu
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ApiSubscriptionFieldsRequest, ValidatedHeadersRequest}
 import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionFields, ApiSubscriptionKey, VersionOne}
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Left
 import scala.util.control.NonFatal
 
 @Singleton
-class ApiSubscriptionFieldsAction @Inject()(connector: ApiSubscriptionFieldsConnector, logger: ExportsLogger) extends ActionRefiner[ValidatedHeadersRequest, ApiSubscriptionFieldsRequest] {
+class ApiSubscriptionFieldsAction @Inject()(connector: ApiSubscriptionFieldsConnector,
+                                            logger: ExportsLogger)
+                                           (implicit ec: ExecutionContext) extends ActionRefiner[ValidatedHeadersRequest, ApiSubscriptionFieldsRequest] {
   private val apiContextEncoded = URLEncoder.encode("customs/inventory-linking/exports", "UTF-8")
 
   override def refine[A](vhr: ValidatedHeadersRequest[A]): Future[Either[Result, ApiSubscriptionFieldsRequest[A]]] = {

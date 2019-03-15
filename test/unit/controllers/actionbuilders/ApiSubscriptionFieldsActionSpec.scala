@@ -20,7 +20,8 @@ import java.net.URLEncoder
 
 import org.mockito.ArgumentMatchers.{eq => ameq, _}
 import org.mockito.Mockito._
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc.{AnyContentAsXml, Result}
 import play.api.test.FakeRequest
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse

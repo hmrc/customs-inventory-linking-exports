@@ -58,7 +58,7 @@ import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.Validate
 import uk.gov.hmrc.customs.inventorylinking.export.services.BusinessService
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 
 @Singleton
 class InventoryLinkingExportController @Inject()(
@@ -69,6 +69,7 @@ class InventoryLinkingExportController @Inject()(
                                                   payloadValidationAction: PayloadValidationAction,
                                                   businessService: BusinessService,
                                                   logger: ExportsLogger)
+                                                (implicit ec: ExecutionContext)
   extends BaseController {
 
   private def xmlOrEmptyBody: BodyParser[AnyContent] = BodyParser(rq => parse.xml(rq).map {

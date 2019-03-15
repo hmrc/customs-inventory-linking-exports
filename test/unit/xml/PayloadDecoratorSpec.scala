@@ -16,8 +16,8 @@
 
 package unit.xml
 
-import org.scalatest.mockito.MockitoSugar
 import org.scalatest.prop.TableDrivenPropertyChecks._
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.mvc.AnyContentAsXml
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
 import uk.gov.hmrc.customs.inventorylinking.export.xml.PayloadDecorator
@@ -28,7 +28,7 @@ import util.XMLTestData._
 
 import scala.xml.NodeSeq
 
-class PayloadDecoratorSpec extends UnitSpec with MockitoSugar{
+class PayloadDecoratorSpec extends UnitSpec with MockitoSugar {
 
   private val xmlPayload: NodeSeq = <node1></node1>
 

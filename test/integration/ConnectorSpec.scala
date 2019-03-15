@@ -19,8 +19,8 @@ package integration
 import java.util.UUID
 
 import org.joda.time.DateTime
-import org.scalatest.mockito.MockitoSugar
 import org.scalatest.prop.TableDrivenPropertyChecks
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
