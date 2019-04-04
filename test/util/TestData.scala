@@ -64,7 +64,7 @@ object TestData {
   val emulatedServiceFailure = new EmulatedServiceFailure("Emulated service failure.")
 
   val xsdLocations = List(
-    "/api/conf/1.0/schemas/exports/request/inventoryLinkingRequestExternal.xsd")
+    "/api/conf/1.0/schemas/exports/inventoryLinkingRequestExternal.xsd")
 
   lazy val ValidRequestWithSubmitterHeader: FakeRequest[AnyContentAsXml] = FakeRequest("POST", "/")
     .withHeaders(
