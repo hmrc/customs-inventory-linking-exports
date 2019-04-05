@@ -278,12 +278,14 @@
 
 	<xs:complexType name="inventoryLinkingValidateMUCRRequest">
 		<xs:sequence>
+			<xs:element name="MRN" type="mrn" minOccurs="1" nillable="false"  />
 			<xs:element name="masterUCR" type="ucr" minOccurs="1" nillable="false" />
 		</xs:sequence>
 	</xs:complexType>
 
 	<xs:complexType name="inventoryLinkingValidateMUCRResponse">
 		<xs:sequence>
+			<xs:element name="MRN" type="mrn" minOccurs="1" nillable="false"  />
 			<xs:element name="masterUCR" type="ucr" minOccurs="1" nillable="false" />
 			<xs:element name="isFound" type="xs:boolean" minOccurs="1" nillable="false" />
 			<xs:element name="isShut" type="xs:boolean" minOccurs="0" nillable="true" />
