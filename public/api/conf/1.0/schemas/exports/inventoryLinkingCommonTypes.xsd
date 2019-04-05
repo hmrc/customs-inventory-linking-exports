@@ -5,7 +5,7 @@
 		   targetNamespace="http://gov.uk/customs/inventoryLinking/v1"
 		   elementFormDefault="qualified"
 		   attributeFormDefault="unqualified"
-		   vc:minVersion="1.1" version="0.5">
+		   vc:minVersion="1.1" version="1.0">
 
 	<xs:simpleType name="uuid">
 		<xs:annotation>
@@ -25,6 +25,15 @@
 			<xs:maxLength value="35" />
 			<xs:pattern
 					value="[0-9][A-Z][A-Z][0-9A-Z\(\)\-/]{6,32}|GB/[0-9A-Z]{3,4}-[0-9A-Z]{5,28}|GB/[0-9A-Z]{9,12}-[0-9A-Z]{1,23}|A:[0-9A-Z]{3}[0-9]{8}|C:[A-Z]{3}[0-9A-Z]{3,30}" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="mrn">
+		<xs:annotation>
+			<xs:documentation>Must be a valid mrn</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:maxLength value="35" />
 		</xs:restriction>
 	</xs:simpleType>
 
