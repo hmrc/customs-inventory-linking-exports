@@ -23,9 +23,8 @@ import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.Eventually
 import org.scalatestplus.mockito.MockitoSugar
-import play.api.Configuration
 import play.api.http.HeaderNames
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.test.Helpers
 import play.mvc.Http.MimeTypes
 import uk.gov.hmrc.customs.api.common.config.{ServiceConfig, ServiceConfigProvider}
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.ExportsConnector
@@ -48,9 +47,9 @@ class ExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfte
   private val mockServiceConfigProvider = mock[ServiceConfigProvider]
   private val mockExportsConfigService = mock[ExportsConfigService]
   private val mockExportsCircuitBreakerConfig = mock[ExportsCircuitBreakerConfig]
-  private val mockConfiguration = mock[Configuration]
+  private implicit val ec = Helpers.stubControllerComponents().executionContext
 
-  private val connector = new ExportsConnector(mockWsPost, mockExportsLogger, mockServiceConfigProvider, mockExportsConfigService, mockConfiguration)
+  private val connector = new ExportsConnector(mockWsPost, mockExportsLogger, mockServiceConfigProvider, mockExportsConfigService)
 
   private val serviceConfig = ServiceConfig("the-url", Some("bearerToken"), "default")
 
@@ -63,7 +62,6 @@ class ExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfte
     reset(mockWsPost, mockServiceConfigProvider, mockExportsLogger)
     when(mockExportsConfigService.exportsCircuitBreakerConfig).thenReturn(mockExportsCircuitBreakerConfig)
     when(mockServiceConfigProvider.getConfig("mdg-exports")).thenReturn(serviceConfig)
-    when(mockConfiguration.getString("appName")).thenReturn(Some("an-app-name"))
   }
 
   private val year = 2017

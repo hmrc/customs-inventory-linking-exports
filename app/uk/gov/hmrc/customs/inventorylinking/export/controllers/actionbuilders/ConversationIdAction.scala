@@ -17,19 +17,23 @@
 package uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders
 
 import javax.inject.{Inject, Singleton}
-
 import play.api.mvc.{ActionTransformer, Request}
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ConversationIdRequest
 import uk.gov.hmrc.customs.inventorylinking.export.services.UniqueIdsService
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Action builder that transforms a `Request` to a `ConversationIdRequest`
   */
 @Singleton
-class ConversationIdAction @Inject()(uniqueIdsService: UniqueIdsService, logger: ExportsLogger) extends ActionTransformer[Request, ConversationIdRequest] {
+class ConversationIdAction @Inject()(uniqueIdsService: UniqueIdsService,
+                                     logger: ExportsLogger)
+                                    (implicit ec: ExecutionContext)
+  extends ActionTransformer[Request, ConversationIdRequest] {
+
+  protected def executionContext: ExecutionContext = ec
 
   override def transform[A](request: Request[A]): Future[ConversationIdRequest[A]] = {
 

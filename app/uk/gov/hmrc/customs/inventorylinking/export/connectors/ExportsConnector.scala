@@ -20,7 +20,6 @@ import java.util.UUID
 
 import com.google.inject._
 import org.joda.time.DateTime
-import play.api.Configuration
 import play.api.http.HeaderNames.{ACCEPT, CONTENT_TYPE, DATE, X_FORWARDED_HOST}
 import play.api.http.MimeTypes
 import uk.gov.hmrc.circuitbreaker.{CircuitBreakerConfig, UsingCircuitBreaker}
@@ -30,7 +29,6 @@ import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.Validate
 import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.logging.Authorization
-import uk.gov.hmrc.play.bootstrap.config.AppName
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -40,9 +38,8 @@ import scala.xml.NodeSeq
 class ExportsConnector @Inject() (http: HttpClient,
                                   logger: ExportsLogger,
                                   serviceConfigProvider: ServiceConfigProvider,
-                                  config: ExportsConfigService,
-                                  override val configuration: Configuration)
-                                 (implicit ec: ExecutionContext) extends UsingCircuitBreaker with AppName {
+                                  config: ExportsConfigService)
+                                 (implicit ec: ExecutionContext) extends UsingCircuitBreaker {
 
   def send[A](xml: NodeSeq, date: DateTime, correlationId: UUID)(implicit vpr: ValidatedPayloadRequest[A]): Future[HttpResponse] = {
     val config = Option(serviceConfigProvider.getConfig("mdg-exports")).getOrElse(throw new IllegalArgumentException("config not found"))
@@ -75,7 +72,7 @@ class ExportsConnector @Inject() (http: HttpClient,
 
   override protected def circuitBreakerConfig: CircuitBreakerConfig =
     CircuitBreakerConfig(
-      serviceName = appName,
+      serviceName = "customs-inventory-linking-exports",
       numberOfCallsToTriggerStateChange = config.exportsCircuitBreakerConfig.numberOfCallsToTriggerStateChange,
       unavailablePeriodDuration = config.exportsCircuitBreakerConfig.unavailablePeriodDurationInMillis,
       unstablePeriodDuration = config.exportsCircuitBreakerConfig.unstablePeriodDurationInMillis

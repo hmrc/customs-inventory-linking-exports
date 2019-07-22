@@ -17,7 +17,7 @@
 package unit.controllers.actionbuilders
 
 import org.scalatestplus.mockito.MockitoSugar
-import play.api.test.FakeRequest
+import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders.ConversationIdAction
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ConversationIdRequest
@@ -25,11 +25,14 @@ import uk.gov.hmrc.play.test.UnitSpec
 import util.TestData
 import util.TestData.conversationId
 
+import scala.concurrent.ExecutionContext
+
 class ConversationIdActionSpec extends UnitSpec with MockitoSugar {
 
   trait SetUp {
     private val mockExportsLogger = mock[ExportsLogger]
     val request = FakeRequest()
+    implicit val ec: ExecutionContext = Helpers.stubControllerComponents().executionContext
     val conversationIdAction = new ConversationIdAction(TestData.stubUniqueIdsService, mockExportsLogger)
     val expected = ConversationIdRequest(conversationId, request)
   }

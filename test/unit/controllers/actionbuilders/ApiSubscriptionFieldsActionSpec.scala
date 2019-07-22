@@ -21,9 +21,8 @@ import java.net.URLEncoder
 import org.mockito.ArgumentMatchers.{eq => ameq, _}
 import org.mockito.Mockito._
 import org.scalatestplus.mockito.MockitoSugar
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc.{AnyContentAsXml, Result}
-import play.api.test.FakeRequest
+import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.ApiSubscriptionFieldsConnector
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders.ApiSubscriptionFieldsAction
@@ -39,6 +38,7 @@ import scala.concurrent.Future
 
 class ApiSubscriptionFieldsActionSpec extends UnitSpec with MockitoSugar {
   private val apiContextEncoded = URLEncoder.encode("customs/inventory-linking/exports", "UTF-8")
+  private implicit val ec = Helpers.stubControllerComponents().executionContext
 
   trait SetUp {
     private[ApiSubscriptionFieldsActionSpec] val connector = mock[ApiSubscriptionFieldsConnector]

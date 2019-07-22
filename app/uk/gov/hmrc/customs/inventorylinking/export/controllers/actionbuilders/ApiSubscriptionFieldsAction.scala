@@ -35,6 +35,8 @@ import scala.util.control.NonFatal
 class ApiSubscriptionFieldsAction @Inject()(connector: ApiSubscriptionFieldsConnector,
                                             logger: ExportsLogger)
                                            (implicit ec: ExecutionContext) extends ActionRefiner[ValidatedHeadersRequest, ApiSubscriptionFieldsRequest] {
+
+  protected def executionContext: ExecutionContext = ec
   private val apiContextEncoded = URLEncoder.encode("customs/inventory-linking/exports", "UTF-8")
 
   override def refine[A](vhr: ValidatedHeadersRequest[A]): Future[Either[Result, ApiSubscriptionFieldsRequest[A]]] = {
