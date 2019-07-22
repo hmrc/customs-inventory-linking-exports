@@ -22,7 +22,7 @@ import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.Eventually
 import org.scalatestplus.mockito.MockitoSugar
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.test.Helpers
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.ApiSubscriptionFieldsConnector
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionFields, ExportsConfig}
@@ -47,7 +47,7 @@ class ApiSubscriptionFieldsConnectorSpec extends UnitSpec
   private val mockWSGetImpl = mock[HttpClient]
   private val mockExportsLogger = mock[ExportsLogger]
   private implicit val hc = HeaderCarrier()
-
+  private implicit val ec = Helpers.stubControllerComponents().executionContext
   private val connector = connectorWithConfig(validConfig)
 
   private val httpException = new NotFoundException("Emulated 404 response from a web call")

@@ -39,7 +39,7 @@ class XmlValidationService @Inject()(configuration: Configuration) {
     def resourceUrl(resourcePath: String): URL = Option(getClass.getResource(resourcePath))
       .getOrElse(throw new FileNotFoundException(s"XML Schema resource file: $resourcePath"))
 
-    val sources = configuration.getStringSeq("xsd.locations")
+    val sources = configuration.getOptional[Seq[String]]("xsd.locations")
       .filter(_.nonEmpty)
       .getOrElse(throw new IllegalStateException("application.conf is missing mandatory property 'xsd.locations'"))
       .map(resourceUrl(_).toString)
@@ -48,7 +48,7 @@ class XmlValidationService @Inject()(configuration: Configuration) {
     SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(sources)
   }
 
-  private lazy val maxSAXErrors = configuration.getInt("xml.max-errors").getOrElse(Int.MaxValue)
+  private lazy val maxSAXErrors = configuration.getOptional[Int]("xml.max-errors").getOrElse(Int.MaxValue)
 
   def validate(xml: NodeSeq)(implicit ec: ExecutionContext): Future[Unit] = {
     Future(doValidate(xml))
@@ -69,7 +69,7 @@ class XmlValidationService @Inject()(configuration: Configuration) {
 
     private lazy val errors: mutable.Buffer[SAXParseException] = mutable.Buffer.empty
 
-    private def accumulateError(e: SAXParseException) = self.synchronized {
+    private def accumulateError(e: SAXParseException): Unit = self.synchronized {
       errors += e
       if (errors.length >= maxErrors) throwIfErrorsEncountered()
     }

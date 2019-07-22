@@ -19,17 +19,16 @@ package unit.controllers.actionbuilders
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status
 import play.api.http.Status.UNAUTHORIZED
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc.AnyContentAsXml
-import play.api.test.FakeRequest
+import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.{ErrorInternalServerError, UnauthorizedCode, errorBadRequest}
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders.AuthAction
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionFields, Eori}
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ApiSubscriptionFieldsRequest, ConversationIdRequest}
+import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ApiSubscriptionFieldsRequest, AuthorisedRequest, ConversationIdRequest}
+import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionFields, Eori}
 import uk.gov.hmrc.play.test.UnitSpec
 import util.RequestHeaders.X_SUBMITTER_IDENTIFIER_NAME_CAMEL_CASE
 import util.TestData._
@@ -70,6 +69,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       .toApiSubscriptionFieldsRequest(ApiSubscriptionFieldsTestData.apiSubscriptionFields)
 
   trait SetUp extends AuthConnectorStubbing {
+    implicit val ec = Helpers.stubControllerComponents().executionContext
     val mockExportsLogger: ExportsLogger = mock[ExportsLogger]
     val authAction: AuthAction = new AuthAction(mockAuthConnector, mockExportsLogger)
   }
@@ -78,8 +78,10 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
     "authorise as CSP when authorised by auth API and both badge identifier and submitter headers exist" in new SetUp {
       authoriseCsp()
 
-      private val actual = await(authAction.refine(request(testFakeRequestWithBadgeIdAndSubmitterId())))
-      actual shouldBe Right(request(testFakeRequestWithBadgeIdAndSubmitterId()).toCspAuthorisedRequest(badgeEoriPair))
+      private val actual: AuthorisedRequest[AnyContentAsXml] = await(authAction.refine(request(testFakeRequestWithBadgeIdAndSubmitterId())).right.get)
+      private val expected: AuthorisedRequest[AnyContentAsXml] = request(testFakeRequestWithBadgeIdAndSubmitterId()).toCspAuthorisedRequest(badgeEoriPair)
+      actual.authorisedAs shouldBe expected.authorisedAs
+      
       verifyNonCspAuthorisationNotCalled
     }
 
@@ -113,9 +115,10 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
     "authorise as CSP when authorised by auth API and badge identifier exists, but submitter not present and authenticated EORI is present" in new SetUp {
       authoriseCsp()
 
-      private val actual = await(authAction.refine(request(testFakeRequestWithBadgeId())))
+      private val actual = await(authAction.refine(request(testFakeRequestWithBadgeId())).right.get)
+      private val expected = request(testFakeRequestWithBadgeId()).toCspAuthorisedRequest(badgeAuthenticatedEoriPair)
+      actual.authorisedAs shouldBe expected.authorisedAs
 
-      actual shouldBe Right(request(testFakeRequestWithBadgeId()).toCspAuthorisedRequest(badgeAuthenticatedEoriPair))
       verifyNonCspAuthorisationNotCalled
     }
 
@@ -190,9 +193,10 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
     "authorise as non-CSP when authorised by auth API (with submitter header matching our records) " in new SetUp {
       authoriseNonCsp(Some(declarantEori))
 
-      private val actual = await(authAction.refine(requestWithValidSubmitterId))
+      private val actual = await(authAction.refine(requestWithValidSubmitterId).right.get)
+      private val expected = requestWithValidSubmitterId.toNonCspAuthorisedRequest(declarantEori)
+      actual.authorisedAs shouldBe expected.authorisedAs
 
-      actual shouldBe Right(requestWithValidSubmitterId.toNonCspAuthorisedRequest(declarantEori))
       verifyCspAuthorisationCalled(1)
       verifyNonCspAuthorisationCalled(1)
     }
@@ -201,9 +205,10 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
     "authorise as non-CSP when authorised by auth API (with submitter header matching our records and header name is camel case) " in new SetUp {
       authoriseNonCsp(Some(declarantEori))
 
-      private val actual = await(authAction.refine(requestWithValidSubmitterIdCamelCase))
+      private val actual = await(authAction.refine(requestWithValidSubmitterIdCamelCase).right.get)
+      private val expected = requestWithValidSubmitterId.toNonCspAuthorisedRequest(declarantEori)
+      actual.authorisedAs shouldBe expected.authorisedAs
 
-      actual shouldBe Right(requestWithValidSubmitterId.toNonCspAuthorisedRequest(declarantEori))
       verifyCspAuthorisationCalled(1)
       verifyNonCspAuthorisationCalled(1)
     }

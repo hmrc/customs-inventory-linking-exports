@@ -17,14 +17,13 @@
 package uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders
 
 import javax.inject.{Inject, Singleton}
-
 import play.api.mvc.{ActionRefiner, _}
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.HeaderValidator
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ConversationIdRequest, ValidatedHeadersRequest}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /** Action builder that validates headers.
   * <li/>INPUT - `CorrelationIdsRequest`
@@ -32,7 +31,12 @@ import scala.concurrent.Future
   * <li/>ERROR - 4XX Result if is a header validation error. This terminates the action builder pipeline.
   */
 @Singleton
-class ValidateAndExtractHeadersAction @Inject()(validator: HeaderValidator, logger: ExportsLogger) extends ActionRefiner[ConversationIdRequest, ValidatedHeadersRequest] {
+class ValidateAndExtractHeadersAction @Inject()(validator: HeaderValidator,
+                                                logger: ExportsLogger)
+                                               (implicit ec: ExecutionContext)
+  extends ActionRefiner[ConversationIdRequest, ValidatedHeadersRequest] {
+
+  protected def executionContext: ExecutionContext = ec
 
   override def refine[A](cr: ConversationIdRequest[A]): Future[Either[Result, ValidatedHeadersRequest[A]]] = Future.successful {
     implicit val id: ConversationIdRequest[A] = cr

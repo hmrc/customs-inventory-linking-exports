@@ -21,8 +21,8 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.{BeforeAndAfterEach, Matchers}
 import org.scalatestplus.mockito.MockitoSugar
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc._
+import play.api.test.Helpers
 import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
@@ -55,7 +55,8 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
     protected val mockErrorResponse: ErrorResponse = mock[ErrorResponse]
     protected val mockResult: Result = mock[Result]
     protected val mockXmlValidationService: XmlValidationService = mock[XmlValidationService]
-    protected val mockApiSubscriptionFieldsConnector = mock[ApiSubscriptionFieldsConnector]
+    protected val mockApiSubscriptionFieldsConnector: ApiSubscriptionFieldsConnector = mock[ApiSubscriptionFieldsConnector]
+    private implicit val ec = Helpers.stubControllerComponents().executionContext
 
     protected val stubConversationIdAction: ConversationIdAction = new ConversationIdAction(stubUniqueIdsService, mockExportsLogger)
     protected val stubFieldsAction: ApiSubscriptionFieldsAction = new ApiSubscriptionFieldsAction(mockApiSubscriptionFieldsConnector, mockExportsLogger)
@@ -63,7 +64,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
     protected val stubValidateAndExtractHeadersAction: ValidateAndExtractHeadersAction = new ValidateAndExtractHeadersAction(new HeaderValidator(mockExportsLogger), mockExportsLogger)
     protected val stubPayloadValidationAction: PayloadValidationAction = new PayloadValidationAction(mockXmlValidationService, mockExportsLogger)
 
-    protected val controller: InventoryLinkingExportController = new InventoryLinkingExportController(
+    protected val controller: InventoryLinkingExportController = new InventoryLinkingExportController(Helpers.stubControllerComponents(),
       stubConversationIdAction, stubValidateAndExtractHeadersAction, stubFieldsAction, stubAuthAction, stubPayloadValidationAction,
       mockBusinessService, mockExportsLogger)
 
@@ -129,7 +130,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
     "respond with status 400 for a CSP request with a missing X-Badge-Identifier" in new SetUp() {
       authoriseCsp()
 
-      val result: Result = awaitSubmit(ValidRequestWithSubmitterHeader.copyFakeRequest(headers = ValidRequestWithSubmitterHeader.headers.remove(X_BADGE_IDENTIFIER_NAME)))
+      val result: Result = awaitSubmit(ValidRequestWithSubmitterHeader.withHeaders(ValidRequestWithSubmitterHeader.headers.remove(X_BADGE_IDENTIFIER_NAME)))
 
       result shouldBe errorResultBadgeIdentifier
       bodyAsString(result) shouldBe bodyAsString(errorResultBadgeIdentifier)
@@ -141,7 +142,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
       when(mockApiSubscriptionFieldsConnector.getSubscriptionFields(any[ApiSubscriptionKey])(any[ValidatedHeadersRequest[_]])).thenReturn(Future.successful(ApiSubscriptionFieldsTestData.apiSubscriptionFieldsNoAuthenticatedEori))
       authoriseCsp()
 
-      val result: Result = awaitSubmit(ValidRequestWithSubmitterHeader.copyFakeRequest(headers = ValidRequestWithSubmitterHeader.headers.remove(X_SUBMITTER_IDENTIFIER_NAME)))
+      val result: Result = awaitSubmit(ValidRequestWithSubmitterHeader.withHeaders(ValidRequestWithSubmitterHeader.headers.remove(X_SUBMITTER_IDENTIFIER_NAME)))
 
       result shouldBe internalServerError
       verifyZeroInteractions(mockBusinessService)
@@ -151,7 +152,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
     "respond with status 500 for a request with a missing X-Client-ID" in new SetUp() {
       authoriseCsp()
 
-      val result: Result = awaitSubmit(ValidRequestWithSubmitterHeader.copyFakeRequest(headers = ValidRequestWithSubmitterHeader.headers.remove(X_CLIENT_ID_NAME)))
+      val result: Result = awaitSubmit(ValidRequestWithSubmitterHeader.withHeaders(ValidRequestWithSubmitterHeader.headers.remove(X_CLIENT_ID_NAME)))
 
       result shouldBe internalServerError
       verifyZeroInteractions(mockBusinessService)
