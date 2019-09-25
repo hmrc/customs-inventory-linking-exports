@@ -51,6 +51,7 @@ class ExportsConfigServiceSpec extends UnitSpec with MockitoSugar {
     "return config as object model when configuration is valid" in {
       val configService = customsConfigService(validServicesConfiguration)
 
+      configService.exportsConfig.whiteListedCspApplicationIds shouldBe Seq("someId-1", "someId-2")
       configService.exportsConfig.apiSubscriptionFieldsBaseUrl shouldBe "http://some-host:1111/some-context"
       configService.exportsCircuitBreakerConfig.numberOfCallsToTriggerStateChange shouldBe 5
       configService.exportsCircuitBreakerConfig.unavailablePeriodDurationInMillis shouldBe 1000
