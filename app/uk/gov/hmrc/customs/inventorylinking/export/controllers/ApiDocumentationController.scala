@@ -20,13 +20,16 @@ import controllers.Assets
 import javax.inject.{Inject, Singleton}
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.customs.api.common.controllers.DocumentationController
+import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
 import uk.gov.hmrc.customs.inventorylinking.export.views._
 
 @Singleton
-class ApiDocumentationController @Inject()(assets: Assets, cc: ControllerComponents)
+class ApiDocumentationController @Inject()(assets: Assets,
+                                           cc: ControllerComponents,
+                                           exportsConfigService: ExportsConfigService)
   extends DocumentationController(assets, cc) {
   
   def definition(): Action[AnyContent] = Action {
-    Ok(txt.definition()).withHeaders(CONTENT_TYPE -> JSON)
+    Ok(txt.definition(exportsConfigService.exportsConfig.whiteListedCspApplicationIds)).withHeaders(CONTENT_TYPE -> JSON)
   }
 }
