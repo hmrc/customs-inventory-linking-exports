@@ -18,18 +18,20 @@ package uk.gov.hmrc.customs.inventorylinking.export.controllers
 
 import controllers.Assets
 import javax.inject.{Inject, Singleton}
+import play.api.Configuration
+import play.api.http.MimeTypes
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.customs.api.common.controllers.DocumentationController
-import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
-import uk.gov.hmrc.customs.inventorylinking.export.views._
 
 @Singleton
 class ApiDocumentationController @Inject()(assets: Assets,
                                            cc: ControllerComponents,
-                                           exportsConfigService: ExportsConfigService)
+                                           configuration: Configuration)
   extends DocumentationController(assets, cc) {
+
+  private lazy val mayBeV1WhitelistedApplicationIds = configuration.getOptional[Seq[String]]("api.access.version-1.0.whitelistedApplicationIds")
   
   def definition(): Action[AnyContent] = Action {
-    Ok(txt.definition(exportsConfigService.exportsConfig.whiteListedCspApplicationIds)).withHeaders(CONTENT_TYPE -> JSON)
+    Ok(uk.gov.hmrc.customs.inventorylinking.export.views.txt.definition(mayBeV1WhitelistedApplicationIds)).as(MimeTypes.JSON)
   }
 }
