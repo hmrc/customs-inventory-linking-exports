@@ -41,11 +41,11 @@ class ExportsConnector @Inject() (http: HttpClient,
                                   config: ExportsConfigService)
                                  (implicit ec: ExecutionContext) extends UsingCircuitBreaker {
 
-  def send[A](xml: NodeSeq, date: DateTime, correlationId: UUID)(implicit vpr: ValidatedPayloadRequest[A]): Future[HttpResponse] = {
+  def send[A](xml: NodeSeq, date: DateTime, correlationId: UUID)(implicit vpr: ValidatedPayloadRequest[A], hc: HeaderCarrier): Future[HttpResponse] = {
     val config = Option(serviceConfigProvider.getConfig("mdg-exports")).getOrElse(throw new IllegalArgumentException("config not found"))
     val bearerToken = "Bearer " + config.bearerToken.getOrElse(throw new IllegalStateException("no bearer token was found in config"))
-    implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = getHeaders(date, correlationId), authorization = Some(Authorization(bearerToken)))
-    withCircuitBreaker(post(xml, config.url))
+    implicit val headerCarrier: HeaderCarrier = hc.copy(extraHeaders = hc.extraHeaders ++ getHeaders(date, correlationId), authorization = Some(Authorization(bearerToken)))
+    withCircuitBreaker(post(xml, config.url)(vpr, headerCarrier))(headerCarrier)
   }
 
   private def getHeaders(date: DateTime, correlationId: UUID) = {

@@ -72,7 +72,7 @@ class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfter
     // type of the value contained in the value class i.e. for CorrelationId the value is UUID so needs to meq type of UUID
     when(mockPayloadDecorator.decorate(meq(TestXmlPayload), meq[String](TestSubscriptionFieldsId.value).asInstanceOf[SubscriptionFieldsId], meq[UUID](correlationIdUuid).asInstanceOf[CorrelationId], any[DateTime])(any[ValidatedPayloadRequest[_]])).thenReturn(wrappedValidXML)
     when(mockDateTimeProvider.getUtcNow).thenReturn(dateTime)
-    when(mockExportsConnector.send(any[NodeSeq], meq(dateTime), any[UUID])(any[ValidatedPayloadRequest[_]])).thenReturn(mockHttpResponse)
+    when(mockExportsConnector.send(any[NodeSeq], meq(dateTime), any[UUID])(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])).thenReturn(mockHttpResponse)
   }
 
   "BusinessService" should {
@@ -80,13 +80,13 @@ class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfter
     "send transformed xml to connector" in new SetUp() {
       send() shouldBe Right(())
 
-      verify(mockExportsConnector).send(meq(wrappedValidXML), any[DateTime], any[UUID])(any[ValidatedPayloadRequest[_]])
+      verify(mockExportsConnector).send(meq(wrappedValidXML), any[DateTime], any[UUID])(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])
     }
 
     "get utc date time and pass to connector" in new SetUp() {
       send() shouldBe Right(())
 
-      verify(mockExportsConnector).send(any[NodeSeq], meq(dateTime), any[UUID])(any[ValidatedPayloadRequest[_]])
+      verify(mockExportsConnector).send(any[NodeSeq], meq(dateTime), any[UUID])(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])
     }
 
     "call payload decorator passing incoming xml" in new SetUp() {
@@ -99,13 +99,13 @@ class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfter
     }
 
     "return InternalServerError ErrorResponse when backend call fails" in new SetUp() {
-      when(mockExportsConnector.send(any[NodeSeq], any[DateTime], any[UUID])(any[ValidatedPayloadRequest[_]])).thenReturn(Future.failed(emulatedServiceFailure))
+      when(mockExportsConnector.send(any[NodeSeq], any[DateTime], any[UUID])(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])).thenReturn(Future.failed(emulatedServiceFailure))
 
       send() shouldBe Left(ErrorResponse.ErrorInternalServerError.XmlResult.withConversationId)
     }
 
     "return InternalServerError ErrorResponse when backend circuit breaker trips" in new SetUp() {
-      when(mockExportsConnector.send(any[NodeSeq], any[DateTime], any[UUID])(any[ValidatedPayloadRequest[_]])).thenReturn(Future.failed(new UnhealthyServiceException("mdg-exports")))
+      when(mockExportsConnector.send(any[NodeSeq], any[DateTime], any[UUID])(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])).thenReturn(Future.failed(new UnhealthyServiceException("mdg-exports")))
 
       send() shouldBe Left(errorResponseServiceUnavailable.XmlResult)
     }
