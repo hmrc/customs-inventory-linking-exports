@@ -28,8 +28,6 @@ import scala.concurrent.Future
 class ExportsServiceSpec extends ComponentTestSpec
   with Matchers
   with OptionValues
-  with BeforeAndAfterAll
-  with BeforeAndAfterEach
   with InventoryLinkingExportsService
   with ApiSubscriptionFieldsService
   with AuthService {

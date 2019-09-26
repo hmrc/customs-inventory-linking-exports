@@ -28,8 +28,6 @@ import uk.gov.hmrc.play.test.UnitSpec
 class ExportsConfigServiceSpec extends UnitSpec with MockitoSugar {
   private val validAppConfig: Config = ConfigFactory.parseString(
     """
-      |api.access.version-1.0.whitelistedApplicationIds.0=someId-1
-      |api.access.version-1.0.whitelistedApplicationIds.1=someId-2
       |microservice.services.api-subscription-fields.host=some-host
       |microservice.services.api-subscription-fields.port=1111
       |microservice.services.api-subscription-fields.context=/some-context
@@ -51,7 +49,6 @@ class ExportsConfigServiceSpec extends UnitSpec with MockitoSugar {
     "return config as object model when configuration is valid" in {
       val configService = customsConfigService(validServicesConfiguration)
 
-      configService.exportsConfig.whiteListedCspApplicationIds shouldBe Seq("someId-1", "someId-2")
       configService.exportsConfig.apiSubscriptionFieldsBaseUrl shouldBe "http://some-host:1111/some-context"
       configService.exportsCircuitBreakerConfig.numberOfCallsToTriggerStateChange shouldBe 5
       configService.exportsCircuitBreakerConfig.unavailablePeriodDurationInMillis shouldBe 1000

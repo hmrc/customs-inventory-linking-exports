@@ -26,13 +26,16 @@ import play.api.test.Helpers._
 
 import scala.concurrent.Future
 
-class ApiDefinitionSpec extends ComponentTestSpec with Matchers {
+class DefinitionSpecWithWhitelistedAppId extends ComponentTestSpec
+  with Matchers {
 
-  override implicit lazy val app: Application = new GuiceApplicationBuilder().build()
+  override implicit lazy val app: Application = new GuiceApplicationBuilder().configure(Map(
+    "api.access.version-1.0.whitelistedApplicationIds.0" -> "someId-1"
+  )).build()
 
   feature("Ensure definition file") {
 
-    scenario("is correct") {
+    scenario("is correct when there are whitelisted applicationIds") {
 
       Given("the API is available")
       val request = FakeRequest("GET", "/api/definition")
@@ -66,7 +69,78 @@ class ApiDefinitionSpec extends ComponentTestSpec with Matchers {
           |        "endpointsEnabled": true,
           |        "access": {
           |          "type": "PRIVATE",
-          |          "whitelistedApplicationIds": []
+          |          "whitelistedApplicationIds": [
+          |          "someId-1"
+          |          ]
+          |        },
+          |        "fieldDefinitions": [
+          |          {
+          |            "name": "callbackUrl",
+          |            "description": "The URL of your HTTPS webservice that HMRC calls to notify you regarding request submission.",
+          |            "type": "URL"
+          |          },
+          |          {
+          |            "name": "securityToken",
+          |            "description": "The full value of Authorization HTTP header that will be used when notifying you.",
+          |            "type": "SecureToken"
+          |          },
+          |          {
+          |            "name": "authenticatedEori",
+          |            "description": "What's your Economic Operator Registration and Identification (EORI) number?",
+          |            "type": "STRING",
+          |            "hint": "This is your EORI that will associate your application with you as a CSP"
+          |          }
+          |        ]
+          |      }
+          |    ]
+          |  }
+          |}
+        """.stripMargin)
+    }
+  }
+}
+
+class DefinitionSpecWithoutWhitelistedAppId extends ComponentTestSpec
+  with Matchers {
+
+  override implicit lazy val app: Application = new GuiceApplicationBuilder().build()
+
+  feature("Ensure definition file") {
+
+    scenario("is correct when there are no whitelisted applicationIds") {
+
+      Given("the API is available")
+      val request = FakeRequest("GET", "/api/definition")
+
+      When("api definition is requested")
+      val result: Option[Future[Result]] = route(app = app, request)
+
+      Then(s"a response with a 200 status is received")
+      val resultFuture = result.get
+      status(resultFuture) shouldBe OK
+
+      And("the response body is correct")
+      contentAsJson(resultFuture) shouldBe Json.parse(
+        """
+          |{
+          |  "scopes": [
+          |    {
+          |      "key": "write:customs-inventory-linking-exports",
+          |      "name": "Inventory Exports Movement Request",
+          |      "description": "Submit an Inventory Exports Movement Request"
+          |    }
+          |  ],
+          |  "api": {
+          |    "name": "Customs Inventory Linking Exports",
+          |    "description": "Customs Inventory Linking Exports",
+          |    "context": "customs/inventory-linking/exports",
+          |    "versions": [
+          |      {
+          |        "version": "1.0",
+          |        "status": "BETA",
+          |        "endpointsEnabled": true,
+          |        "access": {
+          |          "type": "PUBLIC"
           |        },
           |        "fieldDefinitions": [
           |          {
