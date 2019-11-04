@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.customs.inventorylinking.export.connectors
 
+import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 import com.google.inject._
@@ -25,14 +27,14 @@ import play.api.http.MimeTypes
 import uk.gov.hmrc.circuitbreaker.{CircuitBreakerConfig, UsingCircuitBreaker}
 import uk.gov.hmrc.customs.api.common.config.ServiceConfigProvider
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
+import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{HasConversationId, ValidatedPayloadRequest}
 import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.xml.NodeSeq
+import scala.xml.{NodeSeq, PrettyPrinter, TopScope}
 
 @Singleton
 class ExportsConnector @Inject() (http: HttpClient,
@@ -45,7 +47,14 @@ class ExportsConnector @Inject() (http: HttpClient,
     val config = Option(serviceConfigProvider.getConfig("mdg-exports")).getOrElse(throw new IllegalArgumentException("config not found"))
     val bearerToken = "Bearer " + config.bearerToken.getOrElse(throw new IllegalStateException("no bearer token was found in config"))
     implicit val headerCarrier: HeaderCarrier = hc.copy(extraHeaders = hc.extraHeaders ++ getHeaders(date, correlationId), authorization = Some(Authorization(bearerToken)))
-    withCircuitBreaker(post(xml, config.url)(vpr, headerCarrier))(headerCarrier)
+    val startTime = LocalDateTime.now
+    withCircuitBreaker(post(xml, config.url)(vpr, headerCarrier))(headerCarrier).map{
+      response => {
+        logCallDuration(startTime)
+        logger.debug(s"Response status ${response.status} and response body ${formatResponseBody(response.body)}")
+      }
+        response
+    }
   }
 
   private def getHeaders(date: DateTime, correlationId: UUID) = {
@@ -69,6 +78,18 @@ class ExportsConnector @Inject() (http: HttpClient,
       }
   }
 
+  protected def logCallDuration(startTime: LocalDateTime)(implicit r: HasConversationId): Unit ={
+    val callDuration = ChronoUnit.MILLIS.between(startTime, LocalDateTime.now)
+    logger.info(s"Outbound call duration was ${callDuration} ms")
+  }
+
+  private def formatResponseBody(responseBody: String) = {
+    if (responseBody.isEmpty) {
+      "<empty>"
+    } else {
+      new PrettyPrinter(120, 2).format(xml.XML.loadString(responseBody), TopScope)
+    }
+  }
 
   override protected def circuitBreakerConfig: CircuitBreakerConfig =
     CircuitBreakerConfig(

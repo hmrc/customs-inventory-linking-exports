@@ -27,14 +27,15 @@ import play.api.http.HeaderNames
 import play.api.test.Helpers
 import play.mvc.Http.MimeTypes
 import uk.gov.hmrc.customs.api.common.config.{ServiceConfig, ServiceConfigProvider}
+import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.ExportsConnector
-import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.ExportsCircuitBreakerConfig
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
 import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
 import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse, NotFoundException}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.play.test.UnitSpec
+import unit.logging.StubExportsLogger
 import util.RequestHeaders
 import util.TestData._
 
@@ -43,13 +44,14 @@ import scala.concurrent.{ExecutionContext, Future}
 class ExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach with Eventually {
 
   private val mockWsPost = mock[HttpClient]
-  private val mockExportsLogger = mock[ExportsLogger]
+  private val stubExportsLogger = new StubExportsLogger(mock[CdsLogger])
   private val mockServiceConfigProvider = mock[ServiceConfigProvider]
   private val mockExportsConfigService = mock[ExportsConfigService]
   private val mockExportsCircuitBreakerConfig = mock[ExportsCircuitBreakerConfig]
+  private val mockResponse = mock[HttpResponse]
   private implicit val ec = Helpers.stubControllerComponents().executionContext
 
-  private val connector = new ExportsConnector(mockWsPost, mockExportsLogger, mockServiceConfigProvider, mockExportsConfigService)
+  private val connector = new ExportsConnector(mockWsPost, stubExportsLogger, mockServiceConfigProvider, mockExportsConfigService)
 
   private val serviceConfig = ServiceConfig("the-url", Some("bearerToken"), "default")
 
@@ -59,9 +61,10 @@ class ExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfte
   private val httpException = new NotFoundException("Emulated 404 response from a web call")
 
   override protected def beforeEach() {
-    reset(mockWsPost, mockServiceConfigProvider, mockExportsLogger)
+    reset(mockWsPost, mockServiceConfigProvider)
     when(mockExportsConfigService.exportsCircuitBreakerConfig).thenReturn(mockExportsCircuitBreakerConfig)
     when(mockServiceConfigProvider.getConfig("mdg-exports")).thenReturn(serviceConfig)
+    when(mockResponse.body).thenReturn("<foo/>")
   }
 
   private val year = 2017
@@ -79,8 +82,9 @@ class ExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfte
 
     "when making a successful request" should {
 
+
       "ensure URL is retrieved from config" in {
-        returnResponseForRequest(Future.successful(mock[HttpResponse]))
+        returnResponseForRequest(Future.successful(mockResponse))
 
         awaitRequest
 
@@ -89,7 +93,7 @@ class ExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfte
       }
 
       "ensure xml payload is included in the request body" in {
-        returnResponseForRequest(Future.successful(mock[HttpResponse]))
+        returnResponseForRequest(Future.successful(mockResponse))
 
         awaitRequest
 
@@ -98,7 +102,7 @@ class ExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfte
       }
 
       "ensure the content type header is passed through in the request" in {
-        returnResponseForRequest(Future.successful(mock[HttpResponse]))
+        returnResponseForRequest(Future.successful(mockResponse))
 
         awaitRequest
 
@@ -109,7 +113,7 @@ class ExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfte
       }
 
       "ensure the accept header is passed through in the request" in {
-        returnResponseForRequest(Future.successful(mock[HttpResponse]))
+        returnResponseForRequest(Future.successful(mockResponse))
 
         awaitRequest
 
@@ -120,7 +124,7 @@ class ExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfte
       }
 
       "ensure the date header is passed through in the request" in {
-        returnResponseForRequest(Future.successful(mock[HttpResponse]))
+        returnResponseForRequest(Future.successful(mockResponse))
 
         awaitRequest
 
@@ -131,7 +135,7 @@ class ExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfte
       }
 
       "ensure the X-FORWARDED_HOST header is passed through in the request" in {
-        returnResponseForRequest(Future.successful(mock[HttpResponse]))
+        returnResponseForRequest(Future.successful(mockResponse))
 
         awaitRequest
 
@@ -142,7 +146,7 @@ class ExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfte
       }
 
       "ensure the X-Correlation-Id header is passed through in the request" in {
-        returnResponseForRequest(Future.successful(mock[HttpResponse]))
+        returnResponseForRequest(Future.successful(mockResponse))
 
         awaitRequest
 
