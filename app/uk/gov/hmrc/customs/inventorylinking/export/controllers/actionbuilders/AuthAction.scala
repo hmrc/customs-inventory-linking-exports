@@ -175,7 +175,8 @@ class AuthAction @Inject()(override val authConnector: AuthConnector,
           }
         }
     }.recover {
-      case NonFatal(_: AuthorisationException) =>
+      case NonFatal(ae: AuthorisationException) =>
+        logger.error("Failed to authorise as Non CSP", ae)
         Left(errorResponseUnauthorisedGeneral.XmlResult.withConversationId)
       case NonFatal(e) =>
         logger.error("Error authorising Non CSP", e)
