@@ -152,8 +152,7 @@ class AuthAction @Inject()(override val authConnector: AuthConnector,
         maybeEori.fold[Future[Either[Result, AuthorisedRequest[A]]]] {
           Future.successful(Left(errorResponseEoriNotFoundInCustomsEnrolment.XmlResult.withConversationId))
         } { eori =>
-          val validated = validateSubmitterHeaderOnlyIfPresent(eori)
-          if (validated) {
+          if (validateSubmitterHeaderOnlyIfPresent(eori)) {
             logger.debug(s"Successfully authorised non-CSP with HMRC-CUS-ORG enrolment and GovernmentGateway retrievals and using eori: ${eori.toString}")
             Future.successful(Right(asf.toNonCspAuthorisedRequest(eori)))
           } else {
