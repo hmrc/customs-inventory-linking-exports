@@ -65,9 +65,11 @@ class AuthAction @Inject()(override val authConnector: AuthConnector,
         maybeAuthorisedAsCspWithBadgeIdAndEori.fold {
           authoriseAsNonCsp
         } { pair =>
+          logger.debug(s"Successfully authorised CSP PrivilegedApplication with write:customs-inventory-linking-exports enrolment and using badgeId: ${pair.badgeIdentifier} & eori: ${pair.eori}")
           Future.successful(Right(asf.toCspAuthorisedRequest(pair)))
         }
       case Left(result) =>
+        logger.error(s"No authorisation for CSP PrivilegedApplication with write:customs-inventory-linking-exports enrolment or non-CSP with HMRC-CUS-ORG enrolment and GovernmentGateway retrievals")
         Future.successful(Left(result))
     }
   }
@@ -82,10 +84,10 @@ class AuthAction @Inject()(override val authConnector: AuthConnector,
       Future.successful(eitherMaybeBadgeIdentifierEoriPair)
     }.recover[Either[Result, Option[BadgeIdentifierEoriPair]]] {
       case NonFatal(_: AuthorisationException) =>
-        logger.debug("Not authorised as CSP")
+        logger.debug("No authorisation for CSP PrivilegedApplication with write:customs-inventory-linking-exports enrolment")
         Right(None)
       case NonFatal(e) =>
-        logger.error("Error authorising CSP", e)
+        logger.error("Error when authorising for CSP PrivilegedApplication with write:customs-inventory-linking-exports enrolment", e)
         Left(ErrorInternalServerError.XmlResult.withConversationId)
     }
   }
@@ -122,7 +124,6 @@ class AuthAction @Inject()(override val authConnector: AuthConnector,
     } { badgeId: BadgeIdentifier => Right(badgeId) }
   }
 
-
   private def validEori(eori: String): Boolean = {
     xSubmitterIdentifierRegex.findFirstIn(eori).nonEmpty
   }
@@ -136,7 +137,6 @@ class AuthAction @Inject()(override val authConnector: AuthConnector,
       badgeId <- eitherBadgeIdentifierWithValidation.right
       eori <- eitherSubmitterIdentifierWithValidationCSP.right
     } yield Some(BadgeIdentifierEoriPair(badgeId, eori))
-
   }
 
   // pure function that tames exceptions throw by HMRC auth api into an Either
@@ -152,34 +152,19 @@ class AuthAction @Inject()(override val authConnector: AuthConnector,
         maybeEori.fold[Future[Either[Result, AuthorisedRequest[A]]]] {
           Future.successful(Left(errorResponseEoriNotFoundInCustomsEnrolment.XmlResult.withConversationId))
         } { eori =>
-
-          val maybeSubmitterHeader = maybeHeaderCaseInsensitive(XSubmitterIdentifierHeaderName)
-
-          def logAndRight(anEori: Eori): Future[Either[Result, AuthorisedRequest[A]]] = {
-            logger.debug("Authorising as non-CSP")
-            Future.successful(Right(asf.toNonCspAuthorisedRequest(anEori)))
-          }
-
-          maybeSubmitterHeader match {
-            case Some(submitterFromHeader) => maybeValidEori(maybeSubmitterHeader) match {
-              case Some(validSubmitterFromHeader) =>
-                logger.debug(s"Submitter passed in header was in a valid format: $validSubmitterFromHeader")
-                logAndRight(eori)
-              case None =>
-                logger.error(s"Submitter passed in header was in an invalid format: $submitterFromHeader")
-                Future.successful(Left(errorResponseSubmitterIdentifierHeaderInvalid.XmlResult.withConversationId))
-            }
-            case None =>
-              logger.debug("No Submitter passed in header")
-              logAndRight(eori)
+          if (validateSubmitterHeaderOnlyIfPresent(eori)) {
+            logger.debug(s"Successfully authorised non-CSP with HMRC-CUS-ORG enrolment and GovernmentGateway retrievals and using eori: ${eori.toString}")
+            Future.successful(Right(asf.toNonCspAuthorisedRequest(eori)))
+          } else {
+            Future.successful(Left(errorResponseSubmitterIdentifierHeaderInvalid.XmlResult.withConversationId))
           }
         }
     }.recover {
       case NonFatal(ae: AuthorisationException) =>
-        logger.error("Failed to authorise as Non CSP", ae)
+        logger.debug("No authorisation for non-CSP with HMRC-CUS-ORG enrolment and GovernmentGateway retrievals", ae)
         Left(errorResponseUnauthorisedGeneral.XmlResult.withConversationId)
       case NonFatal(e) =>
-        logger.error("Error authorising Non CSP", e)
+        logger.error("Error when authorising for non-CSP with HMRC-CUS-ORG enrolment and GovernmentGateway retrievals", e)
         Left(ErrorInternalServerError.XmlResult.withConversationId)
     }
   }
@@ -191,12 +176,29 @@ class AuthAction @Inject()(override val authConnector: AuthConnector,
   private def findEoriInCustomsEnrolment[A](enrolments: Enrolments, authHeader: Option[Authorization])(implicit asf: ApiSubscriptionFieldsRequest[A], hc: HeaderCarrier): Option[Eori] = {
     val maybeCustomsEnrolment = enrolments.getEnrolment("HMRC-CUS-ORG")
     if (maybeCustomsEnrolment.isEmpty) {
-      logger.warn(s"Customs enrolment HMRC-CUS-ORG not retrieved for authorised non-CSP call")
+      logger.warn(s"Customs enrolment HMRC-CUS-ORG not retrieved for non-CSP request")
     }
     for {
       customsEnrolment <- maybeCustomsEnrolment
       eori <- customsEnrolment.getIdentifier("EORINumber")
     } yield Eori(eori.value)
+  }
+
+  def validateSubmitterHeaderOnlyIfPresent[A](eori: Eori)(implicit asf: ApiSubscriptionFieldsRequest[A]): Boolean = {
+    val maybeSubmitterHeader = maybeHeaderCaseInsensitive(XSubmitterIdentifierHeaderName)
+    maybeSubmitterHeader match {
+      case Some(submitterFromHeader) => maybeValidEori(maybeSubmitterHeader) match {
+        case Some(validSubmitterFromHeader) =>
+          logger.debug(s"Submitter passed in header for non-CSP was in a valid format: $validSubmitterFromHeader")
+          true
+        case None =>
+          logger.error(s"Submitter passed in header for non-CSP was in an invalid format: $submitterFromHeader")
+          false
+      }
+      case None =>
+        logger.debug("No Submitter passed in header for non-CSP")
+        true
+    }
   }
 
 }
