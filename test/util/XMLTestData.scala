@@ -81,9 +81,6 @@ object XMLTestData {
       <ucr>GB/AAAA-00000</ucr>
       <ucrType>M</ucrType>
     </queryUCR>
-    <agentDetails>
-      <EORI>{declarantEoriValue}</EORI>
-    </agentDetails>
   </inventoryLinkingQueryRequest>
 
   val wrappedValidXML: Elem =

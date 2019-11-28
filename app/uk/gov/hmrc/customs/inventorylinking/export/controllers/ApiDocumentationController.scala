@@ -30,7 +30,7 @@ class ApiDocumentationController @Inject()(assets: Assets,
   extends DocumentationController(assets, cc) {
 
   private lazy val mayBeV1WhitelistedApplicationIds = configuration.getOptional[Seq[String]]("api.access.version-1.0.whitelistedApplicationIds")
-  
+
   def definition(): Action[AnyContent] = Action {
     Ok(uk.gov.hmrc.customs.inventorylinking.export.views.txt.definition(mayBeV1WhitelistedApplicationIds)).as(MimeTypes.JSON)
   }
