@@ -266,20 +266,20 @@
 	<xs:complexType name="inventoryLinkingValidateDUCRRequest">
 		<xs:sequence>
 			<xs:element name="MRN" type="mrn" minOccurs="1" nillable="false"  />
-			<xs:element name="DUCR" type="ucr" minOccurs="1" nillable="false" />
+			<xs:element name="DUCR" type="xs:string" minOccurs="1" nillable="false" />
 		</xs:sequence>
 	</xs:complexType>
 
 	<xs:complexType name="inventoryLinkingValidateMUCRRequest">
 		<xs:sequence>
-			<xs:element name="masterUCR" type="ucr" minOccurs="1" nillable="false" />
+			<xs:element name="masterUCR" type="xs:string" minOccurs="1" nillable="false" />
 		</xs:sequence>
 	</xs:complexType>
 
 	<xs:complexType name="inventoryLinkingValidateDUCRResponse">
 		<xs:sequence>
 			<xs:element name="MRN" type="mrn" minOccurs="1" nillable="false"  />
-			<xs:element name="DUCR" type="ucr" minOccurs="1" nillable="false" />
+			<xs:element name="DUCR" type="xs:string" minOccurs="1" nillable="false" />
 			<xs:element name="isFormatValid" type="xs:boolean" minOccurs="1" nillable="false" />
 			<xs:element name="isFound" type="xs:boolean" minOccurs="0" nillable="true" />
 		</xs:sequence>
@@ -287,7 +287,7 @@
 
 	<xs:complexType name="inventoryLinkingValidateMUCRResponse">
 		<xs:sequence>
-			<xs:element name="masterUCR" type="ucr" minOccurs="1" nillable="false" />
+			<xs:element name="masterUCR" type="xs:string" minOccurs="1" nillable="false" />
 			<xs:element name="isFormatValid" type="xs:boolean" minOccurs="1" nillable="false" />
 			<xs:element name="isFound" type="xs:boolean" minOccurs="0" nillable="true" />
 			<xs:element name="isShut" type="xs:boolean" minOccurs="0" nillable="true" />

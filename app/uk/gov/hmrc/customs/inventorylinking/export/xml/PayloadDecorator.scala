@@ -33,7 +33,8 @@ class PayloadDecorator() {
     <n1:InventoryLinkingExportsInboundRequest xmlns:inv="http://gov.uk/customs/inventoryLinking/v1"
                                               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                                               xmlns:gw="http://gov.uk/customs/inventoryLinking/gatewayHeader/v1"
-                                              xmlns:n1="http://www.hmrc.gov.uk/cds/inventorylinking/exportmovement">
+                                              xmlns:n1="http://www.hmrc.gov.uk/cds/inventorylinking/exportmovement"
+                                              xsi:schemaLocation="http://www.hmrc.gov.uk/cds/inventorylinking/exportmovement DEC39_Root.xsd">
       <n1:requestCommon>
         { vpr.authorisedAs match {
             case Csp(badgeIdEoriPair) =>
