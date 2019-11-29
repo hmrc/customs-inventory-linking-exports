@@ -86,7 +86,9 @@ object XMLTestData {
   val wrappedValidXML: Elem =
       <n1:InventoryLinkingExportsInboundRequest xmlns:n1="http://www.hmrc.gov.uk/cds/inventorylinking/exportmovement"
                                                 xmlns:gw="http://gov.uk/customs/inventoryLinking/gatewayHeader/v1"
-                                                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:inv="http://gov.uk/customs/inventoryLinking/v1">
+                                                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                                                xmlns:inv="http://gov.uk/customs/inventoryLinking/v1"
+                                                xsi:schemaLocation="http://www.hmrc.gov.uk/cds/inventorylinking/exportmovement DEC39_Root.xsd">
         <n1:requestCommon>
           <gw:badgeIdentifier>{validBadgeIdentifierValue}</gw:badgeIdentifier>
           <gw:submitter>{declarantEoriValue}</gw:submitter>
