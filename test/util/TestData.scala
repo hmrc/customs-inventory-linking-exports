@@ -161,6 +161,8 @@ object RequestHeaders {
 
   val ACCEPT_HMRC_XML_HEADER: (String, String) = ACCEPT -> "application/vnd.hmrc.1.0+xml"
 
+  val ACCEPT_HMRC_XML_HEADER_V2: (String, String) = ACCEPT -> "application/vnd.hmrc.2.0+xml"
+
   val ACCEPT_HEADER_INVALID: (String, String) = ACCEPT -> MimeTypes.XML
 
   val ValidHeaders = Map(

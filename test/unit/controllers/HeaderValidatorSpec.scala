@@ -21,6 +21,7 @@ import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.HeaderNames._
 import play.api.test.FakeRequest
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse._
+import uk.gov.hmrc.customs.inventorylinking.`export`.model.VersionTwo
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames._
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.HeaderValidator
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
@@ -33,6 +34,7 @@ import util.{ApiSubscriptionFieldsTestData, TestData}
 class HeaderValidatorSpec extends UnitSpec with TableDrivenPropertyChecks with MockitoSugar {
 
   private val extractedHeaders = ExtractedHeadersImpl(VersionOne, ApiSubscriptionFieldsTestData.clientId)
+  private val extractedHeadersV2 = ExtractedHeadersImpl(VersionTwo, ApiSubscriptionFieldsTestData.clientId)
 
   trait SetUp {
     val mockExportsLogger: ExportsLogger = mock[ExportsLogger]
@@ -43,6 +45,7 @@ class HeaderValidatorSpec extends UnitSpec with TableDrivenPropertyChecks with M
     Table(
       ("description", "Headers", "Expected response"),
       ("Valid Headers", ValidHeaders, Right(extractedHeaders)),
+      ("Valid Headers for V2", ValidHeaders + ACCEPT_HMRC_XML_HEADER_V2 , Right(extractedHeadersV2)),
       ("Valid content type XML with no space header", ValidHeaders + (CONTENT_TYPE -> "application/xml;charset=utf-8"), Right(extractedHeaders)),
       ("Missing accept header", ValidHeaders - ACCEPT, Left(ErrorAcceptHeaderInvalid)),
       ("Missing content type header", ValidHeaders - CONTENT_TYPE, Left(ErrorContentTypeHeaderInvalid)),
