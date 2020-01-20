@@ -1,5 +1,5 @@
 @import play.api.libs.json.Json
-@(mayBeV1WhitelistedApplicationIds:  Option[Seq[String]])
+@(mayBeV1WhitelistedApplicationIds:  Option[Seq[String]], mayBeV2WhitelistedApplicationIds:  Option[Seq[String]])
 {
   "scopes": [
     {
@@ -49,7 +49,7 @@
           "status": "BETA",
           "endpointsEnabled": true,
           "access": {
-              @mayBeV1WhitelistedApplicationIds.fold(""" "type": "PUBLIC" """)( ids =>
+              @mayBeV2WhitelistedApplicationIds.fold(""" "type": "PUBLIC" """)( ids =>
                   s"""
                       "type": "PRIVATE",
                       "whitelistedApplicationIds": ${Json.toJson(ids)}
