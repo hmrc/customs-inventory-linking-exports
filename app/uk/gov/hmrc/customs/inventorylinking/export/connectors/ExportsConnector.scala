@@ -26,6 +26,7 @@ import play.api.http.HeaderNames.{ACCEPT, CONTENT_TYPE, DATE, X_FORWARDED_HOST}
 import play.api.http.MimeTypes
 import uk.gov.hmrc.circuitbreaker.{CircuitBreakerConfig, UsingCircuitBreaker}
 import uk.gov.hmrc.customs.api.common.config.ServiceConfigProvider
+import uk.gov.hmrc.customs.inventorylinking.`export`.model.ApiVersion
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{HasConversationId, ValidatedPayloadRequest}
 import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
@@ -43,8 +44,10 @@ class ExportsConnector @Inject() (http: HttpClient,
                                   config: ExportsConfigService)
                                  (implicit ec: ExecutionContext) extends UsingCircuitBreaker {
 
+  private val configKey = "mdg-exports"
+
   def send[A](xml: NodeSeq, date: DateTime, correlationId: UUID)(implicit vpr: ValidatedPayloadRequest[A], hc: HeaderCarrier): Future[HttpResponse] = {
-    val config = Option(serviceConfigProvider.getConfig("mdg-exports")).getOrElse(throw new IllegalArgumentException("config not found"))
+    val config = Option(serviceConfigProvider.getConfig(s"${vpr.requestedApiVersion.configPrefix}$configKey")).getOrElse(throw new IllegalArgumentException("config not found"))
     val bearerToken = "Bearer " + config.bearerToken.getOrElse(throw new IllegalStateException("no bearer token was found in config"))
     implicit val headerCarrier: HeaderCarrier = hc.copy(extraHeaders = hc.extraHeaders ++ getHeaders(date, correlationId), authorization = Some(Authorization(bearerToken)))
     val startTime = LocalDateTime.now

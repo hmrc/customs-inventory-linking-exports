@@ -22,6 +22,7 @@ import play.api.http.MimeTypes
 import play.api.mvc.Headers
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse._
+import uk.gov.hmrc.customs.inventorylinking.`export`.model.{ApiVersion, VersionTwo}
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames._
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ConversationIdRequest, ExtractedHeadersImpl}
@@ -30,14 +31,17 @@ import uk.gov.hmrc.customs.inventorylinking.export.model.{ClientId, VersionOne}
 @Singleton
 class HeaderValidator @Inject()(logger: ExportsLogger) {
 
-  private lazy val validAcceptHeaders = Seq("application/vnd.hmrc.1.0+xml")
+  protected val versionsByAcceptHeader: Map[String, ApiVersion] = Map(
+    "application/vnd.hmrc.1.0+xml" -> VersionOne,
+    "application/vnd.hmrc.2.0+xml" -> VersionTwo
+  )
   private lazy val validContentTypeHeaders = Seq(MimeTypes.XML + ";charset=utf-8", MimeTypes.XML + "; charset=utf-8")
   private lazy val xClientIdRegex = "^\\S+$".r
 
   def validateHeaders[A](implicit conversationIdRequest: ConversationIdRequest[A]): Either[ErrorResponse, ExtractedHeadersImpl] = {
     implicit val headers: Headers = conversationIdRequest.headers
 
-    def hasAccept: Either[ErrorResponse, String] = validateHeader(ACCEPT, validAcceptHeaders.contains, ErrorAcceptHeaderInvalid)
+    def hasAccept: Either[ErrorResponse, String] = validateHeader(ACCEPT, versionsByAcceptHeader.keySet.contains(_), ErrorAcceptHeaderInvalid)
 
     def hasContentType: Either[ErrorResponse, String] = validateHeader(CONTENT_TYPE, s => validContentTypeHeaders.contains(s.toLowerCase()), ErrorContentTypeHeaderInvalid)
 
@@ -52,7 +56,7 @@ class HeaderValidator @Inject()(logger: ExportsLogger) {
         s"\n$ACCEPT header passed validation: $acceptValue"
       + s"\n$CONTENT_TYPE header passed validation: $contentTypeValue"
       + s"\n$XClientIdHeaderName header passed validation: $xClientIdValue")
-      ExtractedHeadersImpl(VersionOne, ClientId(xClientIdValue))
+      ExtractedHeadersImpl(versionsByAcceptHeader(acceptValue), ClientId(xClientIdValue))
     }
     theResult
   }

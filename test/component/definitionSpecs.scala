@@ -30,7 +30,8 @@ class DefinitionSpecWithWhitelistedAppId extends ComponentTestSpec
   with Matchers {
 
   override implicit lazy val app: Application = new GuiceApplicationBuilder().configure(Map(
-    "api.access.version-1.0.whitelistedApplicationIds.0" -> "someId-1"
+    "api.access.version-1.0.whitelistedApplicationIds.0" -> "someId-1",
+    "api.access.version-2.0.whitelistedApplicationIds.0" -> "someId-2"
   )).build()
 
   feature("Ensure definition file") {
@@ -71,6 +72,35 @@ class DefinitionSpecWithWhitelistedAppId extends ComponentTestSpec
           |          "type": "PRIVATE",
           |          "whitelistedApplicationIds": [
           |          "someId-1"
+          |          ]
+          |        },
+          |        "fieldDefinitions": [
+          |          {
+          |            "name": "callbackUrl",
+          |            "description": "The URL of your HTTPS webservice that HMRC calls to notify you regarding request submission.",
+          |            "type": "URL"
+          |          },
+          |          {
+          |            "name": "securityToken",
+          |            "description": "The full value of Authorization HTTP header that will be used when notifying you.",
+          |            "type": "SecureToken"
+          |          },
+          |          {
+          |            "name": "authenticatedEori",
+          |            "description": "What's your Economic Operator Registration and Identification (EORI) number?",
+          |            "type": "STRING",
+          |            "hint": "This is your EORI that will associate your application with you as a CSP"
+          |          }
+          |        ]
+          |      },
+          |      {
+          |        "version": "2.0",
+          |        "status": "BETA",
+          |        "endpointsEnabled": true,
+          |        "access": {
+          |          "type": "PRIVATE",
+          |          "whitelistedApplicationIds": [
+          |          "someId-2"
           |          ]
           |        },
           |        "fieldDefinitions": [
@@ -137,6 +167,32 @@ class DefinitionSpecWithoutWhitelistedAppId extends ComponentTestSpec
           |    "versions": [
           |      {
           |        "version": "1.0",
+          |        "status": "BETA",
+          |        "endpointsEnabled": true,
+          |        "access": {
+          |          "type": "PUBLIC"
+          |        },
+          |        "fieldDefinitions": [
+          |          {
+          |            "name": "callbackUrl",
+          |            "description": "The URL of your HTTPS webservice that HMRC calls to notify you regarding request submission.",
+          |            "type": "URL"
+          |          },
+          |          {
+          |            "name": "securityToken",
+          |            "description": "The full value of Authorization HTTP header that will be used when notifying you.",
+          |            "type": "SecureToken"
+          |          },
+          |          {
+          |            "name": "authenticatedEori",
+          |            "description": "What's your Economic Operator Registration and Identification (EORI) number?",
+          |            "type": "STRING",
+          |            "hint": "This is your EORI that will associate your application with you as a CSP"
+          |          }
+          |        ]
+          |      },
+          |      {
+          |        "version": "2.0",
           |        "status": "BETA",
           |        "endpointsEnabled": true,
           |        "access": {
