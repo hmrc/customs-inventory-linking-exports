@@ -1,15 +1,18 @@
 import AppDependencies._
+import com.typesafe.sbt.web.PathMapping
+import com.typesafe.sbt.web.pipeline.Pipeline
 import sbt.Keys._
 import sbt.Tests.{Group, SubProcess}
 import sbt.{Resolver, _}
-import uk.gov.hmrc.DefaultBuildSettings.{addTestReportOption, defaultSettings, scalaSettings, targetJvm}
+import uk.gov.hmrc.DefaultBuildSettings.{addTestReportOption, targetJvm}
 import uk.gov.hmrc.PublishingSettings._
+import uk.gov.hmrc.gitstamp.GitStampPlugin._
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
 
 import scala.language.postfixOps
 
 name := "customs-inventory-linking-exports"
-
+scalaVersion := "2.12.10"
 targetJvm := "jvm-1.8"
 
 lazy val allResolvers = resolvers ++= Seq(
@@ -30,7 +33,7 @@ def forkedJvmPerTestConfig(tests: Seq[TestDefinition], packages: String*): Seq[G
 
 lazy val testAll = TaskKey[Unit]("test-all")
 lazy val allTest = Seq(testAll := (test in ComponentTest)
-  .dependsOn((test in CdsIntegrationTest).dependsOn(test in Test)))
+  .dependsOn((test in CdsIntegrationTest).dependsOn(test in Test)).value)
 
 lazy val microservice = (project in file("."))
   .enablePlugins(PlayScala)
@@ -82,15 +85,9 @@ lazy val componentTestSettings =
       addTestReportOption(ComponentTest, "component-reports")
     )
 
+lazy val commonSettings: Seq[Setting[_]] = publishingSettings ++ gitStampSettings
 
-lazy val commonSettings: Seq[Setting[_]] =
-  scalaSettings ++
-  publishingSettings ++
-  defaultSettings() ++
-  gitStampSettings
-
-lazy val playPublishingSettings: Seq[sbt.Setting[_]] = sbtrelease.ReleasePlugin.releaseSettings ++
-  Seq(credentials += SbtCredentials) ++
+lazy val playPublishingSettings: Seq[sbt.Setting[_]] = Seq(credentials += SbtCredentials) ++
   publishAllArtefacts
 
 lazy val scoverageSettings: Seq[Setting[_]] = Seq(
@@ -105,29 +102,32 @@ scalastyleConfig := baseDirectory.value / "project" / "scalastyle-config.xml"
 
 val compileDependencies = Seq(customsApiCommon, circuitBreaker)
 
-val testDependencies = Seq(hmrcTest, scalaTest, scalaTestPlusPlay, wireMock, mockito, customsApiCommonTests)
+val testDependencies = Seq(hmrcTest, scalaTestPlusPlay, wireMock, mockito, customsApiCommonTests)
 
 unmanagedResourceDirectories in Compile += baseDirectory.value / "public"
+(managedClasspath in Runtime) += (packageBin in Assets).value
 
 libraryDependencies ++= compileDependencies ++ testDependencies
 
-// Task to create a ZIP file containing all inventory linking exports XSDs for each version, under the version directory
-lazy val zipXsds = taskKey[Unit]("Zips up all inventory linking exports XSD's")
-zipXsds := {
-  (baseDirectory.value / "public" / "api" / "conf")
-    .listFiles()
-    .filter(_.isDirectory)
-    .foreach { dir =>
-      val wcoXsdDir = dir / "schemas" / "exports"
-      val zipFile = dir / "inventory-linking-exports-schemas.zip"
-      IO.zip(Path.allSubpaths(wcoXsdDir), zipFile)
-    }
+// Task to create a ZIP file containing all xsds for each version, under the version directory
+val zipXsds = taskKey[Pipeline.Stage]("Zips up all inventory linking exports XSDs")
+
+zipXsds := { mappings: Seq[PathMapping] =>
+  val targetDir = WebKeys.webTarget.value / "zip"
+  val zipFiles: Iterable[java.io.File] =
+    ((resourceDirectory in Assets).value / "api" / "conf")
+      .listFiles
+      .filter(_.isDirectory)
+      .map { dir =>
+        val xsdPaths = Path.allSubpaths(dir / "schemas" / "exports")
+        val zipFile = targetDir / "api" / "conf" / dir.getName / "inventory-linking-exports-schemas.zip"
+        IO.zip(xsdPaths, zipFile)
+        println(s"Created zip $zipFile")
+        zipFile
+      }
+  zipFiles.pair(Path.relativeTo(targetDir)) ++ mappings
 }
 
-// default package task depends on packageBin which we override here to also invoke the custom ZIP task
-packageBin in Compile := {
-  zipXsds.value
-  (packageBin in Compile).value
-}
+pipelineStages := Seq(zipXsds)
 
 evictionWarningOptions in update := EvictionWarningOptions.default.withWarnTransitiveEvictions(false)
