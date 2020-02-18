@@ -26,7 +26,6 @@ import play.api.http.HeaderNames.{ACCEPT, CONTENT_TYPE, DATE, X_FORWARDED_HOST}
 import play.api.http.MimeTypes
 import uk.gov.hmrc.circuitbreaker.{CircuitBreakerConfig, UsingCircuitBreaker}
 import uk.gov.hmrc.customs.api.common.config.ServiceConfigProvider
-import uk.gov.hmrc.customs.inventorylinking.`export`.model.ApiVersion
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{HasConversationId, ValidatedPayloadRequest}
 import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
@@ -83,7 +82,7 @@ class ExportsConnector @Inject() (http: HttpClient,
 
   protected def logCallDuration(startTime: LocalDateTime)(implicit r: HasConversationId): Unit ={
     val callDuration = ChronoUnit.MILLIS.between(startTime, LocalDateTime.now)
-    logger.info(s"Outbound call duration was ${callDuration} ms")
+    logger.info(s"Outbound call duration was $callDuration ms")
   }
 
   private def formatResponseBody(responseBody: String) = {

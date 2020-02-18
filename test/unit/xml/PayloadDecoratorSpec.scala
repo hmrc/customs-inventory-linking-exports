@@ -98,12 +98,39 @@ class PayloadDecoratorSpec extends UnitSpec with MockitoSugar {
       rd.head.text shouldBe badgeIdentifier.value
     }
 
-    "set the submitter identifier when present" in {
+    "omit the badgeIdentifier when absent" in {
+      implicit val vpr: ValidatedPayloadRequest[AnyContentAsXml] = TestCspValidatedPayloadRequestWithoutBadgeIdentifier
+      val result = decorator.decorate(xmlPayload, TestSubscriptionFieldsId, correlationId, dateTime)
+
+      val rd = result \\ "badgeIdentifier"
+
+      rd.isEmpty shouldBe true
+    }
+
+    "set the submitter when present" in {
       val result = wrapPayloadWithBadgeIdentifierAndEori()
 
       val rd = result \\ "submitter"
 
       rd.head.text shouldBe declarantEori.value
+    }
+    
+    "set the submitter to badgeIdentifier when eori is absent" in {
+      implicit val vpr: ValidatedPayloadRequest[AnyContentAsXml] = TestCspValidatedPayloadRequestWithoutEori
+      val result = decorator.decorate(xmlPayload, TestSubscriptionFieldsId, correlationId, dateTime)
+
+      val rd = result \\ "submitter"
+
+      rd.head.text shouldBe badgeIdentifier.value
+    }
+
+    "set the submitter to authenticated eori when both eori and badgeIdentifier are absent" in {
+      implicit val vpr: ValidatedPayloadRequest[AnyContentAsXml] = TestCspValidatedPayloadRequestWithoutEoriOrBadgeIdentifier
+      val result = decorator.decorate(xmlPayload, TestSubscriptionFieldsId, correlationId, dateTime)
+
+      val rd = result \\ "submitter"
+
+      rd.head.text shouldBe authenticatedEori.value
     }
   }
 

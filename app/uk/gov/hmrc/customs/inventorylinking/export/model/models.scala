@@ -50,8 +50,10 @@ object VersionTwo extends ApiVersion{
   override val configPrefix: String = "v2."
 }
 
-case class BadgeIdentifierEoriPair(badgeIdentifier: BadgeIdentifier, eori: Eori)
-
 sealed trait AuthorisedAs
-case class Csp(pair: BadgeIdentifierEoriPair) extends AuthorisedAs
+sealed trait AuthorisedAsCsp extends AuthorisedAs {
+  val eori: Option[Eori]
+  val badgeIdentifier: Option[BadgeIdentifier]
+}
+case class Csp(eori: Option[Eori], badgeIdentifier: Option[BadgeIdentifier]) extends AuthorisedAsCsp
 case class NonCsp(eori: Eori) extends AuthorisedAs

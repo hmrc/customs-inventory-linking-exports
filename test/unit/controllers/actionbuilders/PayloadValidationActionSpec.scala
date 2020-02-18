@@ -90,7 +90,7 @@ class PayloadValidationActionSpec extends UnitSpec with MockitoSugar {
       val authorisedRequestWithNonWellFormedXml: AuthorisedRequest[AnyContentAsText] = ConversationIdRequest(conversationId, FakeRequest().withTextBody("<foo><foo>"))
         .toValidatedHeadersRequest(TestExtractedHeaders)
         .toApiSubscriptionFieldsRequest(ApiSubscriptionFieldsTestData.apiSubscriptionFields)
-        .toCspAuthorisedRequest(badgeEoriPair)
+        .toCspAuthorisedRequest(cspAuthorisedRequest)
 
       private val actual = await(payloadValidationAction.refine(authorisedRequestWithNonWellFormedXml))
 

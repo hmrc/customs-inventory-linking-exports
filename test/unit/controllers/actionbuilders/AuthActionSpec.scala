@@ -22,13 +22,14 @@ import play.api.http.Status.UNAUTHORIZED
 import play.api.mvc.AnyContentAsXml
 import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
-import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.{ErrorInternalServerError, UnauthorizedCode, errorBadRequest}
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames
+import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.{ErrorInternalServerError, UnauthorizedCode, errorBadRequest, errorInternalServerError}
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders.AuthAction
+import uk.gov.hmrc.customs.inventorylinking.export.controllers.{CustomHeaderNames, HeaderValidator}
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
+import uk.gov.hmrc.customs.inventorylinking.export.model.ApiSubscriptionFields
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ApiSubscriptionFieldsRequest, AuthorisedRequest, ConversationIdRequest}
-import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionFields, Eori}
+import uk.gov.hmrc.customs.inventorylinking.export.services.CustomsAuthService
 import uk.gov.hmrc.play.test.UnitSpec
 import util.RequestHeaders.X_SUBMITTER_IDENTIFIER_NAME_CAMEL_CASE
 import util.TestData._
@@ -42,10 +43,10 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
     errorBadRequest(s"${CustomHeaderNames.XBadgeIdentifierHeaderName} header is missing or invalid")
   private val errorResponseSubmitterIdentifierHeaderInvalid =
     errorBadRequest(s"${CustomHeaderNames.XSubmitterIdentifierHeaderName} header is invalid")
+  private lazy val missingEoriResult = errorInternalServerError("Missing authenticated eori in service lookup")
 
   private lazy val errorResponseEoriNotFoundInCustomsEnrolment =
     ErrorResponse(UNAUTHORIZED, UnauthorizedCode, "EORI number not found in Customs Enrolment")
-
 
   private def request(request: FakeRequest[AnyContentAsXml], fields: ApiSubscriptionFields = ApiSubscriptionFieldsTestData.apiSubscriptionFields): ApiSubscriptionFieldsRequest[AnyContentAsXml] = {
     ConversationIdRequest(conversationId, request)
@@ -55,120 +56,109 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
 
   private val eoriTooLong = "GB9988776655787656"
 
-  private lazy val requestWithValidSubmitterIdCamelCase =
-    ConversationIdRequest(conversationId, FakeRequest().withXmlBody(TestXmlPayload)
-      .withHeaders(X_SUBMITTER_IDENTIFIER_NAME_CAMEL_CASE -> declarantEori.value))
-      .toValidatedHeadersRequest(TestExtractedHeaders)
-      .toApiSubscriptionFieldsRequest(ApiSubscriptionFieldsTestData.apiSubscriptionFields)
-  private lazy val requestWithValidSubmitterId = request(testFakeRequestWithSubmitterId(submitterId = declarantEori.value))
-  private lazy val requestWithInvalidSubmitterId = request(testFakeRequestWithSubmitterId(submitterId = "eeee"))
-  private lazy val requestWithInvalidSubmitterIdCamelCase =
-    ConversationIdRequest(conversationId, FakeRequest().withXmlBody(TestXmlPayload)
-      .withHeaders(X_SUBMITTER_IDENTIFIER_NAME_CAMEL_CASE -> "aaaaa"))
-      .toValidatedHeadersRequest(TestExtractedHeaders)
-      .toApiSubscriptionFieldsRequest(ApiSubscriptionFieldsTestData.apiSubscriptionFields)
-
   trait SetUp extends AuthConnectorStubbing {
     implicit val ec = Helpers.stubControllerComponents().executionContext
     val mockExportsLogger: ExportsLogger = mock[ExportsLogger]
-    val authAction: AuthAction = new AuthAction(mockAuthConnector, mockExportsLogger)
+    val customsAuthService = new CustomsAuthService(mockAuthConnector, mockExportsLogger)
+    val headerValidator = new HeaderValidator(mockExportsLogger)
+    val authAction: AuthAction = new AuthAction(customsAuthService, headerValidator, mockExportsLogger)
   }
 
   "CspAuthAction" should {
     "authorise as CSP when authorised by auth API and both badge identifier and submitter headers exist" in new SetUp {
       authoriseCsp()
 
-      private val actual: AuthorisedRequest[AnyContentAsXml] = await(authAction.refine(request(testFakeRequestWithBadgeIdAndSubmitterId())).right.get)
-      private val expected: AuthorisedRequest[AnyContentAsXml] = request(testFakeRequestWithBadgeIdAndSubmitterId()).toCspAuthorisedRequest(badgeEoriPair)
+      private val actual: AuthorisedRequest[AnyContentAsXml] = await(authAction.refine(request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId())).right.get)
+      private val expected: AuthorisedRequest[AnyContentAsXml] = request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId()).toCspAuthorisedRequest(cspAuthorisedRequest)
       actual.authorisedAs shouldBe expected.authorisedAs
       
       verifyNonCspAuthorisationNotCalled
     }
 
-    "return 400 response with ConversationId when authorised by auth API but badge identifier does not exist" in new SetUp {
+    "authorise as CSP when authorised by auth API and badge identifier header exists but submitter header does not" in new SetUp {
       authoriseCsp()
 
-      private val actual = await(authAction.refine(TestApiSubscriptionFieldsRequest))
+      private val actual = await(authAction.refine(request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeSubmitterIdString = None))).right.get)
+      private val expected: AuthorisedRequest[AnyContentAsXml] = request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeSubmitterIdString = None)).toCspAuthorisedRequest(cspAuthorisedRequestWithoutEori)
 
-      actual shouldBe Left(errorResponseBadgeIdentifierHeaderMissing.XmlResult.withHeaders(RequestHeaders.X_CONVERSATION_ID_NAME -> conversationId.toString))
+      actual.authorisedAs shouldBe expected.authorisedAs
       verifyNonCspAuthorisationNotCalled
     }
 
-    "return 500 response with ConversationId when authorised by auth API and badge identifier exists, but submitter not present and authenticated EORI not present" in new SetUp {
+    "return 500 response with conversationId when authorised by auth API and badge identifier exists, but submitter not present and authenticated EORI not present" in new SetUp {
       authoriseCsp()
 
-      private val actual = await(authAction.refine(request(testFakeRequestWithBadgeId(), ApiSubscriptionFieldsTestData.apiSubscriptionFieldsNoAuthenticatedEori)))
+      private val actual = await(authAction.refine(request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeSubmitterIdString = None), ApiSubscriptionFieldsTestData.apiSubscriptionFieldsNoAuthenticatedEori)))
 
-      actual shouldBe Left(ErrorInternalServerError.XmlResult.withHeaders(RequestHeaders.X_CONVERSATION_ID_NAME -> conversationId.toString))
+      actual shouldBe Left(missingEoriResult.XmlResult.withHeaders(RequestHeaders.X_CONVERSATION_ID_NAME -> conversationId.toString))
       verifyNonCspAuthorisationNotCalled
     }
 
-    "return 500 response with ConversationId when authorised by auth API and badge identifier exists, but submitter not present and authenticated EORI contains only whitespace" in new SetUp {
+    "return 500 response with conversationId when authorised by auth API and badge identifier exists, but submitter not present and authenticated EORI contains only whitespace" in new SetUp {
       authoriseCsp()
 
-      private val actual = await(authAction.refine(request(testFakeRequestWithBadgeId(), ApiSubscriptionFieldsTestData.apiSubscriptionFieldsBlankAuthenticatedEori)))
+      private val actual = await(authAction.refine(request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeSubmitterIdString = None), ApiSubscriptionFieldsTestData.apiSubscriptionFieldsBlankAuthenticatedEori)))
 
-      actual shouldBe Left(ErrorInternalServerError.XmlResult.withHeaders(RequestHeaders.X_CONVERSATION_ID_NAME -> conversationId.toString))
+      actual shouldBe Left(missingEoriResult.XmlResult.withHeaders(RequestHeaders.X_CONVERSATION_ID_NAME -> conversationId.toString))
       verifyNonCspAuthorisationNotCalled
     }
 
-    "authorise as CSP when authorised by auth API and badge identifier exists, but submitter not present and authenticated EORI is present" in new SetUp {
+    "authorise as CSP when authorised by auth API and submitter header and authenticated EORI exists but badge identifier header does not" in new SetUp {
       authoriseCsp()
 
-      private val actual = await(authAction.refine(request(testFakeRequestWithBadgeId())).right.get)
-      private val expected = request(testFakeRequestWithBadgeId()).toCspAuthorisedRequest(badgeAuthenticatedEoriPair)
+      private val actual = await(authAction.refine(request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeBadgeIdString = None))).right.get)
+      private val expected = request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeBadgeIdString = None)).toCspAuthorisedRequest(cspAuthorisedRequestWithoutBadgeIdentifier)
       actual.authorisedAs shouldBe expected.authorisedAs
 
       verifyNonCspAuthorisationNotCalled
     }
 
-
-    "return 400 response with ConversationId when authorised by auth API but badge identifier exists but is too long" in new SetUp {
+    "return 400 response with conversationId when authorised by auth API but badge identifier exists but is too long" in new SetUp {
       authoriseCsp()
 
-      private val actual = await(authAction.refine(request(testFakeRequestWithBadgeId(badgeIdString = "INVALID_BADGE_IDENTIFIER_TOO_LONG"))))
+      private val actual = await(authAction.refine(request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeBadgeIdString = Some("INVALID_BADGE_IDENTIFIER_TOO_LONG")))))
 
       actual shouldBe Left(errorResponseBadgeIdentifierHeaderMissing.XmlResult.withHeaders(RequestHeaders.X_CONVERSATION_ID_NAME -> conversationId.toString))
       verifyNonCspAuthorisationNotCalled
     }
 
-    "return 400 response with ConversationId when authorised by auth API and badge identifier exists but is too long but submitter identifier is too long" in new SetUp {
+    "return 400 response with conversationId when authorised by auth API and badge identifier exists but is too long" in new SetUp {
       authoriseCsp()
 
-      private val actual = await(authAction.refine(request(testFakeRequestWithBadgeIdAndSubmitterId(submitterIdString = eoriTooLong))))
+      private val actual = await(authAction.refine(request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeSubmitterIdString = Some(eoriTooLong)))))
 
       actual shouldBe Left(errorResponseSubmitterIdentifierHeaderInvalid.XmlResult.withHeaders(RequestHeaders.X_CONVERSATION_ID_NAME -> conversationId.toString))
       verifyNonCspAuthorisationNotCalled
     }
 
-    "return 400 response with ConversationId when authorised by auth API, badge identifier exists but submitter identifier is too short" in new SetUp {
+    "return 400 response with conversationId when authorised by auth API, badge identifier exists but submitter identifier is too short" in new SetUp {
       authoriseCsp()
 
-      private val actual = await(authAction.refine(request(testFakeRequestWithBadgeId(badgeIdString = "SHORT"))))
+      private val actual = await(authAction.refine(request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeBadgeIdString = Some("SHORT")))))
 
       actual shouldBe Left(errorResponseBadgeIdentifierHeaderMissing.XmlResult.withHeaders(RequestHeaders.X_CONVERSATION_ID_NAME -> conversationId.toString))
       verifyNonCspAuthorisationNotCalled
     }
 
-    "return 400 response with ConversationId when authorised by auth API but badge identifier exists but contains invalid chars" in new SetUp {
+    "return 400 response with conversationId when authorised by auth API but badge identifier exists but contains invalid chars" in new SetUp {
       authoriseCsp()
 
-      private val actual = await(authAction.refine(request(testFakeRequestWithBadgeId(badgeIdString = "(*&*(^&*&%"))))
+      private val actual = await(authAction.refine(request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeBadgeIdString = Some("(*&*(^&*&%")))))
 
       actual shouldBe Left(errorResponseBadgeIdentifierHeaderMissing.XmlResult.withHeaders(RequestHeaders.X_CONVERSATION_ID_NAME -> conversationId.toString))
       verifyNonCspAuthorisationNotCalled
     }
 
-    "return 400 response with ConversationId when authorised by auth API but badge identifier exists but contains all lowercase chars" in new SetUp {
+    "return 400 response with conversationId when authorised by auth API but badge identifier exists but contains all lowercase chars" in new SetUp {
       authoriseCsp()
 
-      private val actual = await(authAction.refine(request(testFakeRequestWithBadgeId(badgeIdString = "lowercase"))))
+      private val actual = await(authAction.refine(request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeBadgeIdString = Some("lowercase")))))
 
       actual shouldBe Left(errorResponseBadgeIdentifierHeaderMissing.XmlResult.withHeaders(RequestHeaders.X_CONVERSATION_ID_NAME -> conversationId.toString))
       verifyNonCspAuthorisationNotCalled
     }
 
-    "return 500 response with ConversationId when not authorised by auth API" in new SetUp {
+    "return 500 response with conversationId when not authorised by auth API" in new SetUp {
       authoriseCspError()
 
       private val actual = await(authAction.refine(TestApiSubscriptionFieldsRequest))
@@ -180,7 +170,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
   }
 
   "NonCspAuthAction" should {
-    "authorise as non-CSP when authorised by auth API (without submitter header in request) " in new SetUp {
+    "authorise as non-CSP when authorised by auth API and submitter header does not exist " in new SetUp {
       authoriseNonCsp(Some(declarantEori))
 
       private val actual = await(authAction.refine(TestApiSubscriptionFieldsRequest))
@@ -190,60 +180,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       verifyNonCspAuthorisationCalled(1)
     }
 
-    "authorise as non-CSP when authorised by auth API (with submitter header matching our records) " in new SetUp {
-      authoriseNonCsp(Some(declarantEori))
-
-      private val actual = await(authAction.refine(requestWithValidSubmitterId).right.get)
-      private val expected = requestWithValidSubmitterId.toNonCspAuthorisedRequest(declarantEori)
-      actual.authorisedAs shouldBe expected.authorisedAs
-
-      verifyCspAuthorisationCalled(1)
-      verifyNonCspAuthorisationCalled(1)
-    }
-
-
-    "authorise as non-CSP when authorised by auth API (with submitter header matching our records and header name is camel case) " in new SetUp {
-      authoriseNonCsp(Some(declarantEori))
-
-      private val actual = await(authAction.refine(requestWithValidSubmitterIdCamelCase).right.get)
-      private val expected = requestWithValidSubmitterId.toNonCspAuthorisedRequest(declarantEori)
-      actual.authorisedAs shouldBe expected.authorisedAs
-
-      verifyCspAuthorisationCalled(1)
-      verifyNonCspAuthorisationCalled(1)
-    }
-
-    "authorise as non-CSP when authorised by auth API when authorised by auth API and ignore Submitter in the header that doesn't match" in new SetUp {
-      authoriseNonCsp(Some(declarantEori))
-
-      private val actual = await(authAction.refine(requestWithInvalidSubmitterId))
-
-      actual shouldBe Right(requestWithInvalidSubmitterId.toNonCspAuthorisedRequest(declarantEori))
-      verifyCspAuthorisationCalled(1)
-      verifyNonCspAuthorisationCalled(1)
-    }
-
-    "authorise as non-CSP when authorised by auth API when authorised by auth API and ignore Submitter in the header that doesn't match and header name is camel case" in new SetUp {
-      authoriseNonCsp(Some(declarantEori))
-
-      private val actual = await(authAction.refine(requestWithInvalidSubmitterIdCamelCase))
-
-      actual shouldBe Right(requestWithInvalidSubmitterIdCamelCase.toNonCspAuthorisedRequest(declarantEori))
-      verifyCspAuthorisationCalled(1)
-      verifyNonCspAuthorisationCalled(1)
-    }
-
-    "return 400 response with ConversationId when authorised by auth API but Submitter (provided in header) is too long" in new SetUp {
-      authoriseNonCsp(Some(Eori(eoriTooLong)))
-
-      private val actual = await(authAction.refine(request(testFakeRequestWithBadgeIdAndSubmitterId(submitterIdString = eoriTooLong))))
-
-      actual shouldBe Left(errorResponseSubmitterIdentifierHeaderInvalid.XmlResult.withHeaders(RequestHeaders.X_CONVERSATION_ID_NAME -> conversationId.toString))
-      verifyCspAuthorisationCalled(1)
-      verifyNonCspAuthorisationCalled(1)
-    }
-
-    "return 401 response with ConversationId when authorised by auth API but Submitter does not exist" in new SetUp {
+    "return 401 response with conversationId when authorised by auth API but submitter does not exist" in new SetUp {
       authoriseNonCsp(maybeEori = None)
 
       private val actual = await(authAction.refine(TestApiSubscriptionFieldsRequest))
@@ -253,7 +190,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       verifyNonCspAuthorisationCalled(1)
     }
 
-    "return 401 response with ConversationId when not authorised as non-CSP" in new SetUp {
+    "return 401 response with conversationId when not authorised as non-CSP" in new SetUp {
       unauthoriseCsp()
       unauthoriseNonCspOnly()
 
@@ -264,7 +201,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       verifyNonCspAuthorisationCalled(1)
     }
 
-    "return 500 response with ConversationId when not authorised by auth API" in new SetUp {
+    "return 500 response with conversationId when not authorised by auth API" in new SetUp {
       unauthoriseCsp()
       authoriseNonCspOnlyError()
 

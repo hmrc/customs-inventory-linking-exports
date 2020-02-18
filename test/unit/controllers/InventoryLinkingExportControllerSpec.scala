@@ -26,7 +26,7 @@ import play.api.test.Helpers
 import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
-import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.{ErrorInternalServerError, errorBadRequest}
+import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.{ErrorInternalServerError, errorBadRequest, errorInternalServerError}
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.ApiSubscriptionFieldsConnector
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders._
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.{HeaderValidator, InventoryLinkingExportController}
@@ -34,7 +34,7 @@ import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ValidatedHeadersRequest, ValidatedPayloadRequest}
 import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionKey, Eori}
-import uk.gov.hmrc.customs.inventorylinking.export.services.{BusinessService, XmlValidationService}
+import uk.gov.hmrc.customs.inventorylinking.export.services.{BusinessService, CustomsAuthService, XmlValidationService}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 import util.RequestHeaders._
@@ -51,16 +51,18 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
     override val mockAuthConnector: AuthConnector = mock[AuthConnector]
 
     protected val mockExportsLogger: ExportsLogger = mock[ExportsLogger]
+    protected val headerValidator = new HeaderValidator(mockExportsLogger)
     protected val mockBusinessService: BusinessService = mock[BusinessService]
     protected val mockErrorResponse: ErrorResponse = mock[ErrorResponse]
     protected val mockResult: Result = mock[Result]
     protected val mockXmlValidationService: XmlValidationService = mock[XmlValidationService]
     protected val mockApiSubscriptionFieldsConnector: ApiSubscriptionFieldsConnector = mock[ApiSubscriptionFieldsConnector]
     private implicit val ec = Helpers.stubControllerComponents().executionContext
+    protected val customsAuthService = new CustomsAuthService(mockAuthConnector, mockExportsLogger)
 
     protected val stubConversationIdAction: ConversationIdAction = new ConversationIdAction(stubUniqueIdsService, mockExportsLogger)
     protected val stubFieldsAction: ApiSubscriptionFieldsAction = new ApiSubscriptionFieldsAction(mockApiSubscriptionFieldsConnector, mockExportsLogger)
-    protected val stubAuthAction: AuthAction = new AuthAction(mockAuthConnector, mockExportsLogger)
+    protected val stubAuthAction: AuthAction = new AuthAction(customsAuthService, headerValidator, mockExportsLogger)
     protected val stubValidateAndExtractHeadersAction: ValidateAndExtractHeadersAction = new ValidateAndExtractHeadersAction(new HeaderValidator(mockExportsLogger), mockExportsLogger)
     protected val stubPayloadValidationAction: PayloadValidationAction = new PayloadValidationAction(mockXmlValidationService, mockExportsLogger)
 
@@ -92,6 +94,8 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
   private val internalServerError = ErrorInternalServerError.XmlResult.withConversationId(TestConversationIdRequest)
 
   private val errorResultSubmitterIdentifierInvalid = errorBadRequest("X-Submitter-Identifier header is invalid").XmlResult.withHeaders(X_CONVERSATION_ID_HEADER)
+
+  private lazy val missingEoriResult = errorInternalServerError("Missing authenticated eori in service lookup").XmlResult.withHeaders(X_CONVERSATION_ID_HEADER)
 
   "InventoryLinkingExportController" should {
     "process CSP request when call is authorised for CSP (valid badge and submitter id headers present)" in new SetUp() {
@@ -127,15 +131,15 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
       verifyNonCspAuthorisationCalled(numberOfTimes = 1)
     }
 
-    "respond with status 400 for a CSP request with a missing X-Badge-Identifier" in new SetUp() {
+    "process CSP request when call is authorised for CSP (valid submitter header present but missing X-Badge-Identifier and authenticated EORI present)" in new SetUp() {
       authoriseCsp()
 
       val result: Result = awaitSubmit(ValidRequestWithSubmitterHeader.withHeaders(ValidRequestWithSubmitterHeader.headers.remove(X_BADGE_IDENTIFIER_NAME)))
 
-      result shouldBe errorResultBadgeIdentifier
-      bodyAsString(result) shouldBe bodyAsString(errorResultBadgeIdentifier)
-      verifyZeroInteractions(mockBusinessService)
-      verifyZeroInteractions(mockXmlValidationService)
+      status(result) shouldBe ACCEPTED
+      header(X_CONVERSATION_ID_NAME, result) shouldBe Some(conversationIdValue)
+      verifyCspAuthorisationCalled(numberOfTimes = 1)
+      verifyNonCspAuthorisationCalled(numberOfTimes = 0)
     }
 
     "respond with status 500 for a CSP request with a missing X-Submitter-Identifier and no authenticated EORI" in new SetUp() {
@@ -144,9 +148,9 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
 
       val result: Result = awaitSubmit(ValidRequestWithSubmitterHeader.withHeaders(ValidRequestWithSubmitterHeader.headers.remove(X_SUBMITTER_IDENTIFIER_NAME)))
 
-      result shouldBe internalServerError
-      verifyZeroInteractions(mockBusinessService)
-      verifyZeroInteractions(mockXmlValidationService)
+      result shouldBe missingEoriResult
+      verifyNoMoreInteractions(mockBusinessService)
+      verifyNoMoreInteractions(mockXmlValidationService)
     }
 
     "respond with status 500 for a request with a missing X-Client-ID" in new SetUp() {
@@ -155,8 +159,8 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
       val result: Result = awaitSubmit(ValidRequestWithSubmitterHeader.withHeaders(ValidRequestWithSubmitterHeader.headers.remove(X_CLIENT_ID_NAME)))
 
       result shouldBe internalServerError
-      verifyZeroInteractions(mockBusinessService)
-      verifyZeroInteractions(mockXmlValidationService)
+      verifyNoMoreInteractions(mockBusinessService)
+      verifyNoMoreInteractions(mockXmlValidationService)
     }
 
     "respond with status 400 for a request with an invalid X-Badge-Identifier" in new SetUp() {
@@ -166,8 +170,8 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
 
       result shouldBe errorResultBadgeIdentifier
       bodyAsString(result) shouldBe bodyAsString(errorResultBadgeIdentifier)
-      verifyZeroInteractions(mockBusinessService)
-      verifyZeroInteractions(mockXmlValidationService)
+      verifyNoMoreInteractions(mockBusinessService)
+      verifyNoMoreInteractions(mockXmlValidationService)
     }
 
     "respond with status 400 for a request with an invalid X-Submitter-Identifier" in new SetUp() {
@@ -177,8 +181,8 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
 
       result shouldBe errorResultSubmitterIdentifierInvalid
       bodyAsString(result) shouldBe bodyAsString(errorResultSubmitterIdentifierInvalid)
-      verifyZeroInteractions(mockBusinessService)
-      verifyZeroInteractions(mockXmlValidationService)
+      verifyNoMoreInteractions(mockBusinessService)
+      verifyNoMoreInteractions(mockXmlValidationService)
     }
 
     "respond with status 400 for a request with an invalid X-Submitter-Identifier (camel case)" in new SetUp() {
@@ -188,23 +192,14 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
 
       result shouldBe errorResultSubmitterIdentifierInvalid
       bodyAsString(result) shouldBe bodyAsString(errorResultSubmitterIdentifierInvalid)
-      verifyZeroInteractions(mockBusinessService)
-      verifyZeroInteractions(mockXmlValidationService)
+      verifyNoMoreInteractions(mockBusinessService)
+      verifyNoMoreInteractions(mockXmlValidationService)
     }
 
     "respond with status 202 and conversationId in header for a processed valid non-CSP request (without submitter id)" in new SetUp() {
       authoriseNonCsp(Some(declarantEori))
 
       val result: Future[Result] = submit(ValidRequestWithoutSubmitterHeader)
-
-      status(result) shouldBe ACCEPTED
-      header(X_CONVERSATION_ID_NAME, result) shouldBe Some(conversationIdValue)
-    }
-
-    "respond with status 202 and conversationId in header for a processed valid non-CSP request with submitter id that matches our records" in new SetUp() {
-      authoriseNonCsp(Some(declarantEori))
-
-      val result: Future[Result] = submit(ValidRequestWithSubmitterHeader)
 
       status(result) shouldBe ACCEPTED
       header(X_CONVERSATION_ID_NAME, result) shouldBe Some(conversationIdValue)
@@ -238,8 +233,8 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
       await(result) shouldBe errorResultUnauthorised
       bodyAsString(result) shouldBe bodyAsString(errorResultUnauthorised)
       header(X_CONVERSATION_ID_NAME, result) shouldBe Some(conversationIdValue)
-      verifyZeroInteractions(mockBusinessService)
-      verifyZeroInteractions(mockXmlValidationService)
+      verifyNoMoreInteractions(mockBusinessService)
+      verifyNoMoreInteractions(mockXmlValidationService)
     }
 
     "return result 401 UNAUTHORISED and conversationId in header when there's no Customs enrolment retrieved for an enrolled non-CSP call" in new SetUp() {
@@ -251,8 +246,8 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
       await(result) shouldBe errorResultEoriNotFoundInCustomsEnrolment
       bodyAsString(result) shouldBe bodyAsString(errorResultEoriNotFoundInCustomsEnrolment)
       header(X_CONVERSATION_ID_NAME, result) shouldBe Some(conversationIdValue)
-      verifyZeroInteractions(mockBusinessService)
-      verifyZeroInteractions(mockXmlValidationService)
+      verifyNoMoreInteractions(mockBusinessService)
+      verifyNoMoreInteractions(mockXmlValidationService)
     }
 
     "return result 401 UNAUTHORISED and conversationId in header when there's no EORI number in Customs enrolment for a non-CSP call" in new SetUp() {
@@ -264,8 +259,8 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
       await(result) shouldBe errorResultEoriNotFoundInCustomsEnrolment
       bodyAsString(result) shouldBe bodyAsString(errorResultEoriNotFoundInCustomsEnrolment)
       header(X_CONVERSATION_ID_NAME, result) shouldBe Some(conversationIdValue)
-      verifyZeroInteractions(mockBusinessService)
-      verifyZeroInteractions(mockXmlValidationService)
+      verifyNoMoreInteractions(mockBusinessService)
+      verifyNoMoreInteractions(mockXmlValidationService)
     }
 
     "return the error response returned from the Communication service" in new SetUp() {
