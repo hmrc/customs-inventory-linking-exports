@@ -94,11 +94,10 @@ class HeaderValidator @Inject()(logger: ExportsLogger) {
       logger.info(s"$XBadgeIdentifierHeaderName header empty and allowed")
       Right(None)
     } else {
-      maybeBadgeId.filter(xBadgeIdentifierRegex.findFirstIn(_).nonEmpty).map(b => {
+      maybeBadgeId.filter(xBadgeIdentifierRegex.findFirstIn(_).nonEmpty).map { b =>
         logger.info(s"$XBadgeIdentifierHeaderName header passed validation: $b")
         Some(BadgeIdentifier(b))
-      }
-      ).toRight[ErrorResponse] {
+      }.toRight[ErrorResponse] {
         logger.error(s"$XBadgeIdentifierHeaderName invalid or not present for CSP")
         errorResponseBadgeIdentifierHeaderMissing
       }
@@ -109,7 +108,7 @@ class HeaderValidator @Inject()(logger: ExportsLogger) {
 
   private def convertEmptyHeaderToNone(eori: Option[String]) = {
     if (eori.isDefined && eori.get.trim.isEmpty) {
-      eori map (_.trim) filterNot (_.isEmpty)
+      None
     } else {
       eori
     }

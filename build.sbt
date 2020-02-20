@@ -92,7 +92,7 @@ lazy val playPublishingSettings: Seq[sbt.Setting[_]] = Seq(credentials += SbtCre
 
 lazy val scoverageSettings: Seq[Setting[_]] = Seq(
   coverageExcludedPackages := "<empty>;models/.data/..*;uk.gov.hmrc.customs.inventorylinking.views.*;models.*;config.*;.*(Reverse|AuthService|BuildInfo|Routes).*",
-  coverageMinimum := 97,
+  coverageMinimum := 98,
   coverageFailOnMinimum := false,
   coverageHighlighting := true,
   parallelExecution in Test := false
