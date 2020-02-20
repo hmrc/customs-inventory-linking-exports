@@ -22,7 +22,8 @@ import play.api.http.MimeTypes
 import play.api.mvc.Headers
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse._
-import uk.gov.hmrc.customs.inventorylinking.`export`.model.{ApiVersion, VersionTwo}
+import uk.gov.hmrc.customs.inventorylinking.export.model._
+import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{HasConversationId, HasRequest}
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames._
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ConversationIdRequest, ExtractedHeadersImpl}
@@ -38,6 +39,12 @@ class HeaderValidator @Inject()(logger: ExportsLogger) {
   private lazy val validContentTypeHeaders = Seq(MimeTypes.XML + ";charset=utf-8", MimeTypes.XML + "; charset=utf-8")
   private lazy val xClientIdRegex = "^\\S+$".r
 
+  private lazy val xBadgeIdentifierRegex = "^[0-9A-Z]{6,12}$".r
+  private lazy val InvalidEoriHeaderRegex = "(^[\\s]*$|^.{18,}$)".r
+
+  private val errorResponseBadgeIdentifierHeaderMissing = errorBadRequest(s"$XBadgeIdentifierHeaderName header is missing or invalid")
+  private val errorResponseEoriIdentifierHeaderInvalid = errorBadRequest(s"$XSubmitterIdentifierHeaderName header is invalid")
+  
   def validateHeaders[A](implicit conversationIdRequest: ConversationIdRequest[A]): Either[ErrorResponse, ExtractedHeadersImpl] = {
     implicit val headers: Headers = conversationIdRequest.headers
 
@@ -80,5 +87,49 @@ class HeaderValidator @Inject()(logger: ExportsLogger) {
     }
   }
 
-}
+  def eitherBadgeIdentifier[A](allowNone: Boolean)(implicit vhr: HasRequest[A] with HasConversationId): Either[ErrorResponse, Option[BadgeIdentifier]] = {
+    val maybeBadgeId: Option[String] = vhr.request.headers.toSimpleMap.get(XBadgeIdentifierHeaderName)
 
+    if (allowNone && maybeBadgeId.isEmpty) {
+      logger.info(s"$XBadgeIdentifierHeaderName header empty and allowed")
+      Right(None)
+    } else {
+      maybeBadgeId.filter(xBadgeIdentifierRegex.findFirstIn(_).nonEmpty).map { b =>
+        logger.info(s"$XBadgeIdentifierHeaderName header passed validation: $b")
+        Some(BadgeIdentifier(b))
+      }.toRight[ErrorResponse] {
+        logger.error(s"$XBadgeIdentifierHeaderName invalid or not present for CSP")
+        errorResponseBadgeIdentifierHeaderMissing
+      }
+    }
+  }
+
+  private def validEori(eori: String) = InvalidEoriHeaderRegex.findFirstIn(eori).isEmpty
+
+  private def convertEmptyHeaderToNone(eori: Option[String]) = {
+    if (eori.isDefined && eori.get.trim.isEmpty) {
+      None
+    } else {
+      eori
+    }
+  }
+
+  def eoriMustBeValidIfPresent[A](implicit vhr: HasRequest[A] with HasConversationId): Either[ErrorResponse, Option[Eori]] = {
+    val maybeEoriHeader: Option[String] = vhr.request.headers.toSimpleMap.get(XSubmitterIdentifierHeaderName)
+    logger.debug(s"maybeEori => $maybeEoriHeader")
+    val maybeEori = convertEmptyHeaderToNone(maybeEoriHeader)
+
+    maybeEori match {
+      case Some(eori) => if (validEori(eori)) {
+        logger.info(s"$XSubmitterIdentifierHeaderName header passed validation: $eori")
+        Right(Some(Eori(eori)))
+      } else {
+        logger.error(s"$XSubmitterIdentifierHeaderName header is invalid for CSP: $eori")
+        Left(errorResponseEoriIdentifierHeaderInvalid)
+      }
+      case None =>
+        logger.info(s"$XSubmitterIdentifierHeaderName header not present or is empty")
+        Right(None)
+    }
+  }
+}

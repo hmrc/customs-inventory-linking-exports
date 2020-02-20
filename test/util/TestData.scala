@@ -21,7 +21,7 @@ import java.util.UUID
 import org.joda.time.{DateTime, DateTimeZone}
 import play.api.http.HeaderNames._
 import play.api.http.MimeTypes
-import play.api.mvc.AnyContentAsXml
+import play.api.mvc.{AnyContentAsXml, Headers}
 import play.api.test.FakeRequest
 import uk.gov.hmrc.customs.inventorylinking.export.model._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
@@ -51,8 +51,10 @@ object TestData {
   val declarantEori = Eori(declarantEoriValue)
   val authenticatedEori = Eori(authenticatedEoriValue)
 
-  val badgeEoriPair = BadgeIdentifierEoriPair(badgeIdentifier, declarantEori)
-  val badgeAuthenticatedEoriPair = BadgeIdentifierEoriPair(badgeIdentifier, authenticatedEori)
+  val cspAuthorisedRequest = Csp(Some(declarantEori), Some(badgeIdentifier))
+  val cspAuthorisedRequestWithoutBadgeIdentifier = Csp(Some(declarantEori), None)
+  val cspAuthorisedRequestWithoutEori = Csp(None, Some(badgeIdentifier))
+  val cspAuthorisedRequestWithoutEoriOrBadgeIdentifier = Csp(None, None)
 
   val dateTime: DateTime = DateTime.now(DateTimeZone.UTC)
   val dateTimeFormat = "YYYY-MM-dd'T'HH:mm:ss'Z'"
@@ -115,21 +117,20 @@ object TestData {
   val TestXmlPayload: Elem = <foo>bar</foo>
   val TestFakeRequest: FakeRequest[AnyContentAsXml] = FakeRequest().withXmlBody(TestXmlPayload)
 
-  def testFakeRequestWithSubmitterId(submitterId: String): FakeRequest[AnyContentAsXml] =
-    FakeRequest().withXmlBody(TestXmlPayload).withHeaders(X_SUBMITTER_IDENTIFIER_NAME -> submitterId)
-
-  def testFakeRequestWithBadgeId(badgeIdString: String = badgeIdentifier.value): FakeRequest[AnyContentAsXml] =
-    FakeRequest().withXmlBody(TestXmlPayload).withHeaders(X_BADGE_IDENTIFIER_NAME -> badgeIdString)
-
-  def testFakeRequestWithBadgeIdAndSubmitterId(badgeIdString: String = badgeIdentifier.value, submitterIdString: String = declarantEori.value): FakeRequest[AnyContentAsXml] =
-    FakeRequest().withXmlBody(TestXmlPayload).withHeaders(X_BADGE_IDENTIFIER_NAME -> badgeIdString, X_SUBMITTER_IDENTIFIER_NAME -> submitterIdString)
+  def testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeBadgeIdString: Option[String] = Some(badgeIdentifier.value), maybeSubmitterIdString: Option[String] = Some(declarantEori.value)): FakeRequest[AnyContentAsXml] = {
+    val headers = Headers(maybeBadgeIdString.fold(("", ""))(badgeId => (X_BADGE_IDENTIFIER_NAME, badgeId)), maybeSubmitterIdString.fold(("", ""))(submitterId => (X_SUBMITTER_IDENTIFIER_NAME, submitterId)))
+    FakeRequest().withXmlBody(TestXmlPayload).withHeaders(headers.remove("")) //better to not add empty string tuple in first place
+  }
 
   val TestConversationIdRequest = ConversationIdRequest(conversationId, TestFakeRequest)
   val TestExtractedHeaders = ExtractedHeadersImpl(VersionOne, ApiSubscriptionFieldsTestData.clientId)
   val TestValidatedHeadersRequest: ValidatedHeadersRequest[AnyContentAsXml] = TestConversationIdRequest.toValidatedHeadersRequest(TestExtractedHeaders)
   val TestApiSubscriptionFieldsRequest: ApiSubscriptionFieldsRequest[AnyContentAsXml] = TestValidatedHeadersRequest.toApiSubscriptionFieldsRequest(ApiSubscriptionFieldsTestData.apiSubscriptionFields)
-  val TestCspAuthorisedRequest: AuthorisedRequest[AnyContentAsXml] = TestApiSubscriptionFieldsRequest.toCspAuthorisedRequest(badgeEoriPair)
-  val TestCspValidatedPayloadRequest: ValidatedPayloadRequest[AnyContentAsXml] = TestApiSubscriptionFieldsRequest.toCspAuthorisedRequest(badgeEoriPair).toValidatedPayloadRequest(xmlBody = TestXmlPayload)
+  val TestCspAuthorisedRequest: AuthorisedRequest[AnyContentAsXml] = TestApiSubscriptionFieldsRequest.toCspAuthorisedRequest(cspAuthorisedRequest)
+  val TestCspValidatedPayloadRequest: ValidatedPayloadRequest[AnyContentAsXml] = TestApiSubscriptionFieldsRequest.toCspAuthorisedRequest(cspAuthorisedRequest).toValidatedPayloadRequest(xmlBody = TestXmlPayload)
+  val TestCspValidatedPayloadRequestWithoutBadgeIdentifier: ValidatedPayloadRequest[AnyContentAsXml] = TestApiSubscriptionFieldsRequest.toCspAuthorisedRequest(cspAuthorisedRequestWithoutBadgeIdentifier).toValidatedPayloadRequest(xmlBody = TestXmlPayload)
+  val TestCspValidatedPayloadRequestWithoutEori: ValidatedPayloadRequest[AnyContentAsXml] = TestApiSubscriptionFieldsRequest.toCspAuthorisedRequest(cspAuthorisedRequestWithoutEori).toValidatedPayloadRequest(xmlBody = TestXmlPayload)
+  val TestCspValidatedPayloadRequestWithoutEoriOrBadgeIdentifier: ValidatedPayloadRequest[AnyContentAsXml] = TestApiSubscriptionFieldsRequest.toCspAuthorisedRequest(cspAuthorisedRequestWithoutEoriOrBadgeIdentifier).toValidatedPayloadRequest(xmlBody = TestXmlPayload)
   val TestNonCspValidatedPayloadRequest: ValidatedPayloadRequest[AnyContentAsXml] = TestApiSubscriptionFieldsRequest.toNonCspAuthorisedRequest(declarantEori).toValidatedPayloadRequest(xmlBody = TestXmlPayload)
 }
 

@@ -6,18 +6,17 @@ The objective of the service POST API is as follows:
 
 1. Receive a request from a user wishing to submit an inventory linking declaration
 2. Validate the request payload conforms to the schema
-3. Pass the request to MDG
+3. Pass the request to the backend
 4. Respond to the declarant indicating the success of steps 2 / 3.
 
-It is assumed that the underlying MDG process is asynchronous, and that the only response to the declarant from this API is to indicate the success (or otherwise) of the validation and submission to downstream system.
+It is assumed that the underlying backend process is asynchronous, and that the only response to the declarant from this API is to indicate the success (or otherwise) of the validation and submission to downstream system.
 
 ## Useful CURL commands for local testing
 [link to curl commands](docs/curl-commands.md)
 
 # Custom SBT Task for generating ZIP file containing schemas
-There is an SBT task `zipXsds` that generates a ZIP file containing schemas, for each version under `/public/api/conf` 
-during the packaging phase (so are not generated during normal development). These ZIP files are referenced by the RAML. 
- These references are rendered as HTML links to generated ZIP in the deployed service. 
+There is an SBT task `zipXsds` that generates a ZIP file containing schemas, for each version under `/public/api/conf`. 
+These ZIP files are referenced by the RAML. These references are rendered as HTML links to generated ZIP in the deployed service. 
 
 # Lookup of `fieldsId` UUID and `authenticatedEori` from `api-subscription-fields` service
 The `X-Client-ID` header, together with the application context and version are used

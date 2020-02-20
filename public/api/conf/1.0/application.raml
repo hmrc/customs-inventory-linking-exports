@@ -37,12 +37,12 @@ uses:
           required: true
           example: application/xml; charset=UTF-8
         X-Badge-Identifier:
-            description: Required only for submissions via CSPs. Represents the end-user who is interacting with the subscribed application. Must be numeric or upper case letters with a minimum length of 6 and a maximum length of 12.
+            description: Represents the end-user who is interacting with the subscribed application. Must be numeric or upper case letters with a minimum length of 6 and a maximum length of 12. CSPs must have an X-Badge-Identifier or X-Submitter-Identifier.
             type: string
             required: false
             example: ABC123
         X-Submitter-Identifier:
-            description: A CSP user will populate this when submitting a transaction that has not originated with the CSP. The value must be an alphanumeric string with a maximum length of 17 char.
+            description: The EORI associated with the originating owner of the declaration. Must be numeric and upper case characters with a maximum length of 17 characters. CSPs must have an X-Badge-Identifier or X-Submitter-Identifier.
             type: string
             required: false
             example: ABC123

@@ -16,7 +16,7 @@
 
 package component
 
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Matchers, OptionValues}
+import org.scalatest.{Matchers, OptionValues}
 import play.api.mvc.Result
 import play.api.test.Helpers._
 import util.RequestHeaders.X_CONVERSATION_ID_NAME

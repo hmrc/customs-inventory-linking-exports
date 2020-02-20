@@ -31,7 +31,7 @@ import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBu
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ApiSubscriptionFieldsRequest, ConversationIdRequest, ValidatedHeadersRequest}
 import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionKey, VersionOne}
 import uk.gov.hmrc.play.test.UnitSpec
-import util.TestData.{TestExtractedHeaders, conversationId, declarantEori, testFakeRequestWithSubmitterId}
+import util.TestData.{TestExtractedHeaders, conversationId, declarantEori, testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId}
 import util.{ApiSubscriptionFieldsTestData, TestData}
 
 import scala.concurrent.Future
@@ -51,7 +51,7 @@ class ApiSubscriptionFieldsActionSpec extends UnitSpec with MockitoSugar {
     }
 
     private[ApiSubscriptionFieldsActionSpec] val vhr: ValidatedHeadersRequest[AnyContentAsXml] =
-      vhr(testFakeRequestWithSubmitterId(submitterId = declarantEori.value))
+      vhr(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeSubmitterIdString = Some(declarantEori.value), maybeBadgeIdString = None))
     private[ApiSubscriptionFieldsActionSpec] val key = ApiSubscriptionKey(vhr.clientId, apiContextEncoded, VersionOne)
   }
 

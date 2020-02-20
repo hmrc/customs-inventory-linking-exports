@@ -52,7 +52,7 @@ object ActionBuilderModelHelper {
 
   implicit class ApiSubscriptionFieldsRequestOps[A](val asf: ApiSubscriptionFieldsRequest[A]) extends AnyVal {
 
-    def toCspAuthorisedRequest(pair: BadgeIdentifierEoriPair): AuthorisedRequest[A] = toAuthorisedRequest(Csp(pair))
+    def toCspAuthorisedRequest(a: AuthorisedAsCsp): AuthorisedRequest[A] = toAuthorisedRequest(a)
 
     def toNonCspAuthorisedRequest(eori: Eori): AuthorisedRequest[A] = toAuthorisedRequest(NonCsp(eori))
 
@@ -78,6 +78,10 @@ object ActionBuilderModelHelper {
       )
   }
 
+}
+
+trait HasRequest[A] {
+  val request: Request[A]
 }
 
 trait HasConversationId {
@@ -114,7 +118,7 @@ case class ExtractedHeadersImpl(
 case class ConversationIdRequest[A](
   conversationId: ConversationId,
   request: Request[A]
-) extends WrappedRequest[A](request) with HasConversationId
+) extends WrappedRequest[A](request) with HasRequest[A] with HasConversationId
 
 // Available after ValidateAndExtractHeadersAction action builder
 case class ValidatedHeadersRequest[A](
@@ -122,7 +126,7 @@ case class ValidatedHeadersRequest[A](
   requestedApiVersion: ApiVersion,
   clientId: ClientId,
   request: Request[A]
-) extends WrappedRequest[A](request) with HasConversationId with ExtractedHeaders
+) extends WrappedRequest[A](request) with HasRequest[A] with HasConversationId with ExtractedHeaders
 
 // Available after ApiSubscriptionFieldsAction action builder
 case class ApiSubscriptionFieldsRequest[A](
@@ -131,8 +135,7 @@ case class ApiSubscriptionFieldsRequest[A](
   clientId: ClientId,
   apiSubscriptionFields: ApiSubscriptionFields,
   request: Request[A]
-) extends WrappedRequest[A](request) with HasConversationId with ExtractedHeaders
-
+) extends WrappedRequest[A](request) with HasRequest[A] with HasConversationId with ExtractedHeaders
 
 // Available after AuthAction builder
 case class AuthorisedRequest[A](
