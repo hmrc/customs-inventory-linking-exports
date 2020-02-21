@@ -71,7 +71,9 @@ class AuthAction @Inject()(customsAuthService: CustomsAuthService,
           if (validAuthenticatedEori(asfr.apiSubscriptionFields.fields.authenticatedEori)) {
             Future.successful(Right(asfr.toCspAuthorisedRequest(cspData)))
           } else {
-            Future.successful(Left(errorInternalServerError("Missing authenticated eori in service lookup").XmlResult.withConversationId))
+            val msg = "Missing authenticated eori in service lookup"
+            logger.error(s"$msg for CSP request")
+            Future.successful(Left(errorInternalServerError(msg).XmlResult.withConversationId))
           }
         }
       case Left(result) =>
