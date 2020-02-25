@@ -54,6 +54,7 @@ sealed trait AuthorisedAs
 sealed trait AuthorisedAsCsp extends AuthorisedAs {
   val eori: Option[Eori]
   val badgeIdentifier: Option[BadgeIdentifier]
+  val isEmpty: Boolean = eori.isEmpty && badgeIdentifier.isEmpty
 }
 case class Csp(eori: Option[Eori], badgeIdentifier: Option[BadgeIdentifier]) extends AuthorisedAsCsp
 case class NonCsp(eori: Eori) extends AuthorisedAs

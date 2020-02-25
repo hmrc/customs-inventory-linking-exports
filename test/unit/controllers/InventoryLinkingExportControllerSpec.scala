@@ -95,7 +95,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
 
   private val errorResultSubmitterIdentifierInvalid = errorBadRequest("X-Submitter-Identifier header is invalid").XmlResult.withHeaders(X_CONVERSATION_ID_HEADER)
 
-  private lazy val missingEoriResult = errorInternalServerError("Missing authenticated eori in service lookup").XmlResult.withHeaders(X_CONVERSATION_ID_HEADER)
+  private lazy val missingEoriResult = errorInternalServerError("Missing authenticated eori in service lookup. Alternately, use X-Badge-Identifier or X-Submitter-Identifier headers.").XmlResult.withHeaders(X_CONVERSATION_ID_HEADER)
 
   "InventoryLinkingExportController" should {
     "process CSP request when call is authorised for CSP (valid badge and submitter id headers present)" in new SetUp() {
@@ -142,11 +142,11 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
       verifyNonCspAuthorisationCalled(numberOfTimes = 0)
     }
 
-    "respond with status 500 for a CSP request with a missing X-Submitter-Identifier and no authenticated EORI" in new SetUp() {
+    "respond with status 500 for a CSP request with no X-Submitter-Identifier header, no X-Badge-Identifier header and no authenticated EORI" in new SetUp() {
       when(mockApiSubscriptionFieldsConnector.getSubscriptionFields(any[ApiSubscriptionKey])(any[ValidatedHeadersRequest[_]])).thenReturn(Future.successful(ApiSubscriptionFieldsTestData.apiSubscriptionFieldsNoAuthenticatedEori))
       authoriseCsp()
 
-      val result: Result = awaitSubmit(ValidRequestWithSubmitterHeader.withHeaders(ValidRequestWithSubmitterHeader.headers.remove(X_SUBMITTER_IDENTIFIER_NAME)))
+      val result: Result = awaitSubmit(ValidRequestWithSubmitterHeader.withHeaders(ValidRequestWithSubmitterHeader.headers.remove(X_SUBMITTER_IDENTIFIER_NAME).remove(X_BADGE_IDENTIFIER_NAME)))
 
       result shouldBe missingEoriResult
       verifyNoMoreInteractions(mockBusinessService)

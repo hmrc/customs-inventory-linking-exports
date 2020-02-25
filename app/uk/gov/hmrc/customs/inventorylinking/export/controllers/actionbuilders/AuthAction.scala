@@ -68,11 +68,11 @@ class AuthAction @Inject()(customsAuthService: CustomsAuthService,
               Right(asfr.toNonCspAuthorisedRequest(nonCspData.eori))
           }
         }{ cspData =>
-          if (validAuthenticatedEori(asfr.apiSubscriptionFields.fields.authenticatedEori)) {
+          if (validIdentifier(cspData, asfr.apiSubscriptionFields.fields.authenticatedEori)) {
             Future.successful(Right(asfr.toCspAuthorisedRequest(cspData)))
           } else {
-            val msg = "Missing authenticated eori in service lookup"
-            logger.error(s"$msg for CSP request")
+            val msg = "Missing authenticated eori in service lookup. Alternately, use X-Badge-Identifier or X-Submitter-Identifier headers."
+            logger.error(s"For CSP request $msg")
             Future.successful(Left(errorInternalServerError(msg).XmlResult.withConversationId))
           }
         }
@@ -109,8 +109,8 @@ class AuthAction @Inject()(customsAuthService: CustomsAuthService,
     headerValidator.eitherBadgeIdentifier(allowNone = allowNone)
   }
 
-  private def validAuthenticatedEori(authenticatedEori: Option[String]): Boolean = {
-    if (authenticatedEori.isDefined && !authenticatedEori.get.trim.isEmpty) {
+  private def validIdentifier(cspData: AuthorisedAsCsp, authenticatedEori: Option[String]): Boolean = {
+    if (!cspData.isEmpty || (authenticatedEori.isDefined && !authenticatedEori.get.trim.isEmpty)) {
       true
     } else {
       false
