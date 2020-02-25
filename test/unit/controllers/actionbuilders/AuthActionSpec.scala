@@ -31,7 +31,6 @@ import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBu
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ApiSubscriptionFieldsRequest, AuthorisedRequest, ConversationIdRequest}
 import uk.gov.hmrc.customs.inventorylinking.export.services.CustomsAuthService
 import uk.gov.hmrc.play.test.UnitSpec
-import util.RequestHeaders.X_SUBMITTER_IDENTIFIER_NAME_CAMEL_CASE
 import util.TestData._
 import util.{ApiSubscriptionFieldsTestData, AuthConnectorStubbing, RequestHeaders}
 
@@ -43,7 +42,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
     errorBadRequest(s"${CustomHeaderNames.XBadgeIdentifierHeaderName} header is missing or invalid")
   private val errorResponseSubmitterIdentifierHeaderInvalid =
     errorBadRequest(s"${CustomHeaderNames.XSubmitterIdentifierHeaderName} header is invalid")
-  private lazy val missingEoriResult = errorInternalServerError("Missing authenticated eori in service lookup")
+  private lazy val missingEoriResult = errorInternalServerError("Missing authenticated eori in service lookup. Alternately, use X-Badge-Identifier or X-Submitter-Identifier headers.")
 
   private lazy val errorResponseEoriNotFoundInCustomsEnrolment =
     ErrorResponse(UNAUTHORIZED, UnauthorizedCode, "EORI number not found in Customs Enrolment")
@@ -85,21 +84,32 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       verifyNonCspAuthorisationNotCalled
     }
 
-    "return 500 response with conversationId when authorised by auth API and badge identifier exists, but submitter not present and authenticated EORI not present" in new SetUp {
+    "return 500 response with conversationId when authorised by auth API and badge identifier, submitter and authenticated EORI do not exist" in new SetUp {
       authoriseCsp()
 
-      private val actual = await(authAction.refine(request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeSubmitterIdString = None), ApiSubscriptionFieldsTestData.apiSubscriptionFieldsNoAuthenticatedEori)))
+      private val actual = await(authAction.refine(request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeSubmitterIdString = None, maybeBadgeIdString = None), ApiSubscriptionFieldsTestData.apiSubscriptionFieldsNoAuthenticatedEori)))
 
       actual shouldBe Left(missingEoriResult.XmlResult.withHeaders(RequestHeaders.X_CONVERSATION_ID_NAME -> conversationId.toString))
       verifyNonCspAuthorisationNotCalled
     }
 
-    "return 500 response with conversationId when authorised by auth API and badge identifier exists, but submitter not present and authenticated EORI contains only whitespace" in new SetUp {
+    "authorise as CSP when authorised by auth API and badge identifier exists, but submitter and authenticated EORI not present" in new SetUp {
       authoriseCsp()
 
-      private val actual = await(authAction.refine(request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeSubmitterIdString = None), ApiSubscriptionFieldsTestData.apiSubscriptionFieldsBlankAuthenticatedEori)))
+      private val actual = await(authAction.refine(request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeSubmitterIdString = None), ApiSubscriptionFieldsTestData.apiSubscriptionFieldsNoAuthenticatedEori)).right.get)
+      private val expected = request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeSubmitterIdString = None)).toCspAuthorisedRequest(cspAuthorisedRequestWithoutEori)
 
-      actual shouldBe Left(missingEoriResult.XmlResult.withHeaders(RequestHeaders.X_CONVERSATION_ID_NAME -> conversationId.toString))
+      actual.authorisedAs shouldBe expected.authorisedAs
+      verifyNonCspAuthorisationNotCalled
+    }
+
+    "authorise as CSP when authorised by auth API and badge identifier exists, but submitter not present and authenticated EORI contains only whitespace" in new SetUp {
+      authoriseCsp()
+
+      private val actual = await(authAction.refine(request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeSubmitterIdString = None), ApiSubscriptionFieldsTestData.apiSubscriptionFieldsBlankAuthenticatedEori)).right.get)
+      private val expected = request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeSubmitterIdString = None)).toCspAuthorisedRequest(cspAuthorisedRequestWithoutEori)
+
+      actual.authorisedAs shouldBe expected.authorisedAs
       verifyNonCspAuthorisationNotCalled
     }
 
@@ -108,8 +118,8 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
 
       private val actual = await(authAction.refine(request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeBadgeIdString = None))).right.get)
       private val expected = request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeBadgeIdString = None)).toCspAuthorisedRequest(cspAuthorisedRequestWithoutBadgeIdentifier)
+      
       actual.authorisedAs shouldBe expected.authorisedAs
-
       verifyNonCspAuthorisationNotCalled
     }
 
