@@ -20,95 +20,94 @@ uses:
   annotations: https://developer.service.hmrc.gov.uk/api-documentation/assets/common/modules/annotations.raml
   types: https://developer.service.hmrc.gov.uk/api-documentation/assets/common/modules/types.raml
 
-/customs/inventory-linking/exports:
-  /:
-    post:
-      displayName: Inventory Exports Request
-      description: Submit an Inventory Exports Request
-      headers:
-        Accept:
-          description: Specifies the version of the API that you want to call. See [versioning](/api-documentation/docs/reference-guide#versioning).
+/customs/inventory-linking/exports/:
+  post:
+    displayName: Inventory Exports Request
+    description: Submit an Inventory Exports Request
+    headers:
+      Accept:
+        description: Specifies the version of the API that you want to call. See [versioning](/api-documentation/docs/reference-guide#versioning).
+        type: string
+        required: true
+        example: application/vnd.hmrc.2.0+xml
+      Content-Type:
+        description: Specifies the format of the request body, which must be XML. Download [schemas](/api-documentation/docs/api/download/customs-inventory-linking-exports/2.0/inventory-linking-exports-schemas.zip).
+        type: string
+        required: true
+        example: application/xml; charset=UTF-8
+      X-Badge-Identifier:
+          description: Represents the end-user who is interacting with the subscribed application. Must be numeric or upper case letters with a minimum length of 6 and a maximum length of 12.
           type: string
-          required: true
-          example: application/vnd.hmrc.2.0+xml
-        Content-Type:
-          description: Specifies the format of the request body, which must be XML. Download [schemas](/api-documentation/docs/api/download/customs-inventory-linking-exports/2.0/inventory-linking-exports-schemas.zip).
+          required: false
+          example: ABC123
+      X-Submitter-Identifier:
+          description: The EORI associated with the originating owner of the declaration. Must be numeric and upper case characters with a maximum length of 17 characters.
           type: string
-          required: true
-          example: application/xml; charset=UTF-8
-        X-Badge-Identifier:
-            description: Represents the end-user who is interacting with the subscribed application. Must be numeric or upper case letters with a minimum length of 6 and a maximum length of 12.
-            type: string
-            required: false
-            example: ABC123
-        X-Submitter-Identifier:
-            description: The EORI associated with the originating owner of the declaration. Must be numeric and upper case characters with a maximum length of 17 characters.
-            type: string
-            required: false
-            example: ABC123
+          required: false
+          example: ABC123
 
-      (annotations.scope): "write:customs-inventory-linking-exports"
-      securedBy: [ sec.oauth_2_0: { scopes: [ "write:customs-inventory-linking-exports" ] } ]
-      body:
-        application/xml-1:
-          type: !include schemas/customs/wrapper.xsd
-          example: !include examples/consolidationRequest.xml
-        application/xml-2:
-          type: !include schemas/customs/wrapper.xsd
-          example: !include examples/movementRequest.xml
-        application/xml-3:
-          type: !include schemas/customs/wrapper.xsd
-          example: !include examples/queryRequest.xml
+    (annotations.scope): "write:customs-inventory-linking-exports"
+    securedBy: [ sec.oauth_2_0: { scopes: [ "write:customs-inventory-linking-exports" ] } ]
+    body:
+      application/xml-1:
+        type: !include schemas/customs/wrapper.xsd
+        example: !include examples/consolidationRequest.xml
+      application/xml-2:
+        type: !include schemas/customs/wrapper.xsd
+        example: !include examples/movementRequest.xml
+      application/xml-3:
+        type: !include schemas/customs/wrapper.xsd
+        example: !include examples/queryRequest.xml
 
-      responses:
-        202:
-        400:
-          body:
-            application/xml:
-              description: Invalid XML Payload
-              type: !include schemas/customs/error.xsd
-              example: |
-                  <?xml version="1.0" encoding="UTF-8"?>
-                  <errorResponse>
-                      <code>BAD_REQUEST</code>
-                      <message>Payload is not valid according to schema</message>
-                      <errors>
-                          <error>
-                              <code>xml_validation_error</code>
-                              <message>Error at line 13, column 13: no declaration found for element 'unknown'</message>
-                          </error>
-                      </errors>
-                  </errorResponse>
-        406:
-          body:
-            application/xml:
-              description: Invalid Accept header
-              type: !include schemas/customs/error.xsd
-              example: |
-                  <?xml version="1.0" encoding="UTF-8"?>
-                  <errorResponse>
-                    <code>ACCEPT_HEADER_INVALID</code>
-                    <message>The accept header is missing or invalid</message>
-                  </errorResponse>
-        415:
-          body:
-            application/xml:
-              description: Invalid Content-type header
-              type: !include schemas/customs/error.xsd
-              example: |
-                  <?xml version="1.0" encoding="UTF-8"?>
-                  <errorResponse>
-                    <code>UNSUPPORTED_MEDIA_TYPE</code>
-                    <message>The content type header is missing or invalid</message>
-                  </errorResponse>
-        500:
-          body:
-            application/xml:
-              description: Internal server error
-              type: !include schemas/customs/error.xsd
-              example: |
-                  <?xml version="1.0" encoding="UTF-8"?>
-                  <errorResponse>
-                      <code>INTERNAL_SERVER_ERROR</code>
-                      <message>Internal server error</message>
-                  </errorResponse>
+    responses:
+      202:
+      400:
+        body:
+          application/xml:
+            description: Invalid XML Payload
+            type: !include schemas/customs/error.xsd
+            example: |
+                <?xml version="1.0" encoding="UTF-8"?>
+                <errorResponse>
+                    <code>BAD_REQUEST</code>
+                    <message>Payload is not valid according to schema</message>
+                    <errors>
+                        <error>
+                            <code>xml_validation_error</code>
+                            <message>Error at line 13, column 13: no declaration found for element 'unknown'</message>
+                        </error>
+                    </errors>
+                </errorResponse>
+      406:
+        body:
+          application/xml:
+            description: Invalid Accept header
+            type: !include schemas/customs/error.xsd
+            example: |
+                <?xml version="1.0" encoding="UTF-8"?>
+                <errorResponse>
+                  <code>ACCEPT_HEADER_INVALID</code>
+                  <message>The accept header is missing or invalid</message>
+                </errorResponse>
+      415:
+        body:
+          application/xml:
+            description: Invalid Content-type header
+            type: !include schemas/customs/error.xsd
+            example: |
+                <?xml version="1.0" encoding="UTF-8"?>
+                <errorResponse>
+                  <code>UNSUPPORTED_MEDIA_TYPE</code>
+                  <message>The content type header is missing or invalid</message>
+                </errorResponse>
+      500:
+        body:
+          application/xml:
+            description: Internal server error
+            type: !include schemas/customs/error.xsd
+            example: |
+                <?xml version="1.0" encoding="UTF-8"?>
+                <errorResponse>
+                    <code>INTERNAL_SERVER_ERROR</code>
+                    <message>Internal server error</message>
+                </errorResponse>
