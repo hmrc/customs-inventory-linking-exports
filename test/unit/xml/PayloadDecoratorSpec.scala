@@ -43,7 +43,7 @@ class PayloadDecoratorSpec extends UnitSpec with MockitoSugar {
     "wrap passed complete inventoryLinkingMovementRequest" in {
       val result = wrapPayloadWithBadgeIdentifierAndEori(ValidInventoryLinkingMovementRequestXML)
 
-       xml.Utility.trim(result.head) shouldBe xml.Utility.trim(wrappedValidXML.head)
+       scala.xml.Utility.trim(result.head) shouldBe scala.xml.Utility.trim(wrappedValidXML.head)
     }
 
     forAll(xmlRequests) { (linkingType, xml) =>
