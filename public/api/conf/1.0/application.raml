@@ -37,12 +37,18 @@ uses:
           required: true
           example: application/xml; charset=UTF-8
         X-Badge-Identifier:
-            description: Represents the end-user who is interacting with the subscribed application. Must be numeric or upper case letters with a minimum length of 6 and a maximum length of 12.
+            description: |
+              Represents the end-user who is interacting with the subscribed application.
+
+              Must be 6 to 12 numbers and upper-case letters.
             type: string
             required: false
             example: ABC123
         X-Submitter-Identifier:
-            description: The EORI associated with the originating owner of the declaration. Must be numeric and upper case characters with a maximum length of 17 characters.
+            description: |
+              The EORI associated with the originating owner of the declaration.
+
+              Must be numbers and letters with a maximum length of 17 characters.
             type: string
             required: false
             example: ABC123
