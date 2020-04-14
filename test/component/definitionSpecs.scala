@@ -78,18 +78,21 @@ class DefinitionSpecWithWhitelistedAppId extends ComponentTestSpec
           |          {
           |            "name": "callbackUrl",
           |            "description": "The URL of your HTTPS webservice that HMRC calls to notify you regarding request submission.",
-          |            "type": "URL"
+          |            "type": "URL",
+          |            "shortDescription" : "Callback URL"
           |          },
           |          {
           |            "name": "securityToken",
           |            "description": "The full value of Authorization HTTP header that will be used when notifying you.",
-          |            "type": "SecureToken"
+          |            "type": "SecureToken",
+          |            "shortDescription" : "Authorization Token"
           |          },
           |          {
           |            "name": "authenticatedEori",
           |            "description": "What's your Economic Operator Registration and Identification (EORI) number?",
           |            "type": "STRING",
-          |            "hint": "This is your EORI that will associate your application with you as a CSP"
+          |            "hint": "This is your EORI that will associate your application with you as a CSP",
+          |            "shortDescription" : "EORI"
           |          }
           |        ]
           |      },
@@ -107,18 +110,21 @@ class DefinitionSpecWithWhitelistedAppId extends ComponentTestSpec
           |          {
           |            "name": "callbackUrl",
           |            "description": "The URL of your HTTPS webservice that HMRC calls to notify you regarding request submission.",
-          |            "type": "URL"
+          |            "type": "URL",
+          |            "shortDescription" : "Callback URL"
           |          },
           |          {
           |            "name": "securityToken",
           |            "description": "The full value of Authorization HTTP header that will be used when notifying you.",
-          |            "type": "SecureToken"
+          |            "type": "SecureToken",
+          |            "shortDescription" : "Authorization Token"
           |          },
           |          {
           |            "name": "authenticatedEori",
           |            "description": "What's your Economic Operator Registration and Identification (EORI) number?",
           |            "type": "STRING",
-          |            "hint": "This is your EORI that will associate your application with you as a CSP"
+          |            "hint": "This is your EORI that will associate your application with you as a CSP",
+          |            "shortDescription" : "EORI"
           |          }
           |        ]
           |      }
@@ -176,18 +182,21 @@ class DefinitionSpecWithoutWhitelistedAppId extends ComponentTestSpec
           |          {
           |            "name": "callbackUrl",
           |            "description": "The URL of your HTTPS webservice that HMRC calls to notify you regarding request submission.",
-          |            "type": "URL"
+          |            "type": "URL",
+          |            "shortDescription" : "Callback URL"
           |          },
           |          {
           |            "name": "securityToken",
           |            "description": "The full value of Authorization HTTP header that will be used when notifying you.",
-          |            "type": "SecureToken"
+          |            "type": "SecureToken",
+          |            "shortDescription" : "Authorization Token"
           |          },
           |          {
           |            "name": "authenticatedEori",
           |            "description": "What's your Economic Operator Registration and Identification (EORI) number?",
           |            "type": "STRING",
-          |            "hint": "This is your EORI that will associate your application with you as a CSP"
+          |            "hint": "This is your EORI that will associate your application with you as a CSP",
+          |            "shortDescription" : "EORI"
           |          }
           |        ]
           |      },
@@ -202,18 +211,21 @@ class DefinitionSpecWithoutWhitelistedAppId extends ComponentTestSpec
           |          {
           |            "name": "callbackUrl",
           |            "description": "The URL of your HTTPS webservice that HMRC calls to notify you regarding request submission.",
-          |            "type": "URL"
+          |            "type": "URL",
+          |            "shortDescription" : "Callback URL"
           |          },
           |          {
           |            "name": "securityToken",
           |            "description": "The full value of Authorization HTTP header that will be used when notifying you.",
-          |            "type": "SecureToken"
+          |            "type": "SecureToken",
+          |            "shortDescription" : "Authorization Token"
           |          },
           |          {
           |            "name": "authenticatedEori",
           |            "description": "What's your Economic Operator Registration and Identification (EORI) number?",
           |            "type": "STRING",
-          |            "hint": "This is your EORI that will associate your application with you as a CSP"
+          |            "hint": "This is your EORI that will associate your application with you as a CSP",
+          |            "shortDescription" : "EORI"
           |          }
           |        ]
           |      }
