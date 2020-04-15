@@ -40,6 +40,7 @@ lazy val microservice = (project in file("."))
   .enablePlugins(SbtArtifactory)
   .disablePlugins(sbt.plugins.JUnitXmlReportPlugin)
   .configs(testConfig: _*)
+  .settings(majorVersion := 1)
   .settings(
     commonSettings,
     unitTestSettings,
@@ -49,8 +50,7 @@ lazy val microservice = (project in file("."))
     scoverageSettings,
     allResolvers
   )
-  .settings(majorVersion := 1)
-
+  
 lazy val unitTestSettings =
   inConfig(Test)(Defaults.testTasks) ++
     Seq(
