@@ -17,7 +17,9 @@
 package unit.services
 
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 
+import akka.pattern.CircuitBreakerOpenException
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.{eq => meq, _}
 import org.mockito.Mockito.{verify, when}
@@ -25,7 +27,6 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.mvc.{AnyContentAsXml, Result}
 import play.api.test.Helpers
-import uk.gov.hmrc.circuitbreaker.UnhealthyServiceException
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.errorInternalServerError
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.ExportsConnector
@@ -42,6 +43,7 @@ import util.XMLTestData._
 import util.{ApiSubscriptionFieldsTestData, RequestHeaders}
 
 import scala.concurrent.Future
+import scala.concurrent.duration.{FiniteDuration, TimeUnit}
 import scala.xml.NodeSeq
 
 class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach with ApiSubscriptionFieldsTestData {
@@ -105,7 +107,7 @@ class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfter
     }
 
     "return InternalServerError ErrorResponse when backend circuit breaker trips" in new SetUp() {
-      when(mockExportsConnector.send(any[NodeSeq], any[DateTime], any[UUID])(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])).thenReturn(Future.failed(new UnhealthyServiceException("mdg-exports")))
+      when(mockExportsConnector.send(any[NodeSeq], any[DateTime], any[UUID])(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])).thenReturn(Future.failed(new CircuitBreakerOpenException(FiniteDuration(10, TimeUnit.SECONDS))))
 
       send() shouldBe Left(errorResponseServiceUnavailable.XmlResult)
     }

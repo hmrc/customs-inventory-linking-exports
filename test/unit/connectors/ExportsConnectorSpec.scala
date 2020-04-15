@@ -16,6 +16,7 @@
 
 package unit.connectors
 
+import akka.actor.ActorSystem
 import org.joda.time.{DateTime, DateTimeZone}
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.{eq => ameq, _}
@@ -49,9 +50,11 @@ class ExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfte
   private val mockExportsConfigService = mock[ExportsConfigService]
   private val mockExportsCircuitBreakerConfig = mock[ExportsCircuitBreakerConfig]
   private val mockResponse = mock[HttpResponse]
+  private val cdsLogger = mock[CdsLogger]
+  private val actorSystem = ActorSystem("mockActorSystem")
   private implicit val ec = Helpers.stubControllerComponents().executionContext
 
-  private val connector = new ExportsConnector(mockWsPost, stubExportsLogger, mockServiceConfigProvider, mockExportsConfigService)
+  private val connector = new ExportsConnector(mockWsPost, stubExportsLogger, mockServiceConfigProvider, mockExportsConfigService, cdsLogger, actorSystem)
 
   private val serviceConfig = ServiceConfig("the-url", Some("bearerToken"), "default")
 
