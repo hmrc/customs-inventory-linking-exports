@@ -20,12 +20,14 @@ import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import java.util.UUID
 
+import akka.actor.ActorSystem
 import com.google.inject._
 import org.joda.time.DateTime
 import play.api.http.HeaderNames.{ACCEPT, CONTENT_TYPE, DATE, X_FORWARDED_HOST}
 import play.api.http.MimeTypes
-import uk.gov.hmrc.circuitbreaker.{CircuitBreakerConfig, UsingCircuitBreaker}
 import uk.gov.hmrc.customs.api.common.config.ServiceConfigProvider
+import uk.gov.hmrc.customs.api.common.connectors.CircuitBreakerConnector
+import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{HasConversationId, ValidatedPayloadRequest}
 import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
@@ -40,17 +42,23 @@ import scala.xml.{NodeSeq, PrettyPrinter, TopScope}
 class ExportsConnector @Inject() (http: HttpClient,
                                   logger: ExportsLogger,
                                   serviceConfigProvider: ServiceConfigProvider,
-                                  config: ExportsConfigService)
-                                 (implicit ec: ExecutionContext) extends UsingCircuitBreaker {
+                                  config: ExportsConfigService,
+                                  override val cdsLogger: CdsLogger,
+                                  override val actorSystem: ActorSystem)
+                                 (implicit override val ec: ExecutionContext) extends CircuitBreakerConnector {
 
-  private val configKey = "mdg-exports"
+  override val configKey = "mdg-exports"
+
+  override lazy val numberOfCallsToTriggerStateChange = config.exportsCircuitBreakerConfig.numberOfCallsToTriggerStateChange
+  override lazy val unstablePeriodDurationInMillis = config.exportsCircuitBreakerConfig.unstablePeriodDurationInMillis
+  override lazy val unavailablePeriodDurationInMillis = config.exportsCircuitBreakerConfig.unavailablePeriodDurationInMillis
 
   def send[A](xml: NodeSeq, date: DateTime, correlationId: UUID)(implicit vpr: ValidatedPayloadRequest[A], hc: HeaderCarrier): Future[HttpResponse] = {
     val config = Option(serviceConfigProvider.getConfig(s"${vpr.requestedApiVersion.configPrefix}$configKey")).getOrElse(throw new IllegalArgumentException("config not found"))
     val bearerToken = "Bearer " + config.bearerToken.getOrElse(throw new IllegalStateException("no bearer token was found in config"))
     implicit val headerCarrier: HeaderCarrier = hc.copy(extraHeaders = hc.extraHeaders ++ getHeaders(date, correlationId), authorization = Some(Authorization(bearerToken)))
     val startTime = LocalDateTime.now
-    withCircuitBreaker(post(xml, config.url)(vpr, headerCarrier))(headerCarrier).map{
+    withCircuitBreaker(post(xml, config.url)(vpr, headerCarrier)).map{
       response => {
         logCallDuration(startTime)
         logger.debug(s"Response status ${response.status} and response body ${formatResponseBody(response.body)}")
@@ -92,14 +100,6 @@ class ExportsConnector @Inject() (http: HttpClient,
       new PrettyPrinter(120, 2).format(xml.XML.loadString(responseBody), TopScope)
     }
   }
-
-  override protected def circuitBreakerConfig: CircuitBreakerConfig =
-    CircuitBreakerConfig(
-      serviceName = "customs-inventory-linking-exports",
-      numberOfCallsToTriggerStateChange = config.exportsCircuitBreakerConfig.numberOfCallsToTriggerStateChange,
-      unavailablePeriodDuration = config.exportsCircuitBreakerConfig.unavailablePeriodDurationInMillis,
-      unstablePeriodDuration = config.exportsCircuitBreakerConfig.unstablePeriodDurationInMillis
-    )
 
   override protected def breakOnException(t: Throwable): Boolean = t match {
     case _: BadRequestException | _: NotFoundException | _: Upstream4xxResponse => false

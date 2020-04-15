@@ -18,6 +18,7 @@ package integration
 
 import java.util.UUID
 
+import akka.pattern.CircuitBreakerOpenException
 import org.joda.time.DateTime
 import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatestplus.mockito.MockitoSugar
@@ -25,7 +26,6 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._
-import uk.gov.hmrc.circuitbreaker.UnhealthyServiceException
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.ExportsConnector
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
 import uk.gov.hmrc.http._
@@ -78,12 +78,42 @@ class ConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite with Mo
 
     "ExportsConnector" should {
 
+      //wait to clear the circuit breaker state that may of been tripped by previous tests
+      Thread.sleep(unavailablePeriodDurationInMillis)
+
       "make a correct request" in {
         startBackendService()
 
         await(sendValidXml(ValidInventoryLinkingMovementRequestXML))
 
         verifyInventoryLinkingExportsServiceWasCalledWith(ValidInventoryLinkingMovementRequestXML.toString())
+      }
+
+      "cause circuit breaker to trip after specified number of failures" in {
+        Thread.sleep(unavailablePeriodDurationInMillis)
+
+        setupBackendServiceToReturn(INTERNAL_SERVER_ERROR)
+
+        1 to numberOfCallsToTriggerStateChange foreach { _ =>
+          val k = intercept[Upstream5xxResponse](await(sendValidXml(ValidInventoryLinkingMovementRequestXML)))
+          k.reportAs shouldBe BAD_GATEWAY
+        }
+
+        1 to 3 foreach { _ =>
+          intercept[CircuitBreakerOpenException](await(sendValidXml(ValidInventoryLinkingMovementRequestXML)))
+        }
+
+        resetMockServer()
+        startBackendService()
+
+        Thread.sleep(unavailablePeriodDurationInMillis)
+
+        1 to 5 foreach { _ =>
+          resetMockServer()
+          startBackendService()
+          await(sendValidXml(ValidInventoryLinkingMovementRequestXML))
+          verifyInventoryLinkingExportsServiceWasCalledWith(ValidInventoryLinkingMovementRequestXML.toString())
+        }
       }
 
       "return a failed future when service returns 404" in {
@@ -102,34 +132,6 @@ class ConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite with Mo
         setupBackendServiceToReturn(INTERNAL_SERVER_ERROR)
 
         intercept[Upstream5xxResponse](await(sendValidXml(ValidInventoryLinkingMovementRequestXML)))
-      }
-
-      "cause circuit breaker to trip after specified number of failures" in {
-        Thread.sleep(unavailablePeriodDurationInMillis)
-
-        setupBackendServiceToReturn(INTERNAL_SERVER_ERROR)
-
-        1 to numberOfCallsToTriggerStateChange foreach { _ =>
-          val k = intercept[Upstream5xxResponse](await(sendValidXml(ValidInventoryLinkingMovementRequestXML)))
-          k.reportAs shouldBe BAD_GATEWAY
-        }
-
-        1 to 3 foreach { _ =>
-          val k = intercept[UnhealthyServiceException](await(sendValidXml(ValidInventoryLinkingMovementRequestXML)))
-          k.getMessage shouldBe "customs-inventory-linking-exports"
-        }
-
-        resetMockServer()
-        startBackendService()
-
-        Thread.sleep(unavailablePeriodDurationInMillis)
-
-        1 to 5 foreach { _ =>
-          resetMockServer()
-          startBackendService()
-          await(sendValidXml(ValidInventoryLinkingMovementRequestXML))
-          verifyInventoryLinkingExportsServiceWasCalledWith(ValidInventoryLinkingMovementRequestXML.toString())
-        }
       }
 
       "return a failed future when connection with backend service fails" in {
