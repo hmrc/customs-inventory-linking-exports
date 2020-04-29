@@ -23,7 +23,7 @@ import uk.gov.hmrc.customs.api.common.config.ConfigValidatedNelAdaptor
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
 import uk.gov.hmrc.play.bootstrap.config.{RunMode, ServicesConfig}
-import uk.gov.hmrc.play.test.UnitSpec
+import util.UnitSpec
 
 class ExportsConfigServiceSpec extends UnitSpec with MockitoSugar {
   private val validAppConfig: Config = ConfigFactory.parseString(

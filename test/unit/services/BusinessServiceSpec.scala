@@ -37,13 +37,12 @@ import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.Validate
 import uk.gov.hmrc.customs.inventorylinking.export.services.{BusinessService, _}
 import uk.gov.hmrc.customs.inventorylinking.export.xml.PayloadDecorator
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import uk.gov.hmrc.play.test.UnitSpec
 import util.TestData._
 import util.XMLTestData._
-import util.{ApiSubscriptionFieldsTestData, RequestHeaders}
+import util.{ApiSubscriptionFieldsTestData, RequestHeaders, UnitSpec}
 
 import scala.concurrent.Future
-import scala.concurrent.duration.{FiniteDuration, TimeUnit}
+import scala.concurrent.duration.FiniteDuration
 import scala.xml.NodeSeq
 
 class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach with ApiSubscriptionFieldsTestData {

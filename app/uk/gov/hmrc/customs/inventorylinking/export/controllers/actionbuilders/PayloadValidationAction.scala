@@ -17,7 +17,7 @@
 package uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders
 
 import javax.inject.{Inject, Singleton}
-import play.api.mvc.{ActionRefiner, AnyContent, Result}
+import play.api.mvc.{ActionRefiner, AnyContentAsXml, Result}
 import uk.gov.hmrc.customs.api.common.controllers.{ErrorResponse, ResponseContents}
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
@@ -41,11 +41,7 @@ class PayloadValidationAction @Inject() (xmlValidationService: XmlValidationServ
     lazy val errorMessage = "Request body does not contain a well-formed XML document."
 
     ar.body match {
-      case content: AnyContent =>
-        content.asXml
-          .map(validateXml(_))
-          .getOrElse(Future.successful(Left(errorResponse(errorMessage))))
-
+      case content: AnyContentAsXml => validateXml(content.xml)
       case _ => Future.successful(Left(errorResponse(errorMessage)))
     }
   }

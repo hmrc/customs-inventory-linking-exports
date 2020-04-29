@@ -42,7 +42,7 @@ import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{AuthorisedRequest, ConversationIdRequest, ValidatedPayloadRequest}
 import uk.gov.hmrc.customs.inventorylinking.export.services.XmlValidationService
-import uk.gov.hmrc.play.test.UnitSpec
+import util.UnitSpec
 import util.ApiSubscriptionFieldsTestData
 import util.TestData._
 

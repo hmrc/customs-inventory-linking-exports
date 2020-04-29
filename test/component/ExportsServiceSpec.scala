@@ -48,13 +48,6 @@ class ExportsServiceSpec extends ComponentTestSpec
       |</errorResponse>
     """.stripMargin
 
-  private val malformedXmlAndNonXmlPayloadError =
-    """<?xml version="1.0" encoding="UTF-8"?>
-      |<errorResponse>
-      |  <code>BAD_REQUEST</code>
-      |  <message>Request body does not contain a well-formed XML document.</message>
-      |</errorResponse>""".stripMargin
-
   private val badRequestError =
     s"""<?xml version="1.0" encoding="UTF-8"?>
        |<errorResponse>

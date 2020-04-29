@@ -27,7 +27,7 @@ import uk.gov.hmrc.customs.inventorylinking.export.controllers.HeaderValidator
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.VersionOne
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ConversationIdRequest, ExtractedHeadersImpl}
-import uk.gov.hmrc.play.test.UnitSpec
+import util.UnitSpec
 import util.RequestHeaders._
 import util.{ApiSubscriptionFieldsTestData, TestData}
 
