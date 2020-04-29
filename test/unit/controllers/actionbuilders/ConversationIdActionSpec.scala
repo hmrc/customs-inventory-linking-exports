@@ -21,7 +21,7 @@ import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders.ConversationIdAction
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ConversationIdRequest
-import uk.gov.hmrc.play.test.UnitSpec
+import util.UnitSpec
 import util.TestData
 import util.TestData.conversationId
 

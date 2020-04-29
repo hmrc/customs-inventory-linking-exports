@@ -21,10 +21,9 @@ import play.api.test.FakeRequest
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ConversationIdRequest
-import uk.gov.hmrc.play.test.UnitSpec
+import util.UnitSpec
 import util.MockitoPassByNameHelper.PassByNameVerifier
 import util.TestData.{TestXmlPayload, conversationId, emulatedServiceFailure}
-
 
 class ExportsLoggerSpec extends UnitSpec with MockitoSugar {
 

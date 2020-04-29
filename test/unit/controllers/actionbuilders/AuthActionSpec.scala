@@ -30,7 +30,7 @@ import uk.gov.hmrc.customs.inventorylinking.export.model.ApiSubscriptionFields
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ApiSubscriptionFieldsRequest, AuthorisedRequest, ConversationIdRequest}
 import uk.gov.hmrc.customs.inventorylinking.export.services.CustomsAuthService
-import uk.gov.hmrc.play.test.UnitSpec
+import util.UnitSpec
 import util.TestData._
 import util.{ApiSubscriptionFieldsTestData, AuthConnectorStubbing, RequestHeaders}
 

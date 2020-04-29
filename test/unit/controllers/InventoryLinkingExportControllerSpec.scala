@@ -36,7 +36,7 @@ import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{Validat
 import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionKey, Eori}
 import uk.gov.hmrc.customs.inventorylinking.export.services.{BusinessService, CustomsAuthService, XmlValidationService}
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.test.UnitSpec
+import util.UnitSpec
 import util.RequestHeaders._
 import util.TestData._
 import util.{ApiSubscriptionFieldsTestData, AuthConnectorStubbing}
