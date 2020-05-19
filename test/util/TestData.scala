@@ -125,8 +125,10 @@ object TestData {
     FakeRequest().withXmlBody(TestXmlPayload).withHeaders(X_BADGE_IDENTIFIER_NAME -> badgeIdString, X_SUBMITTER_IDENTIFIER_NAME -> submitterIdString)
 
   val TestConversationIdRequest = ConversationIdRequest(conversationId, TestFakeRequest)
-  val TestExtractedHeaders = ExtractedHeadersImpl(VersionOne, ApiSubscriptionFieldsTestData.clientId)
+  val TestExtractedHeaders: ExtractedHeadersImpl = ExtractedHeadersImpl(VersionOne, ApiSubscriptionFieldsTestData.clientId)
+  val TestExtractedHeadersV2 = TestExtractedHeaders.copy(requestedApiVersion = VersionTwo)
   val TestValidatedHeadersRequest: ValidatedHeadersRequest[AnyContentAsXml] = TestConversationIdRequest.toValidatedHeadersRequest(TestExtractedHeaders)
+  val TestValidatedHeadersRequestV2: ValidatedHeadersRequest[AnyContentAsXml] = TestConversationIdRequest.toValidatedHeadersRequest(TestExtractedHeadersV2)
   val TestApiSubscriptionFieldsRequest: ApiSubscriptionFieldsRequest[AnyContentAsXml] = TestValidatedHeadersRequest.toApiSubscriptionFieldsRequest(ApiSubscriptionFieldsTestData.apiSubscriptionFields)
   val TestCspAuthorisedRequest: AuthorisedRequest[AnyContentAsXml] = TestApiSubscriptionFieldsRequest.toCspAuthorisedRequest(badgeEoriPair)
   val TestCspValidatedPayloadRequest: ValidatedPayloadRequest[AnyContentAsXml] = TestApiSubscriptionFieldsRequest.toCspAuthorisedRequest(badgeEoriPair).toValidatedPayloadRequest(xmlBody = TestXmlPayload)
