@@ -25,7 +25,7 @@ import uk.gov.hmrc.customs.inventorylinking.export.connectors.ApiSubscriptionFie
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ApiSubscriptionFieldsRequest, ValidatedHeadersRequest}
-import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionFields, ApiSubscriptionKey, VersionOne}
+import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionFields, ApiSubscriptionKey}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Left
@@ -42,7 +42,7 @@ class ApiSubscriptionFieldsAction @Inject()(connector: ApiSubscriptionFieldsConn
   override def refine[A](vhr: ValidatedHeadersRequest[A]): Future[Either[Result, ApiSubscriptionFieldsRequest[A]]] = {
     implicit val i = vhr
 
-    (connector.getSubscriptionFields(ApiSubscriptionKey(vhr.clientId, apiContextEncoded, VersionOne)) map {
+    (connector.getSubscriptionFields(ApiSubscriptionKey(vhr.clientId, apiContextEncoded, vhr.requestedApiVersion)) map {
       fields: ApiSubscriptionFields =>
         Right(ApiSubscriptionFieldsRequest(
           vhr.conversationId,
