@@ -30,9 +30,8 @@ import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ApiSubscriptionFieldsRequest, ConversationIdRequest, ValidatedHeadersRequest}
 import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionKey, VersionOne}
-import util.UnitSpec
-import util.TestData.{TestExtractedHeaders, conversationId, declarantEori, testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId}
-import util.{ApiSubscriptionFieldsTestData, TestData}
+import util.TestData.{TestExtractedHeaders, TestValidatedHeadersRequestV2, conversationId, declarantEori, testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId}
+import util.{ApiSubscriptionFieldsTestData, TestData, UnitSpec}
 
 import scala.concurrent.Future
 
@@ -62,6 +61,14 @@ class ApiSubscriptionFieldsActionSpec extends UnitSpec with MockitoSugar {
       val Right(actual: ApiSubscriptionFieldsRequest[AnyContentAsXml]) = await(service.refine(vhr))
 
       actual shouldBe vhr.toApiSubscriptionFieldsRequest(ApiSubscriptionFieldsTestData.apiSubscriptionFields)
+    }
+
+    "ensure that correct version is used in call to subscription service" in new SetUp {
+      when(connector.getSubscriptionFields(any[ApiSubscriptionKey])(ameq(TestValidatedHeadersRequestV2))).thenReturn(Future.successful(ApiSubscriptionFieldsTestData.apiSubscriptionFields))
+
+      val Right(actual: ApiSubscriptionFieldsRequest[AnyContentAsXml]) = await(service.refine(TestValidatedHeadersRequestV2))
+
+      actual shouldBe TestValidatedHeadersRequestV2.toApiSubscriptionFieldsRequest(ApiSubscriptionFieldsTestData.apiSubscriptionFields)
     }
 
     "return Left of a 500 error result when connector throws an exception" in new SetUp {
