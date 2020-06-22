@@ -1,1 +1,1 @@
-Schema definitions for all the API endpoints request and response payloads can be found in the following [schemas and example messages](/api-documentation/docs/api/download/customs-inventory-linking-exports/1.0/inventory-linking-exports-schemas.zip) zip archive.
+Schema definitions for all the API endpoints request and response payloads can be found in the following [schemas](/api-documentation/docs/api/download/customs-inventory-linking-exports/1.0/inventory-linking-exports-schemas.zip) zip archive.
