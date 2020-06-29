@@ -34,7 +34,7 @@ uses:
           required: true
           example: application/vnd.hmrc.2.0+xml
         Content-Type:
-          description: Specifies the format of the request body, which must be XML. Download [schemas](/api-documentation/docs/api/download/customs-inventory-linking-exports/2.0/inventory-linking-exports-schemas.zip).
+          description: Specifies the format of the request body, which must be XML.
           type: string
           required: true
           example: application/xml; charset=UTF-8
@@ -60,10 +60,10 @@ uses:
       body:
         application/xml-1:
           type: !include schemas/customs/wrapper.xsd
-          example: !include examples/Trade%20Test%2010.3%20Sample%20Messages/TT_EX01a/Example%20Movement%20Messages/CST.xml
+          example: !include examples/example_messages/Trade%20Test%2010.3%20Sample%20Messages/TT_EX01a/Example%20Movement%20Messages/CST.xml
         application/xml-2:
           type: !include schemas/customs/wrapper.xsd
-          example: !include examples/Trade%20Test%2010.3%20Sample%20Messages/TT_EX01a/Example%20Movement%20Messages/EAL.xml
+          example: !include examples/example_messages/Trade%20Test%2010.3%20Sample%20Messages/TT_EX01a/Example%20Movement%20Messages/EAL.xml
         application/xml-3:
           type: !include schemas/customs/wrapper.xsd
           example: !include examples/queryRequest.xml
