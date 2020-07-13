@@ -79,6 +79,7 @@ object XMLTestData {
     <inventoryLinkingQueryRequest xmlns="http://gov.uk/customs/inventoryLinking/v1">
     <queryUCR>
       <ucr>GB/AAAA-00000</ucr>
+      <ucrPartNo>111Z</ucrPartNo>
       <ucrType>M</ucrType>
     </queryUCR>
   </inventoryLinkingQueryRequest>

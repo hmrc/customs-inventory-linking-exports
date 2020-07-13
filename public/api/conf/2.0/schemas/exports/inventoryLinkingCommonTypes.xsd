@@ -7,6 +7,14 @@
            attributeFormDefault="unqualified" 
            vc:minVersion="1.1" version="1.0">
 
+<!-- 
+Change History:
+	22/05/2020: CDSP-6976 - Introduced element 'ucrPartNo' within complex type ucrBlock (John Stirling)
+	08/07/2020: CDSP-6976 - Amended alpha character in element 'ucrPartNo' within complex type ucrBlock to an optional character (Tim Sillars)
+
+
+ -->
+
 	<xs:simpleType name="uuid">
 		<xs:annotation>
 			<xs:documentation>Must be a valid uuid</xs:documentation>
@@ -47,16 +55,17 @@
 	<xs:complexType name="ucrBlock">
 		<xs:sequence>
 			<xs:element name="ucr" type="ucr" minOccurs="1" />
-<!-- UCR Part number in Policy query, may not be required, commented for now
+			<!-- 20/05/2020: CDSP-6976 - UCR Part number introduced -->
+			<!-- 08/07/2020: CDSP-6976 - Amended alpha character to become an optional character -->
 			<xs:element name="ucrPartNo" minOccurs="0" nillable="true">
 				<xs:simpleType>
 					<xs:restriction base="xs:string">
 						<xs:maxLength value="4" />
-						<xs:pattern value="[0-9]{1,3}[A-Z]{0,1}" />
+						<xs:pattern value="[0-9]{0,3}[A-Z]{0,1}" />
 					</xs:restriction>
 				</xs:simpleType>
 			</xs:element>
--->
+
 			<xs:element name="ucrType" type="ucrType" minOccurs="1" />
 		</xs:sequence>
 	</xs:complexType>
