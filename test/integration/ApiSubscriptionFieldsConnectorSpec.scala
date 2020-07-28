@@ -22,7 +22,7 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._
-import uk.gov.hmrc.customs.inventorylinking.export.connectors.ApiSubscriptionFieldsConnector
+import uk.gov.hmrc.customs.inventorylinking.export.connectors.{ApiSubscriptionFieldsConnector}
 import uk.gov.hmrc.customs.inventorylinking.export.model.ApiSubscriptionFields
 import uk.gov.hmrc.http._
 import util.ExternalServicesConfig.{Host, Port}
@@ -36,8 +36,6 @@ class ApiSubscriptionFieldsConnectorSpec extends IntegrationTestSpec with GuiceO
   with BeforeAndAfterAll with ApiSubscriptionFieldsService with ApiSubscriptionFieldsTestData {
 
   private lazy val connector = app.injector.instanceOf[ApiSubscriptionFieldsConnector]
-
-  private implicit val hc = HeaderCarrier()
 
   private implicit val vhr = TestValidatedHeadersRequest
 
@@ -74,22 +72,22 @@ class ApiSubscriptionFieldsConnectorSpec extends IntegrationTestSpec with GuiceO
     "return a failed future when external service returns 404" in {
       setupGetSubscriptionFieldsToReturn(NOT_FOUND)
 
-      intercept[RuntimeException](await(getApiSubscriptionFields)).getCause.getClass shouldBe classOf[NotFoundException]
+      checkCorrectExceptionStatus(NOT_FOUND)
     }
 
     "return a failed future when external service returns 400" in {
       setupGetSubscriptionFieldsToReturn(BAD_REQUEST)
-      intercept[RuntimeException](await(getApiSubscriptionFields)).getCause.getClass shouldBe classOf[BadRequestException]
+      checkCorrectExceptionStatus(BAD_REQUEST)
     }
 
     "return a failed future when external service returns any 4xx response other than 400" in {
       setupGetSubscriptionFieldsToReturn(FORBIDDEN)
-      intercept[Upstream4xxResponse](await(getApiSubscriptionFields))
+      checkCorrectExceptionStatus(FORBIDDEN)
     }
 
     "return a failed future when external service returns 500" in {
       setupGetSubscriptionFieldsToReturn(INTERNAL_SERVER_ERROR)
-      intercept[Upstream5xxResponse](await(getApiSubscriptionFields))
+      checkCorrectExceptionStatus(INTERNAL_SERVER_ERROR)
     }
 
     "return a failed future when fail to connect the external service" in {
@@ -97,10 +95,14 @@ class ApiSubscriptionFieldsConnectorSpec extends IntegrationTestSpec with GuiceO
       intercept[RuntimeException](await(getApiSubscriptionFields)).getCause.getClass shouldBe classOf[BadGatewayException]
       startMockServer()
     }
-
   }
 
   private def getApiSubscriptionFields: Future[ApiSubscriptionFields] = {
     connector.getSubscriptionFields(apiSubscriptionKey)
+  }
+
+  private def checkCorrectExceptionStatus(status: Int): Unit = {
+    val ex = intercept[UpstreamErrorResponse](await(getApiSubscriptionFields))
+    ex.statusCode shouldBe status
   }
 }

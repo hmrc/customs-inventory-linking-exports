@@ -26,7 +26,7 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._
-import uk.gov.hmrc.customs.inventorylinking.export.connectors.ExportsConnector
+import uk.gov.hmrc.customs.inventorylinking.export.connectors.{ExportsConnector, Non2xxResponseException}
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.logging.Authorization
@@ -37,7 +37,7 @@ import util.externalservices.{ExportsExternalServicesConfig, InventoryLinkingExp
 
 import scala.xml.NodeSeq
 
-class ConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite with MockitoSugar
+class ExportsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite with MockitoSugar
   with InventoryLinkingExportsService with TableDrivenPropertyChecks {
 
   private val numberOfCallsToTriggerStateChange = 5
@@ -95,8 +95,8 @@ class ConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite with Mo
         setupBackendServiceToReturn(INTERNAL_SERVER_ERROR)
 
         1 to numberOfCallsToTriggerStateChange foreach { _ =>
-          val k = intercept[Upstream5xxResponse](await(sendValidXml(ValidInventoryLinkingMovementRequestXML)))
-          k.reportAs shouldBe BAD_GATEWAY
+          val k = intercept[RuntimeException](await(sendValidXml(ValidInventoryLinkingMovementRequestXML))).getCause.asInstanceOf[Non2xxResponseException]
+          k.responseCode shouldBe INTERNAL_SERVER_ERROR
         }
 
         1 to 3 foreach { _ =>
@@ -119,19 +119,19 @@ class ConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite with Mo
       "return a failed future when service returns 404" in {
         setupBackendServiceToReturn(NOT_FOUND)
 
-        intercept[RuntimeException](await(sendValidXml(ValidInventoryLinkingMovementRequestXML))).getCause.getClass shouldBe classOf[NotFoundException]
+        intercept[RuntimeException](await(sendValidXml(ValidInventoryLinkingMovementRequestXML))).getCause.getClass shouldBe classOf[Non2xxResponseException]
       }
 
       "return a failed future when service returns 400" in {
         setupBackendServiceToReturn(BAD_REQUEST)
 
-        intercept[RuntimeException](await(sendValidXml(ValidInventoryLinkingMovementRequestXML))).getCause.getClass shouldBe classOf[BadRequestException]
+        intercept[RuntimeException](await(sendValidXml(ValidInventoryLinkingMovementRequestXML))).getCause.getClass shouldBe classOf[Non2xxResponseException]
       }
 
       "return a failed future when service returns 500" in {
         setupBackendServiceToReturn(INTERNAL_SERVER_ERROR)
 
-        intercept[Upstream5xxResponse](await(sendValidXml(ValidInventoryLinkingMovementRequestXML)))
+        intercept[RuntimeException](await(sendValidXml(ValidInventoryLinkingMovementRequestXML))).getCause.getClass shouldBe classOf[Non2xxResponseException]
       }
 
       "return a failed future when connection with backend service fails" in {
@@ -141,11 +141,9 @@ class ConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite with Mo
 
         startMockServer()
       }
-
   }
 
   private def sendValidXml(xml:NodeSeq)(implicit vpr: ValidatedPayloadRequest[_]) = {
     connector.send(xml, new DateTime(), correlationId)
   }
-
 }
