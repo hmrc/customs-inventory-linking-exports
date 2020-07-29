@@ -34,6 +34,7 @@ import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
+import uk.gov.hmrc.http.HttpReads.Implicits._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.{NodeSeq, PrettyPrinter, TopScope}
@@ -45,7 +46,7 @@ class ExportsConnector @Inject() (http: HttpClient,
                                   config: ExportsConfigService,
                                   override val cdsLogger: CdsLogger,
                                   override val actorSystem: ActorSystem)
-                                 (implicit override val ec: ExecutionContext) extends CircuitBreakerConnector {
+                                 (implicit override val ec: ExecutionContext) extends CircuitBreakerConnector with HttpErrorFunctions {
 
   override val configKey = "mdg-exports"
 
@@ -79,9 +80,18 @@ class ExportsConnector @Inject() (http: HttpClient,
   private def post[A](xml: NodeSeq, url: String)(implicit vpr: ValidatedPayloadRequest[A], hc: HeaderCarrier) = {
     logger.debug(s"Posting inventory linking exports.\nurl = $url\npayload = \n${xml.toString}")
 
-    http.POSTString[HttpResponse](url, xml.toString())
-      .recoverWith {
-        case httpError: HttpException => Future.failed(new RuntimeException(httpError))
+    http.POSTString[HttpResponse](url, xml.toString()).map{ response =>
+      response.status match {
+        case status if is2xx(status) =>
+          response
+
+        case status => //1xx, 3xx, 4xx, 5xx
+          throw new Non2xxResponseException(status)
+      }
+    }.recoverWith {
+        case httpError: HttpException =>
+          logger.error(s"Call to inventory linking exports failed. url = $url status=${httpError.responseCode}")
+          Future.failed(new RuntimeException(httpError))
         case e: Throwable =>
           logger.error(s"Call to inventory linking exports failed. url = $url", e)
           Future.failed(e)
@@ -102,8 +112,11 @@ class ExportsConnector @Inject() (http: HttpClient,
   }
 
   override protected def breakOnException(t: Throwable): Boolean = t match {
-    case _: BadRequestException | _: NotFoundException | _: Upstream4xxResponse => false
+    case e: Non2xxResponseException => e.responseCode match {
+      case 400 => false //BadRequest
+      case 404 => false //NotFound
+      case _ => true
+    }
     case _ => true
   }
-
 }

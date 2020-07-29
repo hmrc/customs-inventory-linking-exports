@@ -68,6 +68,7 @@ class ExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfte
     when(mockExportsConfigService.exportsCircuitBreakerConfig).thenReturn(mockExportsCircuitBreakerConfig)
     when(mockServiceConfigProvider.getConfig("mdg-exports")).thenReturn(serviceConfig)
     when(mockResponse.body).thenReturn("<foo/>")
+    when(mockResponse.status).thenReturn(200)
   }
 
   private val year = 2017
