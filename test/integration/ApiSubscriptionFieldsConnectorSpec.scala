@@ -71,7 +71,6 @@ class ApiSubscriptionFieldsConnectorSpec extends IntegrationTestSpec with GuiceO
 
     "return a failed future when external service returns 404" in {
       setupGetSubscriptionFieldsToReturn(NOT_FOUND)
-
       checkCorrectExceptionStatus(NOT_FOUND)
     }
 

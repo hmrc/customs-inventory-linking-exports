@@ -118,20 +118,17 @@ class ExportsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite 
 
       "return a failed future when service returns 404" in {
         setupBackendServiceToReturn(NOT_FOUND)
-
-        intercept[RuntimeException](await(sendValidXml(ValidInventoryLinkingMovementRequestXML))).getCause.getClass shouldBe classOf[Non2xxResponseException]
+        checkCorrectExceptionStatus(NOT_FOUND)
       }
 
       "return a failed future when service returns 400" in {
         setupBackendServiceToReturn(BAD_REQUEST)
-
-        intercept[RuntimeException](await(sendValidXml(ValidInventoryLinkingMovementRequestXML))).getCause.getClass shouldBe classOf[Non2xxResponseException]
+        checkCorrectExceptionStatus(BAD_REQUEST)
       }
 
       "return a failed future when service returns 500" in {
         setupBackendServiceToReturn(INTERNAL_SERVER_ERROR)
-
-        intercept[RuntimeException](await(sendValidXml(ValidInventoryLinkingMovementRequestXML))).getCause.getClass shouldBe classOf[Non2xxResponseException]
+        checkCorrectExceptionStatus(INTERNAL_SERVER_ERROR)
       }
 
       "return a failed future when connection with backend service fails" in {
@@ -145,5 +142,11 @@ class ExportsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite 
 
   private def sendValidXml(xml:NodeSeq)(implicit vpr: ValidatedPayloadRequest[_]) = {
     connector.send(xml, new DateTime(), correlationId)
+  }
+
+  private def checkCorrectExceptionStatus(status: Int): Unit = {
+    val ex = intercept[RuntimeException](await(sendValidXml(ValidInventoryLinkingMovementRequestXML)))
+    ex.getCause.getClass shouldBe classOf[Non2xxResponseException]
+    ex.getCause.asInstanceOf[Non2xxResponseException].responseCode shouldBe status
   }
 }
