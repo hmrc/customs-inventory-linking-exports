@@ -79,7 +79,7 @@ class ExportsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite 
     "ExportsConnector" should {
 
       //wait to clear the circuit breaker state that may of been tripped by previous tests
-      Thread.sleep(unavailablePeriodDurationInMillis)
+      Thread.sleep(unavailablePeriodDurationInMillis * 4)
 
       "make a correct request" in {
         startBackendService()
