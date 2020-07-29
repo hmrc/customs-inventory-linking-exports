@@ -41,7 +41,7 @@ class ExportsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite 
   with InventoryLinkingExportsService with TableDrivenPropertyChecks {
 
   private val numberOfCallsToTriggerStateChange = 5
-  private val unstablePeriodDurationInMillis = 200
+  private val unstablePeriodDurationInMillis = 1000
   private val unavailablePeriodDurationInMillis = 250
 
   override implicit lazy val app: Application =
@@ -79,7 +79,7 @@ class ExportsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite 
     "ExportsConnector" should {
 
       //wait to clear the circuit breaker state that may of been tripped by previous tests
-      Thread.sleep(unavailablePeriodDurationInMillis * 4)
+      Thread.sleep(unavailablePeriodDurationInMillis)
 
       "make a correct request" in {
         startBackendService()
