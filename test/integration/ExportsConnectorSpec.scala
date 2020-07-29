@@ -41,7 +41,7 @@ class ExportsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite 
   with InventoryLinkingExportsService with TableDrivenPropertyChecks {
 
   private val numberOfCallsToTriggerStateChange = 5
-  private val unstablePeriodDurationInMillis = 200
+  private val unstablePeriodDurationInMillis = 1000
   private val unavailablePeriodDurationInMillis = 250
 
   override implicit lazy val app: Application =
