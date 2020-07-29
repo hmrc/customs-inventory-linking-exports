@@ -61,8 +61,6 @@ class ExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfte
   private val xml = <xml></xml>
   private implicit val hc = HeaderCarrier().withExtraHeaders(RequestHeaders.API_SUBSCRIPTION_FIELDS_ID_HEADER)
 
-  private val httpException = new NotFoundException("Emulated 404 response from a web call")
-
   override protected def beforeEach() {
     reset(mockWsPost, mockServiceConfigProvider)
     when(mockExportsConfigService.exportsCircuitBreakerConfig).thenReturn(mockExportsCircuitBreakerConfig)
@@ -170,16 +168,6 @@ class ExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfte
         }
 
         caught shouldBe emulatedServiceFailure
-      }
-
-      "wrap an underlying error when backend call fails with an http exception" in {
-        returnResponseForRequest(Future.failed(httpException))
-
-        val caught = intercept[RuntimeException] {
-          awaitRequest
-        }
-
-        caught.getCause shouldBe httpException
       }
 
       "when configuration is absent" should {
