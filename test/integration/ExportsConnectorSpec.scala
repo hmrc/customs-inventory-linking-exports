@@ -88,34 +88,7 @@ class ExportsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite 
 
         verifyInventoryLinkingExportsServiceWasCalledWith(ValidInventoryLinkingMovementRequestXML.toString())
       }
-
-      "cause circuit breaker to trip after specified number of failures" in {
-        Thread.sleep(unavailablePeriodDurationInMillis)
-
-        setupBackendServiceToReturn(INTERNAL_SERVER_ERROR)
-
-        1 to numberOfCallsToTriggerStateChange foreach { _ =>
-          val k = intercept[RuntimeException](await(sendValidXml(ValidInventoryLinkingMovementRequestXML))).getCause.asInstanceOf[Non2xxResponseException]
-          k.responseCode shouldBe INTERNAL_SERVER_ERROR
-        }
-
-        1 to 3 foreach { _ =>
-          intercept[CircuitBreakerOpenException](await(sendValidXml(ValidInventoryLinkingMovementRequestXML)))
-        }
-
-        resetMockServer()
-        startBackendService()
-
-        Thread.sleep(unavailablePeriodDurationInMillis)
-
-        1 to 5 foreach { _ =>
-          resetMockServer()
-          startBackendService()
-          await(sendValidXml(ValidInventoryLinkingMovementRequestXML))
-          verifyInventoryLinkingExportsServiceWasCalledWith(ValidInventoryLinkingMovementRequestXML.toString())
-        }
-      }
-
+      
       "return a failed future when service returns 404" in {
         setupBackendServiceToReturn(NOT_FOUND)
         checkCorrectExceptionStatus(NOT_FOUND)
