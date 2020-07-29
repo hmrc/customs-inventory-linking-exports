@@ -5,7 +5,7 @@ object AppDependencies {
   val scalatestplusVersion = "3.1.3"
   val mockitoVersion = "3.3.3"
   val wireMockVersion = "2.26.3"
-  val customsApiCommonVersion = "1.50.0"
+  val customsApiCommonVersion = "1.51.0"
   val testScope = "test,it"
 
   val scalaTestPlusPlay = "org.scalatestplus.play" %% "scalatestplus-play" % scalatestplusVersion % testScope
