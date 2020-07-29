@@ -107,7 +107,7 @@ class ExportsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite 
       "return a failed future when connection with backend service fails" in {
         stopMockServer()
 
-        intercept[RuntimeException](await(sendValidXml(ValidInventoryLinkingMovementRequestXML))).getCause.getClass shouldBe classOf[BadGatewayException]
+        intercept[BadGatewayException](await(sendValidXml(ValidInventoryLinkingMovementRequestXML)))
 
         startMockServer()
       }
@@ -118,8 +118,7 @@ class ExportsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite 
   }
 
   private def checkCorrectExceptionStatus(status: Int): Unit = {
-    val ex = intercept[RuntimeException](await(sendValidXml(ValidInventoryLinkingMovementRequestXML)))
-    ex.getCause.getClass shouldBe classOf[Non2xxResponseException]
-    ex.getCause.asInstanceOf[Non2xxResponseException].responseCode shouldBe status
+    val ex = intercept[Non2xxResponseException](await(sendValidXml(ValidInventoryLinkingMovementRequestXML)))
+    ex.responseCode shouldBe status
   }
 }

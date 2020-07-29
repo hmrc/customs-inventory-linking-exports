@@ -91,7 +91,7 @@ class ExportsConnector @Inject() (http: HttpClient,
     }.recoverWith {
         case httpError: HttpException =>
           logger.error(s"Call to inventory linking exports failed. url = $url status=${httpError.responseCode}")
-          Future.failed(new RuntimeException(httpError))
+          Future.failed(httpError)
         case e: Throwable =>
           logger.error(s"Call to inventory linking exports failed. url = $url", e)
           Future.failed(e)
