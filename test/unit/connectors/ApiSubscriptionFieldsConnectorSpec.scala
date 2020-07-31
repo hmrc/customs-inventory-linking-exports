@@ -46,7 +46,6 @@ class ApiSubscriptionFieldsConnectorSpec extends UnitSpec
   private val mockExportsConfig = mock[ExportsConfig]
   private val mockWSGetImpl = mock[HttpClient]
   private val mockExportsLogger = mock[ExportsLogger]
-  private implicit val hc = HeaderCarrier()
   private implicit val ec = Helpers.stubControllerComponents().executionContext
   private val connector = connectorWithConfig(validConfig)
 
