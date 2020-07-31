@@ -79,7 +79,13 @@ class DefinitionSpecWithWhitelistedAppId extends ComponentTestSpec
           |            "name": "callbackUrl",
           |            "description": "The URL of your HTTPS webservice that HMRC calls to notify you regarding request submission.",
           |            "type": "URL",
-          |            "shortDescription" : "Callback URL"
+          |            "shortDescription" : "Callback URL",
+          |            "validation" : {
+          |              "errorMessage" : "Enter a URL in the correct format, like 'https://your.domain.name/some/path' ",
+          |              "rules" : [{
+          |                "UrlValidationRule" : {}
+          |              }]
+          |            }
           |          },
           |          {
           |            "name": "securityToken",
@@ -111,7 +117,13 @@ class DefinitionSpecWithWhitelistedAppId extends ComponentTestSpec
           |            "name": "callbackUrl",
           |            "description": "The URL of your HTTPS webservice that HMRC calls to notify you regarding request submission.",
           |            "type": "URL",
-          |            "shortDescription" : "Callback URL"
+          |            "shortDescription" : "Callback URL",
+          |            "validation" : {
+          |              "errorMessage" : "Enter a URL in the correct format, like 'https://your.domain.name/some/path' ",
+          |              "rules" : [{
+          |                "UrlValidationRule" : {}
+          |              }]
+          |            }
           |          },
           |          {
           |            "name": "securityToken",
@@ -183,7 +195,13 @@ class DefinitionSpecWithoutWhitelistedAppId extends ComponentTestSpec
           |            "name": "callbackUrl",
           |            "description": "The URL of your HTTPS webservice that HMRC calls to notify you regarding request submission.",
           |            "type": "URL",
-          |            "shortDescription" : "Callback URL"
+          |            "shortDescription" : "Callback URL",
+          |            "validation" : {
+          |              "errorMessage" : "Enter a URL in the correct format, like 'https://your.domain.name/some/path' ",
+          |              "rules" : [{
+          |                "UrlValidationRule" : {}
+          |              }]
+          |            }
           |          },
           |          {
           |            "name": "securityToken",
@@ -212,7 +230,13 @@ class DefinitionSpecWithoutWhitelistedAppId extends ComponentTestSpec
           |            "name": "callbackUrl",
           |            "description": "The URL of your HTTPS webservice that HMRC calls to notify you regarding request submission.",
           |            "type": "URL",
-          |            "shortDescription" : "Callback URL"
+          |            "shortDescription" : "Callback URL",
+          |            "validation" : {
+          |              "errorMessage" : "Enter a URL in the correct format, like 'https://your.domain.name/some/path' ",
+          |              "rules" : [{
+          |                "UrlValidationRule" : {}
+          |              }]
+          |            }
           |          },
           |          {
           |            "name": "securityToken",
