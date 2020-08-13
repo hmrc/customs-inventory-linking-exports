@@ -18,7 +18,6 @@ package integration
 
 import java.util.UUID
 
-import akka.pattern.CircuitBreakerOpenException
 import org.joda.time.DateTime
 import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatestplus.mockito.MockitoSugar

@@ -59,11 +59,10 @@ class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfter
     protected val mockExportsConnector: ExportsConnector = mock[ExportsConnector]
     protected val mockPayloadDecorator: PayloadDecorator = mock[PayloadDecorator]
     protected val mockDateTimeProvider: DateTimeService = mock[DateTimeService]
-    protected val mockCustomsConfigService: ExportsConfigService = mock[ExportsConfigService]
     protected val mockHttpResponse: HttpResponse = mock[HttpResponse]
 
     protected lazy val service: BusinessService = new BusinessService(mockLogger, mockExportsConnector,
-      mockPayloadDecorator, mockDateTimeProvider, stubUniqueIdsService, mockCustomsConfigService)
+      mockPayloadDecorator, mockDateTimeProvider, stubUniqueIdsService)
 
     protected def send(vpr: ValidatedPayloadRequest[AnyContentAsXml] = TestCspValidatedPayloadRequest, hc: HeaderCarrier = headerCarrier): Either[Result, Unit] = {
       await(service.send(vpr, hc))
@@ -108,7 +107,7 @@ class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfter
     "return InternalServerError ErrorResponse when backend circuit breaker trips" in new SetUp() {
       when(mockExportsConnector.send(any[NodeSeq], any[DateTime], any[UUID])(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])).thenReturn(Future.failed(new CircuitBreakerOpenException(FiniteDuration(10, TimeUnit.SECONDS))))
 
-      send() shouldBe Left(errorResponseServiceUnavailable.XmlResult)
+      send() shouldBe Left(errorResponseServiceUnavailable.XmlResult.withConversationId)
     }
 
   }
