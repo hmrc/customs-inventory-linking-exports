@@ -24,17 +24,17 @@ import akka.actor.ActorSystem
 import com.google.inject._
 import org.joda.time.DateTime
 import play.api.http.HeaderNames.{ACCEPT, CONTENT_TYPE, DATE, X_FORWARDED_HOST}
-import play.api.http.MimeTypes
+import play.api.http.{MimeTypes, Status}
 import uk.gov.hmrc.customs.api.common.config.ServiceConfigProvider
 import uk.gov.hmrc.customs.api.common.connectors.CircuitBreakerConnector
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{HasConversationId, ValidatedPayloadRequest}
 import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
+import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
-import uk.gov.hmrc.http.HttpReads.Implicits._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.{NodeSeq, PrettyPrinter, TopScope}
@@ -46,7 +46,7 @@ class ExportsConnector @Inject() (http: HttpClient,
                                   config: ExportsConfigService,
                                   override val cdsLogger: CdsLogger,
                                   override val actorSystem: ActorSystem)
-                                 (implicit override val ec: ExecutionContext) extends CircuitBreakerConnector with HttpErrorFunctions {
+                                 (implicit override val ec: ExecutionContext) extends CircuitBreakerConnector with HttpErrorFunctions with Status {
 
   override val configKey = "mdg-exports"
 
@@ -84,7 +84,6 @@ class ExportsConnector @Inject() (http: HttpClient,
       response.status match {
         case status if is2xx(status) =>
           response
-
         case status => //1xx, 3xx, 4xx, 5xx
           throw new Non2xxResponseException(status)
       }
@@ -113,8 +112,8 @@ class ExportsConnector @Inject() (http: HttpClient,
 
   override protected def breakOnException(t: Throwable): Boolean = t match {
     case e: Non2xxResponseException => e.responseCode match {
-      case 400 => false //BadRequest
-      case 404 => false //NotFound
+      case BAD_REQUEST => false
+      case NOT_FOUND => false
       case _ => true
     }
     case _ => true

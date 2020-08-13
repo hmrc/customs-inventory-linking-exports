@@ -42,8 +42,7 @@ class BusinessService @Inject()(logger: ExportsLogger,
                                 connector: ExportsConnector,
                                 wrapper: PayloadDecorator,
                                 dateTimeProvider: DateTimeService,
-                                uniqueIdsService: UniqueIdsService,
-                                customsConfigService: ExportsConfigService)
+                                uniqueIdsService: UniqueIdsService)
                                (implicit ec: ExecutionContext) {
 
   private val errorResponseServiceUnavailable = errorInternalServerError("This service is currently unavailable")
@@ -65,7 +64,7 @@ class BusinessService @Inject()(logger: ExportsLogger,
     }.recover[Either[Result, Unit]]{
       case _: CircuitBreakerOpenException =>
         logger.error("unhealthy state entered")
-        Left(errorResponseServiceUnavailable.XmlResult)
+        Left(errorResponseServiceUnavailable.XmlResult.withConversationId)
       case NonFatal(e) =>
         logger.error(s"Inventory linking export request failed: ${e.getMessage}", e)
         Left(ErrorResponse.ErrorInternalServerError.XmlResult.withConversationId)
