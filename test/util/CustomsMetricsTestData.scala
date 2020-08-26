@@ -14,10 +14,19 @@
  * limitations under the License.
  */
 
-package util.externalservices
+package util
 
-object ExportsExternalServicesConfig {
-  val ExportsServiceContext = "/InventoryLinking/ExportMovement/1.0.0"
-  val ApiSubscriptionFieldsContext = "/api-subscription-fields/field"
-  val CustomsMetricsContext = "/log-times"
+import java.time.{ZoneId, ZonedDateTime}
+
+import uk.gov.hmrc.customs.inventorylinking.export.model.CustomsMetricsRequest
+
+object CustomsMetricsTestData {
+
+  val UtcZoneId: ZoneId = ZoneId.of("UTC")
+  val EventStart: ZonedDateTime = ZonedDateTime.of(2015, 11, 30, 23, 45,
+    59, 0, UtcZoneId)
+  val EventEnd: ZonedDateTime = EventStart.plusSeconds(2)
+
+  val ValidCustomsMetricsRequest: CustomsMetricsRequest =
+    CustomsMetricsRequest("ILE", TestData.conversationId, EventStart, EventEnd)
 }

@@ -18,6 +18,8 @@ package uk.gov.hmrc.customs.inventorylinking.export.model
 
 import java.util.UUID
 
+import play.api.libs.json.{JsString, Reads, Writes}
+
 case class Eori(value: String) extends AnyVal {
   override def toString: String = value
 }
@@ -26,6 +28,10 @@ case class ClientId(value: String) extends AnyVal
 
 case class ConversationId(uuid: UUID) extends AnyVal {
   override def toString: String = uuid.toString
+}
+object ConversationId {
+  implicit val writer: Writes[ConversationId] = Writes[ConversationId] { x => JsString(x.uuid.toString) }
+  implicit val reader: Reads[ConversationId] = Reads.of[UUID].map(new ConversationId(_))
 }
 
 case class CorrelationId(uuid: UUID) extends AnyVal {

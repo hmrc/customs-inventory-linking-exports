@@ -21,12 +21,13 @@ import play.api.mvc.Result
 import play.api.test.Helpers._
 import util.RequestHeaders.X_CONVERSATION_ID_NAME
 import util.TestData._
-import util.externalservices.{ApiSubscriptionFieldsService, AuthService, InventoryLinkingExportsService}
+import util.externalservices.{ApiSubscriptionFieldsService, AuthService, CustomsMetricsService, InventoryLinkingExportsService}
 
 import scala.concurrent.Future
 
 class ExportsServiceSpec extends ComponentTestSpec
   with Matchers
+  with CustomsMetricsService
   with OptionValues
   with InventoryLinkingExportsService
   with ApiSubscriptionFieldsService
@@ -99,6 +100,9 @@ class ExportsServiceSpec extends ComponentTestSpec
 
       And("the request was authorised with AuthService")
       verifyAuthServiceCalledForCsp()
+
+      And("Metrics logging call was made")
+      eventually(verifyCustomsMetricsServiceWasCalled())
     }
 
     scenario("A valid message is submitted and the backend service fails") {
