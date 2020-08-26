@@ -14,10 +14,18 @@
  * limitations under the License.
  */
 
-package util.externalservices
+package uk.gov.hmrc.customs.inventorylinking.export.model
 
-object ExportsExternalServicesConfig {
-  val ExportsServiceContext = "/InventoryLinking/ExportMovement/1.0.0"
-  val ApiSubscriptionFieldsContext = "/api-subscription-fields/field"
-  val CustomsMetricsContext = "/log-times"
+import java.time.ZonedDateTime
+
+import play.api.libs.json.{Format, Json}
+
+case class CustomsMetricsRequest(eventType: String,
+                                 conversationId: ConversationId,
+                                 eventStart: ZonedDateTime,
+                                 eventEnd: ZonedDateTime
+)
+
+object CustomsMetricsRequest {
+  implicit val format: Format[CustomsMetricsRequest] = Json.format[CustomsMetricsRequest]
 }

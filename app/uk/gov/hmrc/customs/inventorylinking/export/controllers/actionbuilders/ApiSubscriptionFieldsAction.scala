@@ -46,6 +46,7 @@ class ApiSubscriptionFieldsAction @Inject()(connector: ApiSubscriptionFieldsConn
       fields: ApiSubscriptionFields =>
         Right(ApiSubscriptionFieldsRequest(
           vhr.conversationId,
+          vhr.start,
           vhr.requestedApiVersion,
           vhr.clientId,
           fields,

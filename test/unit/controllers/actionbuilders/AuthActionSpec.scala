@@ -30,6 +30,7 @@ import uk.gov.hmrc.customs.inventorylinking.export.model.ApiSubscriptionFields
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ApiSubscriptionFieldsRequest, AuthorisedRequest, ConversationIdRequest}
 import uk.gov.hmrc.customs.inventorylinking.export.services.CustomsAuthService
+import util.CustomsMetricsTestData.EventStart
 import util.UnitSpec
 import util.TestData._
 import util.{ApiSubscriptionFieldsTestData, AuthConnectorStubbing, RequestHeaders}
@@ -48,7 +49,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
     ErrorResponse(UNAUTHORIZED, UnauthorizedCode, "EORI number not found in Customs Enrolment")
 
   private def request(request: FakeRequest[AnyContentAsXml], fields: ApiSubscriptionFields = ApiSubscriptionFieldsTestData.apiSubscriptionFields): ApiSubscriptionFieldsRequest[AnyContentAsXml] = {
-    ConversationIdRequest(conversationId, request)
+    ConversationIdRequest(conversationId, EventStart, request)
       .toValidatedHeadersRequest(TestExtractedHeaders)
       .toApiSubscriptionFieldsRequest(fields)
   }

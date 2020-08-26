@@ -31,6 +31,9 @@ class ExportsConfigServiceSpec extends UnitSpec with MockitoSugar {
       |microservice.services.api-subscription-fields.host=some-host
       |microservice.services.api-subscription-fields.port=1111
       |microservice.services.api-subscription-fields.context=/some-context
+      |microservice.services.customs-metrics.host=some-host
+      |microservice.services.customs-metrics.port=1111
+      |microservice.services.customs-metrics.context=/some-context
       |circuitBreaker.numberOfCallsToTriggerStateChange=5
       |circuitBreaker.unstablePeriodDurationInMillis=1000
       |circuitBreaker.unavailablePeriodDurationInMillis=1000
@@ -43,7 +46,7 @@ class ExportsConfigServiceSpec extends UnitSpec with MockitoSugar {
   private val mockExportsLogger = mock[ExportsLogger]
 
   private def customsConfigService(conf: Configuration) =
-    new ExportsConfigService(conf, new ConfigValidatedNelAdaptor(testServicesConfig(conf), conf), mockExportsLogger)
+    new ExportsConfigService(new ConfigValidatedNelAdaptor(testServicesConfig(conf), conf), mockExportsLogger)
 
   "ImportsConfigService" should {
     "return config as object model when configuration is valid" in {
@@ -60,6 +63,8 @@ class ExportsConfigServiceSpec extends UnitSpec with MockitoSugar {
         """
           |Could not find config api-subscription-fields.host
           |Service configuration not found for key: api-subscription-fields.context
+          |Could not find config customs-metrics.host
+          |Service configuration not found for key: customs-metrics.context
           |Could not find config key 'circuitBreaker.numberOfCallsToTriggerStateChange'
           |Could not find config key 'circuitBreaker.unavailablePeriodDurationInMillis'
           |Could not find config key 'circuitBreaker.unstablePeriodDurationInMillis'""".stripMargin

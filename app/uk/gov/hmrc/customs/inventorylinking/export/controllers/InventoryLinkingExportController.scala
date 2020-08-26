@@ -19,6 +19,8 @@ package uk.gov.hmrc.customs.inventorylinking.export.controllers
 import javax.inject.{Inject, Singleton}
 import play.api.http.MimeTypes
 import play.api.mvc._
+import uk.gov.hmrc.customs.inventorylinking.export.connectors.CustomsMetricsConnector
+import uk.gov.hmrc.customs.inventorylinking.export.model.CustomsMetricsRequest
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders._
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
@@ -36,6 +38,7 @@ class InventoryLinkingExportController @Inject()(cc: ControllerComponents,
                                                  authAction: AuthAction,
                                                  payloadValidationAction: PayloadValidationAction,
                                                  businessService: BusinessService,
+                                                 metricsConnector: CustomsMetricsConnector,
                                                  logger: ExportsLogger)
                                                 (implicit ec: ExecutionContext)
   extends BackendController(cc) {
@@ -64,6 +67,8 @@ class InventoryLinkingExportController @Inject()(cc: ControllerComponents,
 
         businessService.send map {
           case Right(_) =>
+            metricsConnector.post(CustomsMetricsRequest(
+              "ILE", vpr.conversationId, vpr.start, conversationIdAction.timeService.zonedDateTimeUtc))
             Accepted.as(MimeTypes.XML).withConversationId
           case Left(errorResult) =>
             errorResult

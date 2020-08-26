@@ -21,6 +21,7 @@ import play.api.test.FakeRequest
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ConversationIdRequest
+import util.CustomsMetricsTestData.EventStart
 import util.UnitSpec
 import util.MockitoPassByNameHelper.PassByNameVerifier
 import util.TestData.{TestXmlPayload, conversationId, emulatedServiceFailure}
@@ -30,12 +31,12 @@ class ExportsLoggerSpec extends UnitSpec with MockitoSugar {
   trait SetUp {
     val mockCdsLogger = mock[CdsLogger]
     val logger = new ExportsLogger(mockCdsLogger)
-    implicit val implicitVpr = ConversationIdRequest(conversationId, FakeRequest()
+    implicit val implicitVpr = ConversationIdRequest(conversationId, EventStart, FakeRequest()
       .withXmlBody(TestXmlPayload).withHeaders("Content-Type" -> "Some-Content-Type"))
   }
 
   trait SetUpWithMixedCaseHeader extends SetUp {
-    override implicit val implicitVpr =  ConversationIdRequest(conversationId, FakeRequest()
+    override implicit val implicitVpr =  ConversationIdRequest(conversationId, EventStart, FakeRequest()
       .withXmlBody(TestXmlPayload).withHeaders("ConTenT-Type" -> "Some-Content-Type"))
   }
 

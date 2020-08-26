@@ -44,6 +44,7 @@ import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{Authori
 import uk.gov.hmrc.customs.inventorylinking.export.services.XmlValidationService
 import util.UnitSpec
 import util.ApiSubscriptionFieldsTestData
+import util.CustomsMetricsTestData.EventStart
 import util.TestData._
 
 import scala.concurrent.Future
@@ -87,7 +88,7 @@ class PayloadValidationActionSpec extends UnitSpec with MockitoSugar {
     }
 
     "return 400 error response when XML validation fails" in new SetUp {
-      val authorisedRequestWithNonWellFormedXml: AuthorisedRequest[AnyContentAsText] = ConversationIdRequest(conversationId, FakeRequest().withTextBody("<foo><foo>"))
+      val authorisedRequestWithNonWellFormedXml: AuthorisedRequest[AnyContentAsText] = ConversationIdRequest(conversationId, EventStart, FakeRequest().withTextBody("<foo><foo>"))
         .toValidatedHeadersRequest(TestExtractedHeaders)
         .toApiSubscriptionFieldsRequest(ApiSubscriptionFieldsTestData.apiSubscriptionFields)
         .toCspAuthorisedRequest(cspAuthorisedRequest)

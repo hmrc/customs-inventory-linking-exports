@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders
 
+import java.time.ZonedDateTime
+
 import play.api.mvc.{Request, Result, WrappedRequest}
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames.XConversationIdHeaderName
 import uk.gov.hmrc.customs.inventorylinking.export.model.{AuthorisedAs, _}
@@ -33,6 +35,7 @@ object ActionBuilderModelHelper {
   implicit class CorrelationIdsRequestOps[A](val cir: ConversationIdRequest[A]) extends AnyVal {
     def toValidatedHeadersRequest(eh: ExtractedHeaders): ValidatedHeadersRequest[A] = ValidatedHeadersRequest(
       cir.conversationId,
+      cir.start,
       eh.requestedApiVersion,
       eh.clientId,
       cir.request
@@ -43,6 +46,7 @@ object ActionBuilderModelHelper {
 
     def toApiSubscriptionFieldsRequest(fields: ApiSubscriptionFields): ApiSubscriptionFieldsRequest[A] = ApiSubscriptionFieldsRequest(
         vhr.conversationId,
+        vhr.start,
         vhr.requestedApiVersion,
         vhr.clientId,
         fields,
@@ -58,6 +62,7 @@ object ActionBuilderModelHelper {
 
     def toAuthorisedRequest(authorisedAs: AuthorisedAs): AuthorisedRequest[A] = AuthorisedRequest(
       asf.conversationId,
+      asf.start,
       asf.requestedApiVersion,
       asf.clientId,
       asf.apiSubscriptionFields,
@@ -69,6 +74,7 @@ object ActionBuilderModelHelper {
   implicit class AuthorisedRequestOps[A](val ar: AuthorisedRequest[A]) extends AnyVal {
     def toValidatedPayloadRequest(xmlBody: NodeSeq): ValidatedPayloadRequest[A] = ValidatedPayloadRequest(
         ar.conversationId,
+        ar.start,
         ar.requestedApiVersion,
         ar.clientId,
         ar.apiSubscriptionFields,
@@ -117,12 +123,14 @@ case class ExtractedHeadersImpl(
 // Available after ConversationIdAction action builder
 case class ConversationIdRequest[A](
   conversationId: ConversationId,
+  start: ZonedDateTime,
   request: Request[A]
 ) extends WrappedRequest[A](request) with HasRequest[A] with HasConversationId
 
 // Available after ValidateAndExtractHeadersAction action builder
 case class ValidatedHeadersRequest[A](
   conversationId: ConversationId,
+  start: ZonedDateTime,
   requestedApiVersion: ApiVersion,
   clientId: ClientId,
   request: Request[A]
@@ -131,6 +139,7 @@ case class ValidatedHeadersRequest[A](
 // Available after ApiSubscriptionFieldsAction action builder
 case class ApiSubscriptionFieldsRequest[A](
   conversationId: ConversationId,
+  start: ZonedDateTime,
   requestedApiVersion: ApiVersion,
   clientId: ClientId,
   apiSubscriptionFields: ApiSubscriptionFields,
@@ -140,6 +149,7 @@ case class ApiSubscriptionFieldsRequest[A](
 // Available after AuthAction builder
 case class AuthorisedRequest[A](
   conversationId: ConversationId,
+  start: ZonedDateTime,
   requestedApiVersion: ApiVersion,
   clientId: ClientId,
   apiSubscriptionFields: ApiSubscriptionFields,
@@ -150,6 +160,7 @@ case class AuthorisedRequest[A](
 // Available after ValidatedPayloadAction builder
 case class ValidatedPayloadRequest[A](
   conversationId: ConversationId,
+  start: ZonedDateTime,
   requestedApiVersion: ApiVersion,
   clientId: ClientId,
   apiSubscriptionFields: ApiSubscriptionFields,

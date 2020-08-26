@@ -30,6 +30,7 @@ import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ApiSubscriptionFieldsRequest, ConversationIdRequest, ValidatedHeadersRequest}
 import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionKey, VersionOne}
+import util.CustomsMetricsTestData.EventStart
 import util.TestData.{TestExtractedHeaders, TestValidatedHeadersRequestV2, conversationId, declarantEori, testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId}
 import util.{ApiSubscriptionFieldsTestData, TestData, UnitSpec}
 
@@ -45,7 +46,7 @@ class ApiSubscriptionFieldsActionSpec extends UnitSpec with MockitoSugar {
     private[ApiSubscriptionFieldsActionSpec] val service = new ApiSubscriptionFieldsAction(connector, logger)
 
     private[ApiSubscriptionFieldsActionSpec] def vhr(request: FakeRequest[AnyContentAsXml]): ValidatedHeadersRequest[AnyContentAsXml] = {
-      ConversationIdRequest(conversationId, request)
+      ConversationIdRequest(conversationId, EventStart, request)
         .toValidatedHeadersRequest(TestExtractedHeaders)
     }
 
