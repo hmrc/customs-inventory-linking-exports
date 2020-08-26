@@ -17,6 +17,7 @@
 package component
 
 import org.scalatest._
+import org.scalatest.concurrent.Eventually
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -27,7 +28,7 @@ import scala.util.control.NonFatal
 import scala.xml.{Node, Utility, XML}
 
 trait ComponentTestSpec extends FeatureSpec with GivenWhenThen with GuiceOneAppPerSuite
-  with BeforeAndAfterAll with BeforeAndAfterEach {
+  with BeforeAndAfterAll with BeforeAndAfterEach with Eventually {
 
   override def fakeApplication(): Application = new GuiceApplicationBuilder().configure(Map(
     "microservice.services.auth.host" -> ExternalServicesConfig.Host,
@@ -38,7 +39,10 @@ trait ComponentTestSpec extends FeatureSpec with GivenWhenThen with GuiceOneAppP
     "microservice.services.mdg-exports.bearer-token" -> ExternalServicesConfig.AuthToken,
     "microservice.services.api-subscription-fields.host" -> ExternalServicesConfig.Host,
     "microservice.services.api-subscription-fields.port" -> ExternalServicesConfig.Port,
-    "microservice.services.api-subscription-fields.context" -> ExportsExternalServicesConfig.ApiSubscriptionFieldsContext
+    "microservice.services.api-subscription-fields.context" -> ExportsExternalServicesConfig.ApiSubscriptionFieldsContext,
+    "microservice.services.customs-metrics.host" -> ExternalServicesConfig.Host,
+    "microservice.services.customs-metrics.port" -> ExternalServicesConfig.Port,
+    "microservice.services.customs-metrics.context" -> ExportsExternalServicesConfig.CustomsMetricsContext
   )).build()
 
   protected def stringToXml(s: String): Node = {

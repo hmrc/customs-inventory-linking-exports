@@ -17,9 +17,10 @@
 package unit.controllers
 
 import akka.stream.Materializer
+import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
-import org.scalatest.{BeforeAndAfterEach, Matchers}
+import org.scalatest.{Assertion, BeforeAndAfterEach, Matchers}
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.mvc._
 import play.api.test.Helpers
@@ -27,6 +28,10 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.{ErrorInternalServerError, errorBadRequest, errorInternalServerError}
+import uk.gov.hmrc.customs.inventorylinking.export.connectors.CustomsMetricsConnector
+import uk.gov.hmrc.customs.inventorylinking.export.model.CustomsMetricsRequest
+import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.HasConversationId
+import uk.gov.hmrc.customs.inventorylinking.export.services.DateTimeService
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.ApiSubscriptionFieldsConnector
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders._
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.{HeaderValidator, InventoryLinkingExportController}
@@ -36,6 +41,7 @@ import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{Validat
 import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionKey, Eori}
 import uk.gov.hmrc.customs.inventorylinking.export.services.{BusinessService, CustomsAuthService, XmlValidationService}
 import uk.gov.hmrc.http.HeaderCarrier
+import util.CustomsMetricsTestData.{EventEnd, EventStart}
 import util.UnitSpec
 import util.RequestHeaders._
 import util.TestData._
@@ -57,10 +63,12 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
     protected val mockResult: Result = mock[Result]
     protected val mockXmlValidationService: XmlValidationService = mock[XmlValidationService]
     protected val mockApiSubscriptionFieldsConnector: ApiSubscriptionFieldsConnector = mock[ApiSubscriptionFieldsConnector]
+    protected val mockMetricsConnector: CustomsMetricsConnector = mock[CustomsMetricsConnector]
     private implicit val ec = Helpers.stubControllerComponents().executionContext
     protected val customsAuthService = new CustomsAuthService(mockAuthConnector, mockExportsLogger)
+    protected val mockDateTimeService: DateTimeService = mock[DateTimeService]
 
-    protected val stubConversationIdAction: ConversationIdAction = new ConversationIdAction(stubUniqueIdsService, mockExportsLogger)
+    protected val stubConversationIdAction: ConversationIdAction = new ConversationIdAction(stubUniqueIdsService, mockDateTimeService, mockExportsLogger)
     protected val stubFieldsAction: ApiSubscriptionFieldsAction = new ApiSubscriptionFieldsAction(mockApiSubscriptionFieldsConnector, mockExportsLogger)
     protected val stubAuthAction: AuthAction = new AuthAction(customsAuthService, headerValidator, mockExportsLogger)
     protected val stubValidateAndExtractHeadersAction: ValidateAndExtractHeadersAction = new ValidateAndExtractHeadersAction(new HeaderValidator(mockExportsLogger), mockExportsLogger)
@@ -68,7 +76,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
 
     protected val controller: InventoryLinkingExportController = new InventoryLinkingExportController(Helpers.stubControllerComponents(),
       stubConversationIdAction, stubValidateAndExtractHeadersAction, stubFieldsAction, stubAuthAction, stubPayloadValidationAction,
-      mockBusinessService, mockExportsLogger)
+      mockBusinessService, mockMetricsConnector, mockExportsLogger)
 
     protected def awaitSubmit(request: Request[AnyContent]): Result = {
       await(controller.post().apply(request))
@@ -76,6 +84,15 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
 
     protected def submit(request: Request[AnyContent]): Future[Result] = {
       controller.post().apply(request)
+    }
+
+    protected def verifyMetrics: Assertion = {
+      val captor: ArgumentCaptor[CustomsMetricsRequest] = ArgumentCaptor.forClass(classOf[CustomsMetricsRequest])
+      verify(mockMetricsConnector).post(captor.capture())(any[HasConversationId])
+      captor.getValue.eventType shouldBe "ILE"
+      captor.getValue.conversationId shouldBe conversationId
+      captor.getValue.eventStart shouldBe EventStart
+      captor.getValue.eventEnd shouldBe EventEnd
     }
 
     when(mockXmlValidationService.validate(any[NodeSeq])(any[ExecutionContext])).thenReturn(Future.successful(()))
@@ -140,6 +157,16 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
       header(X_CONVERSATION_ID_NAME, result) shouldBe Some(conversationIdValue)
       verifyCspAuthorisationCalled(numberOfTimes = 1)
       verifyNonCspAuthorisationCalled(numberOfTimes = 0)
+    }
+
+    "log metrics" in new SetUp() {
+      authoriseCsp()
+      when(mockDateTimeService.zonedDateTimeUtc).thenReturn(EventStart, EventEnd)
+
+      val result: Future[Result] = awaitSubmit(ValidRequestWithSubmitterHeader)
+
+      status(result) shouldBe ACCEPTED
+      verifyMetrics
     }
 
     "respond with status 500 for a CSP request with no X-Submitter-Identifier header, no X-Badge-Identifier header and no authenticated EORI" in new SetUp() {

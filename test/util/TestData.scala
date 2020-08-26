@@ -27,6 +27,7 @@ import uk.gov.hmrc.customs.inventorylinking.export.model._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders._
 import uk.gov.hmrc.customs.inventorylinking.export.services.{UniqueIdsService, UuidService}
+import util.CustomsMetricsTestData.EventStart
 import util.RequestHeaders._
 import util.TestData._
 import util.XMLTestData._
@@ -122,7 +123,7 @@ object TestData {
     FakeRequest().withXmlBody(TestXmlPayload).withHeaders(headers.remove("")) //better to not add empty string tuple in first place
   }
 
-  val TestConversationIdRequest = ConversationIdRequest(conversationId, TestFakeRequest)
+  val TestConversationIdRequest = ConversationIdRequest(conversationId, EventStart, TestFakeRequest)
   val TestExtractedHeaders: ExtractedHeadersImpl = ExtractedHeadersImpl(VersionOne, ApiSubscriptionFieldsTestData.clientId)
   val TestExtractedHeadersV2 = TestExtractedHeaders.copy(requestedApiVersion = VersionTwo)
   val TestValidatedHeadersRequest: ValidatedHeadersRequest[AnyContentAsXml] = TestConversationIdRequest.toValidatedHeadersRequest(TestExtractedHeaders)

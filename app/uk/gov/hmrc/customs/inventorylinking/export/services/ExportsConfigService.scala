@@ -18,26 +18,27 @@ package uk.gov.hmrc.customs.inventorylinking.export.services
 
 import cats.implicits._
 import javax.inject.{Inject, Singleton}
-import play.api.Configuration
 import uk.gov.hmrc.customs.api.common.config.{ConfigValidatedNelAdaptor, CustomsValidatedNel}
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.{ExportsCircuitBreakerConfig, ExportsConfig}
 
 
 @Singleton
-class ExportsConfigService @Inject()(configuration: Configuration,
-                                     configValidatedNel: ConfigValidatedNelAdaptor,
+class ExportsConfigService @Inject()(configValidatedNel: ConfigValidatedNelAdaptor,
                                      logger: ExportsLogger) {
 
   private val root = configValidatedNel.root
 
   private val apiSubscriptionFieldsService = configValidatedNel.service("api-subscription-fields")
   private val apiSubscriptionFieldsServiceUrlNel = apiSubscriptionFieldsService.serviceUrl
+  private val customsMetricsService = configValidatedNel.service("customs-metrics")
+  private val customsMetricsServiceUrlNel = customsMetricsService.serviceUrl
+
   private val numberOfCallsToTriggerStateChangeNel = root.int("circuitBreaker.numberOfCallsToTriggerStateChange")
   private val unavailablePeriodDurationInMillisNel = root.int("circuitBreaker.unavailablePeriodDurationInMillis")
   private val unstablePeriodDurationInMillisNel = root.int("circuitBreaker.unstablePeriodDurationInMillis")
 
-  private val validatedExportsConfig: CustomsValidatedNel[ExportsConfig] = apiSubscriptionFieldsServiceUrlNel.map(ExportsConfig.apply)
+  private val validatedExportsConfig: CustomsValidatedNel[ExportsConfig] = (apiSubscriptionFieldsServiceUrlNel, customsMetricsServiceUrlNel) mapN ExportsConfig
 
   private val validatedExportsCircuitBreakerConfig: CustomsValidatedNel[ExportsCircuitBreakerConfig] = (
     numberOfCallsToTriggerStateChangeNel, unavailablePeriodDurationInMillisNel, unstablePeriodDurationInMillisNel
