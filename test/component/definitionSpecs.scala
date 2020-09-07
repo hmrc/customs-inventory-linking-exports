@@ -148,14 +148,16 @@ class DefinitionSpecWithWhitelistedAppId extends ComponentTestSpec
   }
 }
 
-class DefinitionSpecWithoutWhitelistedAppId extends ComponentTestSpec
+class DefinitionSpecWithVersion2Disabled extends ComponentTestSpec
   with Matchers {
 
-  override implicit lazy val app: Application = new GuiceApplicationBuilder().build()
+  override implicit lazy val app: Application = new GuiceApplicationBuilder().configure(Map(
+    "api.access.version-2.0.enabled" -> false
+  )).build()
 
   feature("Ensure definition file") {
 
-    scenario("is correct when there are no whitelisted applicationIds") {
+    scenario("is correct when version 2 is disabled") {
 
       Given("the API is available")
       val request = FakeRequest("GET", "/api/definition")
@@ -221,7 +223,7 @@ class DefinitionSpecWithoutWhitelistedAppId extends ComponentTestSpec
           |      {
           |        "version": "2.0",
           |        "status": "BETA",
-          |        "endpointsEnabled": true,
+          |        "endpointsEnabled": false,
           |        "access": {
           |          "type": "PUBLIC"
           |        },
