@@ -28,24 +28,20 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.{ErrorInternalServerError, errorBadRequest, errorInternalServerError}
-import uk.gov.hmrc.customs.inventorylinking.export.connectors.CustomsMetricsConnector
-import uk.gov.hmrc.customs.inventorylinking.export.model.CustomsMetricsRequest
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.HasConversationId
-import uk.gov.hmrc.customs.inventorylinking.export.services.DateTimeService
-import uk.gov.hmrc.customs.inventorylinking.export.connectors.ApiSubscriptionFieldsConnector
+import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
+import uk.gov.hmrc.customs.inventorylinking.export.connectors.{ApiSubscriptionFieldsConnector, CustomsMetricsConnector}
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders._
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.{HeaderValidator, InventoryLinkingExportController}
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ValidatedHeadersRequest, ValidatedPayloadRequest}
-import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionKey, Eori}
-import uk.gov.hmrc.customs.inventorylinking.export.services.{BusinessService, CustomsAuthService, XmlValidationService}
+import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{HasConversationId, ValidatedHeadersRequest, ValidatedPayloadRequest}
+import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionKey, CustomsMetricsRequest, Eori}
+import uk.gov.hmrc.customs.inventorylinking.export.services.{BusinessService, CustomsAuthService, DateTimeService, XmlValidationService}
 import uk.gov.hmrc.http.HeaderCarrier
 import util.CustomsMetricsTestData.{EventEnd, EventStart}
-import util.UnitSpec
 import util.RequestHeaders._
-import util.TestData._
-import util.{ApiSubscriptionFieldsTestData, AuthConnectorStubbing}
+import util.TestData.{allVersionsUnshuttered, _}
+import util.{ApiSubscriptionFieldsTestData, AuthConnectorStubbing, UnitSpec}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
@@ -64,18 +60,20 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
     protected val mockXmlValidationService: XmlValidationService = mock[XmlValidationService]
     protected val mockApiSubscriptionFieldsConnector: ApiSubscriptionFieldsConnector = mock[ApiSubscriptionFieldsConnector]
     protected val mockMetricsConnector: CustomsMetricsConnector = mock[CustomsMetricsConnector]
-    private implicit val ec = Helpers.stubControllerComponents().executionContext
+    private implicit val ec: ExecutionContext = Helpers.stubControllerComponents().executionContext
     protected val customsAuthService = new CustomsAuthService(mockAuthConnector, mockExportsLogger)
     protected val mockDateTimeService: DateTimeService = mock[DateTimeService]
+    protected val mockExportsConfigService: ExportsConfigService = mock[ExportsConfigService]
 
     protected val stubConversationIdAction: ConversationIdAction = new ConversationIdAction(stubUniqueIdsService, mockDateTimeService, mockExportsLogger)
+    protected val stubShutterCheckAction = new ShutterCheckAction(mockExportsLogger, mockExportsConfigService)
     protected val stubFieldsAction: ApiSubscriptionFieldsAction = new ApiSubscriptionFieldsAction(mockApiSubscriptionFieldsConnector, mockExportsLogger)
     protected val stubAuthAction: AuthAction = new AuthAction(customsAuthService, headerValidator, mockExportsLogger)
-    protected val stubValidateAndExtractHeadersAction: ValidateAndExtractHeadersAction = new ValidateAndExtractHeadersAction(new HeaderValidator(mockExportsLogger), mockExportsLogger)
+    protected val stubValidateAndExtractHeadersAction: ValidateAndExtractHeadersAction = new ValidateAndExtractHeadersAction(new HeaderValidator(mockExportsLogger))
     protected val stubPayloadValidationAction: PayloadValidationAction = new PayloadValidationAction(mockXmlValidationService, mockExportsLogger)
 
     protected val controller: InventoryLinkingExportController = new InventoryLinkingExportController(Helpers.stubControllerComponents(),
-      stubConversationIdAction, stubValidateAndExtractHeadersAction, stubFieldsAction, stubAuthAction, stubPayloadValidationAction,
+      stubConversationIdAction, stubShutterCheckAction, stubValidateAndExtractHeadersAction, stubFieldsAction, stubAuthAction, stubPayloadValidationAction,
       mockBusinessService, mockMetricsConnector, mockExportsLogger)
 
     protected def awaitSubmit(request: Request[AnyContent]): Result = {
@@ -98,6 +96,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
     when(mockXmlValidationService.validate(any[NodeSeq])(any[ExecutionContext])).thenReturn(Future.successful(()))
     when(mockBusinessService.send(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])).thenReturn(Future.successful(Right(())))
     when(mockApiSubscriptionFieldsConnector.getSubscriptionFields(any[ApiSubscriptionKey])(any[ValidatedHeadersRequest[_]])).thenReturn(Future.successful(ApiSubscriptionFieldsTestData.apiSubscriptionFields))
+    when(mockExportsConfigService.exportsShutterConfig).thenReturn(allVersionsUnshuttered)
   }
 
   private val errorResultEoriNotFoundInCustomsEnrolment = ErrorResponse(UNAUTHORIZED, errorCode = "UNAUTHORIZED",

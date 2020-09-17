@@ -19,9 +19,9 @@ package uk.gov.hmrc.customs.inventorylinking.export.services
 import cats.implicits._
 import javax.inject.{Inject, Singleton}
 import uk.gov.hmrc.customs.api.common.config.{ConfigValidatedNelAdaptor, CustomsValidatedNel}
+import uk.gov.hmrc.customs.inventorylinking.export.model.ExportsShutterConfig
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.{ExportsCircuitBreakerConfig, ExportsConfig}
-
 
 @Singleton
 class ExportsConfigService @Inject()(configValidatedNel: ConfigValidatedNelAdaptor,
@@ -34,34 +34,42 @@ class ExportsConfigService @Inject()(configValidatedNel: ConfigValidatedNelAdapt
   private val customsMetricsService = configValidatedNel.service("customs-metrics")
   private val customsMetricsServiceUrlNel = customsMetricsService.serviceUrl
 
+  private val v1ShutteredNel = root.maybeBoolean("shutter.v1")
+  private val v2ShutteredNel = root.maybeBoolean("shutter.v2")
+
   private val numberOfCallsToTriggerStateChangeNel = root.int("circuitBreaker.numberOfCallsToTriggerStateChange")
   private val unavailablePeriodDurationInMillisNel = root.int("circuitBreaker.unavailablePeriodDurationInMillis")
   private val unstablePeriodDurationInMillisNel = root.int("circuitBreaker.unstablePeriodDurationInMillis")
 
   private val validatedExportsConfig: CustomsValidatedNel[ExportsConfig] = (apiSubscriptionFieldsServiceUrlNel, customsMetricsServiceUrlNel) mapN ExportsConfig
 
+  private val validatedExportsShutterConfig: CustomsValidatedNel[ExportsShutterConfig] = (
+    v1ShutteredNel, v2ShutteredNel
+  ) mapN ExportsShutterConfig
+
   private val validatedExportsCircuitBreakerConfig: CustomsValidatedNel[ExportsCircuitBreakerConfig] = (
     numberOfCallsToTriggerStateChangeNel, unavailablePeriodDurationInMillisNel, unstablePeriodDurationInMillisNel
   ) mapN ExportsCircuitBreakerConfig
 
   private val exportsConfigHolder =
-    (validatedExportsConfig, validatedExportsCircuitBreakerConfig) mapN ExportsConfigHolder fold(
-      // error
+    (validatedExportsConfig, validatedExportsShutterConfig, validatedExportsCircuitBreakerConfig) mapN ExportsConfigHolder fold(
       { nel =>
-        // error case exposes nel (a NotEmptyList)
+        // error case exposes a NEL
         val errorMsg = nel.toList.mkString("\n", "\n", "")
         logger.errorWithoutRequestContext(errorMsg)
         throw new IllegalStateException(errorMsg)
       },
-      // success
       identity
     )
 
   val exportsConfig: ExportsConfig = exportsConfigHolder.exportsConfig
 
+  val exportsShutterConfig: ExportsShutterConfig = exportsConfigHolder.exportsShutterConfig
+
   val exportsCircuitBreakerConfig: ExportsCircuitBreakerConfig = exportsConfigHolder.exportsCircuitBreakerConfig
 
   private case class ExportsConfigHolder(exportsConfig: ExportsConfig,
+                                         exportsShutterConfig: ExportsShutterConfig,
                                          exportsCircuitBreakerConfig: ExportsCircuitBreakerConfig)
 
 }

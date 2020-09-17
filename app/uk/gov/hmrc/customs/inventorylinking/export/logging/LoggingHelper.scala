@@ -17,6 +17,7 @@
 package uk.gov.hmrc.customs.inventorylinking.export.logging
 
 import play.api.http.HeaderNames.{ACCEPT, CONTENT_TYPE}
+import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.HasApiVersion
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ConversationIdRequest, ExtractedHeaders, HasAuthorisedAs, HasConversationId}
 
@@ -52,15 +53,19 @@ object LoggingHelper {
       case c: HasConversationId => s"[conversationId=${c.conversationId}]"
       case _ => ""
     }
+    def apiVersion = r match {
+      case a: HasApiVersion => s"[requestedApiVersion=${a.requestedApiVersion}]"
+      case _ => ""
+    }
     def extractedHeaders = r match {
-      case h: ExtractedHeaders => s"[clientId=${h.clientId.value}][requestedApiVersion=${h.requestedApiVersion}]"
+      case h: ExtractedHeaders => s"[clientId=${h.clientId.value}]"
       case _ => ""
     }
     def authorised = r match {
       case a: HasAuthorisedAs => s"[authorisedAs=${a.authorisedAs}]"
       case _ => ""
     }
-    s"$conversationId$extractedHeaders$authorised"
+    s"$conversationId$extractedHeaders$apiVersion$authorised"
   }
 
   def formatMessageFull(msg: String, r: ConversationIdRequest[_]): String = {

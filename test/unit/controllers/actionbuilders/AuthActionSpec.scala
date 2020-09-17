@@ -23,17 +23,20 @@ import play.api.mvc.AnyContentAsXml
 import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.{ErrorInternalServerError, UnauthorizedCode, errorBadRequest, errorInternalServerError}
+import uk.gov.hmrc.customs.inventorylinking.export.model.VersionOne
+import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ApiVersionRequest
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders.AuthAction
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.{CustomHeaderNames, HeaderValidator}
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.ApiSubscriptionFields
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ApiSubscriptionFieldsRequest, AuthorisedRequest, ConversationIdRequest}
+import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ApiSubscriptionFieldsRequest, AuthorisedRequest}
 import uk.gov.hmrc.customs.inventorylinking.export.services.CustomsAuthService
 import util.CustomsMetricsTestData.EventStart
-import util.UnitSpec
 import util.TestData._
-import util.{ApiSubscriptionFieldsTestData, AuthConnectorStubbing, RequestHeaders}
+import util.{ApiSubscriptionFieldsTestData, AuthConnectorStubbing, RequestHeaders, UnitSpec}
+
+import scala.concurrent.ExecutionContext
 
 class AuthActionSpec extends UnitSpec with MockitoSugar {
 
@@ -49,7 +52,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
     ErrorResponse(UNAUTHORIZED, UnauthorizedCode, "EORI number not found in Customs Enrolment")
 
   private def request(request: FakeRequest[AnyContentAsXml], fields: ApiSubscriptionFields = ApiSubscriptionFieldsTestData.apiSubscriptionFields): ApiSubscriptionFieldsRequest[AnyContentAsXml] = {
-    ConversationIdRequest(conversationId, EventStart, request)
+    ApiVersionRequest(conversationId, EventStart, VersionOne, request)
       .toValidatedHeadersRequest(TestExtractedHeaders)
       .toApiSubscriptionFieldsRequest(fields)
   }
@@ -57,7 +60,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
   private val eoriTooLong = "GB9988776655787656"
 
   trait SetUp extends AuthConnectorStubbing {
-    implicit val ec = Helpers.stubControllerComponents().executionContext
+    implicit val ec: ExecutionContext = Helpers.stubControllerComponents().executionContext
     val mockExportsLogger: ExportsLogger = mock[ExportsLogger]
     val customsAuthService = new CustomsAuthService(mockAuthConnector, mockExportsLogger)
     val headerValidator = new HeaderValidator(mockExportsLogger)

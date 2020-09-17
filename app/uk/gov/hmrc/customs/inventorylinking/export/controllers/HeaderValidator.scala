@@ -22,20 +22,14 @@ import play.api.http.MimeTypes
 import play.api.mvc.Headers
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse._
-import uk.gov.hmrc.customs.inventorylinking.export.model._
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{HasConversationId, HasRequest}
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames._
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ConversationIdRequest, ExtractedHeadersImpl}
-import uk.gov.hmrc.customs.inventorylinking.export.model.{ClientId, VersionOne}
+import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ApiVersionRequest, ExtractedHeadersImpl, HasConversationId, HasRequest}
+import uk.gov.hmrc.customs.inventorylinking.export.model.{ClientId, _}
 
 @Singleton
 class HeaderValidator @Inject()(logger: ExportsLogger) {
 
-  protected val versionsByAcceptHeader: Map[String, ApiVersion] = Map(
-    "application/vnd.hmrc.1.0+xml" -> VersionOne,
-    "application/vnd.hmrc.2.0+xml" -> VersionTwo
-  )
   private lazy val validContentTypeHeaders = Seq(MimeTypes.XML + ";charset=utf-8", MimeTypes.XML + "; charset=utf-8")
   private lazy val xClientIdRegex = "^\\S+$".r
 
@@ -45,30 +39,26 @@ class HeaderValidator @Inject()(logger: ExportsLogger) {
   private val errorResponseBadgeIdentifierHeaderMissing = errorBadRequest(s"$XBadgeIdentifierHeaderName header is missing or invalid")
   private val errorResponseEoriIdentifierHeaderInvalid = errorBadRequest(s"$XSubmitterIdentifierHeaderName header is invalid")
   
-  def validateHeaders[A](implicit conversationIdRequest: ConversationIdRequest[A]): Either[ErrorResponse, ExtractedHeadersImpl] = {
-    implicit val headers: Headers = conversationIdRequest.headers
-
-    def hasAccept: Either[ErrorResponse, String] = validateHeader(ACCEPT, versionsByAcceptHeader.keySet.contains(_), ErrorAcceptHeaderInvalid)
+  def validateHeaders[A](implicit apiVersionRequest: ApiVersionRequest[A]): Either[ErrorResponse, ExtractedHeadersImpl] = {
+    implicit val headers: Headers = apiVersionRequest.headers
 
     def hasContentType: Either[ErrorResponse, String] = validateHeader(CONTENT_TYPE, s => validContentTypeHeaders.contains(s.toLowerCase()), ErrorContentTypeHeaderInvalid)
 
     def hasXClientId: Either[ErrorResponse, String] = validateHeader(XClientIdHeaderName, xClientIdRegex.findFirstIn(_).nonEmpty, ErrorInternalServerError)
 
     val theResult: Either[ErrorResponse, ExtractedHeadersImpl] = for {
-      acceptValue <- hasAccept.right
       contentTypeValue <- hasContentType.right
       xClientIdValue <- hasXClientId.right
     } yield {
       logger.debug(
-        s"\n$ACCEPT header passed validation: $acceptValue"
-      + s"\n$CONTENT_TYPE header passed validation: $contentTypeValue"
+      s"\n$CONTENT_TYPE header passed validation: $contentTypeValue"
       + s"\n$XClientIdHeaderName header passed validation: $xClientIdValue")
-      ExtractedHeadersImpl(versionsByAcceptHeader(acceptValue), ClientId(xClientIdValue))
+      ExtractedHeadersImpl(ClientId(xClientIdValue))
     }
     theResult
   }
 
-  private def validateHeader[A](headerName: String, rule: String => Boolean, errorResponse: ErrorResponse)(implicit conversationIdRequest: ConversationIdRequest[A], h: Headers): Either[ErrorResponse, String] = {
+  private def validateHeader[A](headerName: String, rule: String => Boolean, errorResponse: ErrorResponse)(implicit apiVersionRequest: ApiVersionRequest[A], h: Headers): Either[ErrorResponse, String] = {
     val left = Left(errorResponse)
     def leftWithLog(headerName: String) = {
       logger.error(s"Error - header '$headerName' not present")

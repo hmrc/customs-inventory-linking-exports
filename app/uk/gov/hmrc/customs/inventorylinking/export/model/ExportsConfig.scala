@@ -19,6 +19,9 @@ package uk.gov.hmrc.customs.inventorylinking.export.model
 case class ExportsConfig(apiSubscriptionFieldsBaseUrl: String,
                          customsMetricsBaseUrl: String)
 
+case class ExportsShutterConfig(v1Shuttered: Option[Boolean],
+                                v2Shuttered: Option[Boolean])
+
 case class ExportsCircuitBreakerConfig(numberOfCallsToTriggerStateChange: Int,
                                        unavailablePeriodDurationInMillis: Int,
                                        unstablePeriodDurationInMillis: Int)
