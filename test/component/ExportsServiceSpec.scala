@@ -17,6 +17,7 @@
 package component
 
 import org.scalatest.{Matchers, OptionValues}
+import play.api.Application
 import play.api.mvc.Result
 import play.api.test.Helpers._
 import util.RequestHeaders.X_CONVERSATION_ID_NAME
@@ -64,6 +65,14 @@ class ExportsServiceSpec extends ComponentTestSpec
        |    </errors>
        |</errorResponse>
      """.stripMargin
+
+  private val serviceUnavailableError: String =
+    """<?xml version='1.0' encoding='UTF-8'?>
+      |<errorResponse>
+      |      <code>SERVER_ERROR</code>
+      |      <message>The 'customs/inventory-linking/exports' API is currently unavailable</message>
+      |</errorResponse>
+    """.stripMargin
 
   override protected def beforeAll() {
     startMockServer()
@@ -121,6 +130,7 @@ class ExportsServiceSpec extends ComponentTestSpec
       stringToXml(contentAsString(result)) shouldEqual stringToXml(internalServerError)
       header(X_CONVERSATION_ID_NAME, result).get shouldNot be("")
     }
+
   }
 
   feature("The endpoint handles errors as expected") {
@@ -161,6 +171,20 @@ class ExportsServiceSpec extends ComponentTestSpec
 
       And("the response body is a \"Bad request\" XML")
       stringToXml(contentAsString(resultFuture)) shouldBe stringToXml(badRequestError)
+    }
+
+    scenario("A valid message is submitted when the service is shuttered") {
+      Given("a CSP is authorised to use the API endpoint and submits to a shuttered version")
+      implicit lazy val app: Application = super.app(configMap + ("shutter.v1" -> "true"))
+      authServiceAuthorisesCSP()
+
+      When("a valid message request is submitted")
+      val result = route(app, ValidRequestWithSubmitterHeader.fromCsp).get
+
+      Then("a 503 Service Unavailable response is returned")
+      status(result) shouldBe SERVICE_UNAVAILABLE
+      stringToXml(contentAsString(result)) shouldEqual stringToXml(serviceUnavailableError)
+      header(X_CONVERSATION_ID_NAME, result) shouldBe None
     }
 
   }

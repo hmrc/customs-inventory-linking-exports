@@ -63,6 +63,8 @@ object TestData {
   val cspBearerToken = "CSP-Bearer-Token"
   val nonCspBearerToken = "Software-House-Bearer-Token"
 
+  val allVersionsUnshuttered = ExportsShutterConfig(Some(false), Some(false))
+
   type EmulatedServiceFailure = UnsupportedOperationException
   val emulatedServiceFailure = new EmulatedServiceFailure("Emulated service failure.")
 
@@ -117,6 +119,7 @@ object TestData {
 
   val TestXmlPayload: Elem = <foo>bar</foo>
   val TestFakeRequest: FakeRequest[AnyContentAsXml] = FakeRequest().withXmlBody(TestXmlPayload)
+  val TestFakeRequestWithV1Headers = FakeRequest().withXmlBody(TestXmlPayload).withHeaders(ValidHeaders.toSeq: _*)
 
   def testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeBadgeIdString: Option[String] = Some(badgeIdentifier.value), maybeSubmitterIdString: Option[String] = Some(declarantEori.value)): FakeRequest[AnyContentAsXml] = {
     val headers = Headers(maybeBadgeIdString.fold(("", ""))(badgeId => (X_BADGE_IDENTIFIER_NAME, badgeId)), maybeSubmitterIdString.fold(("", ""))(submitterId => (X_SUBMITTER_IDENTIFIER_NAME, submitterId)))
@@ -124,10 +127,11 @@ object TestData {
   }
 
   val TestConversationIdRequest = ConversationIdRequest(conversationId, EventStart, TestFakeRequest)
-  val TestExtractedHeaders: ExtractedHeadersImpl = ExtractedHeadersImpl(VersionOne, ApiSubscriptionFieldsTestData.clientId)
-  val TestExtractedHeadersV2 = TestExtractedHeaders.copy(requestedApiVersion = VersionTwo)
-  val TestValidatedHeadersRequest: ValidatedHeadersRequest[AnyContentAsXml] = TestConversationIdRequest.toValidatedHeadersRequest(TestExtractedHeaders)
-  val TestValidatedHeadersRequestV2: ValidatedHeadersRequest[AnyContentAsXml] = TestConversationIdRequest.toValidatedHeadersRequest(TestExtractedHeadersV2)
+  val TestConversationIdRequestWithV1Headers = ConversationIdRequest(conversationId, EventStart, TestFakeRequestWithV1Headers)
+  val TestConversationIdRequestWithV2Headers = ConversationIdRequest(conversationId, EventStart, TestFakeRequestWithV1Headers.withHeaders(ACCEPT_HMRC_XML_HEADER_V2))
+  val TestExtractedHeaders: ExtractedHeadersImpl = ExtractedHeadersImpl(ApiSubscriptionFieldsTestData.clientId)
+  val TestValidatedHeadersRequest: ValidatedHeadersRequest[AnyContentAsXml] = TestConversationIdRequest.toApiVersionRequest(VersionOne).toValidatedHeadersRequest(TestExtractedHeaders)
+  val TestValidatedHeadersRequestV2: ValidatedHeadersRequest[AnyContentAsXml] = TestConversationIdRequest.toApiVersionRequest(VersionTwo).toValidatedHeadersRequest(TestExtractedHeaders)
   val TestApiSubscriptionFieldsRequest: ApiSubscriptionFieldsRequest[AnyContentAsXml] = TestValidatedHeadersRequest.toApiSubscriptionFieldsRequest(ApiSubscriptionFieldsTestData.apiSubscriptionFields)
   val TestCspAuthorisedRequest: AuthorisedRequest[AnyContentAsXml] = TestApiSubscriptionFieldsRequest.toCspAuthorisedRequest(cspAuthorisedRequest)
   val TestCspValidatedPayloadRequest: ValidatedPayloadRequest[AnyContentAsXml] = TestApiSubscriptionFieldsRequest.toCspAuthorisedRequest(cspAuthorisedRequest).toValidatedPayloadRequest(xmlBody = TestXmlPayload)

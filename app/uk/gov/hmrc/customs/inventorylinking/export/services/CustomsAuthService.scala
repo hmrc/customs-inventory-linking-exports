@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.customs.inventorylinking.`export`.services
+package uk.gov.hmrc.customs.inventorylinking.export.services
 
 import javax.inject.{Inject, Singleton}
 import play.api.http.Status

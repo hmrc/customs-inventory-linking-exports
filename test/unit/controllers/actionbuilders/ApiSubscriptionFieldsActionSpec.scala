@@ -28,17 +28,17 @@ import uk.gov.hmrc.customs.inventorylinking.export.connectors.ApiSubscriptionFie
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders.ApiSubscriptionFieldsAction
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ApiSubscriptionFieldsRequest, ConversationIdRequest, ValidatedHeadersRequest}
+import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ApiSubscriptionFieldsRequest, ApiVersionRequest, ValidatedHeadersRequest}
 import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionKey, VersionOne}
 import util.CustomsMetricsTestData.EventStart
 import util.TestData.{TestExtractedHeaders, TestValidatedHeadersRequestV2, conversationId, declarantEori, testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId}
 import util.{ApiSubscriptionFieldsTestData, TestData, UnitSpec}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class ApiSubscriptionFieldsActionSpec extends UnitSpec with MockitoSugar {
   private val apiContextEncoded = URLEncoder.encode("customs/inventory-linking/exports", "UTF-8")
-  private implicit val ec = Helpers.stubControllerComponents().executionContext
+  private implicit val ec: ExecutionContext = Helpers.stubControllerComponents().executionContext
 
   trait SetUp {
     private[ApiSubscriptionFieldsActionSpec] val connector = mock[ApiSubscriptionFieldsConnector]
@@ -46,7 +46,7 @@ class ApiSubscriptionFieldsActionSpec extends UnitSpec with MockitoSugar {
     private[ApiSubscriptionFieldsActionSpec] val service = new ApiSubscriptionFieldsAction(connector, logger)
 
     private[ApiSubscriptionFieldsActionSpec] def vhr(request: FakeRequest[AnyContentAsXml]): ValidatedHeadersRequest[AnyContentAsXml] = {
-      ConversationIdRequest(conversationId, EventStart, request)
+      ApiVersionRequest(conversationId, EventStart, VersionOne, request)
         .toValidatedHeadersRequest(TestExtractedHeaders)
     }
 
