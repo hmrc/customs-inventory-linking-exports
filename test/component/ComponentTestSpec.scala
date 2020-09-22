@@ -30,7 +30,7 @@ import scala.xml.{Node, Utility, XML}
 trait ComponentTestSpec extends FeatureSpec with GivenWhenThen with GuiceOneAppPerSuite
   with BeforeAndAfterAll with BeforeAndAfterEach with Eventually {
 
-  override def fakeApplication(): Application = new GuiceApplicationBuilder().configure(Map(
+  val configMap = Map(
     "microservice.services.auth.host" -> ExternalServicesConfig.Host,
     "microservice.services.auth.port" -> ExternalServicesConfig.Port,
     "microservice.services.mdg-exports.host" -> ExternalServicesConfig.Host,
@@ -42,8 +42,14 @@ trait ComponentTestSpec extends FeatureSpec with GivenWhenThen with GuiceOneAppP
     "microservice.services.api-subscription-fields.context" -> ExportsExternalServicesConfig.ApiSubscriptionFieldsContext,
     "microservice.services.customs-metrics.host" -> ExternalServicesConfig.Host,
     "microservice.services.customs-metrics.port" -> ExternalServicesConfig.Port,
-    "microservice.services.customs-metrics.context" -> ExportsExternalServicesConfig.CustomsMetricsContext
-  )).build()
+    "microservice.services.customs-metrics.context" -> ExportsExternalServicesConfig.CustomsMetricsContext,
+    "metrics.jvm" -> false
+  )
+
+  def app(values: Map[String, Any] = configMap): Application =
+    new GuiceApplicationBuilder().configure(values).build()
+
+  override def fakeApplication(): Application = app()
 
   protected def stringToXml(s: String): Node = {
     val xml = try {

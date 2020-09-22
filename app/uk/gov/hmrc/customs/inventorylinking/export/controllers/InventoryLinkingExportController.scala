@@ -33,6 +33,7 @@ import scala.concurrent.ExecutionContext
 @Singleton
 class InventoryLinkingExportController @Inject()(cc: ControllerComponents,
                                                  conversationIdAction: ConversationIdAction,
+                                                 shutterCheckAction: ShutterCheckAction,
                                                  validateAndExtractHeadersAction: ValidateAndExtractHeadersAction,
                                                  fieldsAction: ApiSubscriptionFieldsAction,
                                                  authAction: AuthAction,
@@ -53,6 +54,7 @@ class InventoryLinkingExportController @Inject()(cc: ControllerComponents,
   def post(): Action[AnyContent] = (
     Action andThen
     conversationIdAction andThen
+    shutterCheckAction andThen
     validateAndExtractHeadersAction andThen
     fieldsAction andThen
     authAction andThen

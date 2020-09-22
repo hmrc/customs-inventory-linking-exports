@@ -32,13 +32,22 @@ object ActionBuilderModelHelper {
     }
   }
 
-  implicit class CorrelationIdsRequestOps[A](val cir: ConversationIdRequest[A]) extends AnyVal {
-    def toValidatedHeadersRequest(eh: ExtractedHeaders): ValidatedHeadersRequest[A] = ValidatedHeadersRequest(
+  implicit class ConversationIdRequestOps[A](val cir: ConversationIdRequest[A]) extends AnyVal {
+    def toApiVersionRequest(apiVersion: ApiVersion): ApiVersionRequest[A] = ApiVersionRequest(
       cir.conversationId,
       cir.start,
-      eh.requestedApiVersion,
-      eh.clientId,
+      apiVersion,
       cir.request
+    )
+  }
+
+  implicit class ApiVersionRequestOps[A](val avr: ApiVersionRequest[A]) extends AnyVal {
+    def toValidatedHeadersRequest(eh: ExtractedHeaders): ValidatedHeadersRequest[A] = ValidatedHeadersRequest(
+      avr.conversationId,
+      avr.start,
+      avr.requestedApiVersion,
+      eh.clientId,
+      avr.request
     )
   }
 
@@ -94,8 +103,11 @@ trait HasConversationId {
   val conversationId: ConversationId
 }
 
-trait ExtractedHeaders {
+trait HasApiVersion {
   val requestedApiVersion: ApiVersion
+}
+
+trait ExtractedHeaders {
   val clientId: ClientId
 }
 
@@ -108,7 +120,6 @@ trait HasXmlBody {
 }
 
 case class ExtractedHeadersImpl(
-  requestedApiVersion: ApiVersion,
   clientId: ClientId
 ) extends ExtractedHeaders
 
@@ -127,6 +138,13 @@ case class ConversationIdRequest[A](
   request: Request[A]
 ) extends WrappedRequest[A](request) with HasRequest[A] with HasConversationId
 
+// Available after ShutterCheckAction
+case class ApiVersionRequest[A](conversationId: ConversationId,
+                                start: ZonedDateTime,
+                                requestedApiVersion: ApiVersion,
+                                request: Request[A]
+) extends WrappedRequest[A](request) with HasRequest[A] with HasConversationId with HasApiVersion
+
 // Available after ValidateAndExtractHeadersAction action builder
 case class ValidatedHeadersRequest[A](
   conversationId: ConversationId,
@@ -134,7 +152,7 @@ case class ValidatedHeadersRequest[A](
   requestedApiVersion: ApiVersion,
   clientId: ClientId,
   request: Request[A]
-) extends WrappedRequest[A](request) with HasRequest[A] with HasConversationId with ExtractedHeaders
+) extends WrappedRequest[A](request) with HasRequest[A] with HasConversationId with HasApiVersion with ExtractedHeaders
 
 // Available after ApiSubscriptionFieldsAction action builder
 case class ApiSubscriptionFieldsRequest[A](
@@ -144,7 +162,7 @@ case class ApiSubscriptionFieldsRequest[A](
   clientId: ClientId,
   apiSubscriptionFields: ApiSubscriptionFields,
   request: Request[A]
-) extends WrappedRequest[A](request) with HasRequest[A] with HasConversationId with ExtractedHeaders
+) extends WrappedRequest[A](request) with HasRequest[A] with HasConversationId with HasApiVersion with ExtractedHeaders
 
 // Available after AuthAction builder
 case class AuthorisedRequest[A](
@@ -155,7 +173,7 @@ case class AuthorisedRequest[A](
   apiSubscriptionFields: ApiSubscriptionFields,
   authorisedAs: AuthorisedAs,
   request: Request[A]
-) extends WrappedRequest[A](request) with HasConversationId with ExtractedHeaders with HasAuthorisedAs
+) extends WrappedRequest[A](request) with HasConversationId with HasApiVersion with ExtractedHeaders with HasAuthorisedAs
 
 // Available after ValidatedPayloadAction builder
 case class ValidatedPayloadRequest[A](
@@ -167,4 +185,4 @@ case class ValidatedPayloadRequest[A](
   authorisedAs: AuthorisedAs,
   xmlBody: NodeSeq,
   request: Request[A]
-) extends WrappedRequest[A](request) with HasConversationId with ExtractedHeaders with HasAuthorisedAs with HasXmlBody
+) extends WrappedRequest[A](request) with HasConversationId with HasApiVersion with ExtractedHeaders with HasAuthorisedAs with HasXmlBody

@@ -21,20 +21,18 @@ import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.HeaderNames._
 import play.api.test.FakeRequest
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse._
-import uk.gov.hmrc.customs.inventorylinking.`export`.model.VersionTwo
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames._
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.HeaderValidator
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.VersionOne
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ConversationIdRequest, ExtractedHeadersImpl}
+import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ApiVersionRequest, ExtractedHeadersImpl}
 import util.CustomsMetricsTestData.EventStart
 import util.RequestHeaders._
 import util.{ApiSubscriptionFieldsTestData, TestData, UnitSpec}
 
 class HeaderValidatorSpec extends UnitSpec with TableDrivenPropertyChecks with MockitoSugar {
 
-  private val extractedHeaders = ExtractedHeadersImpl(VersionOne, ApiSubscriptionFieldsTestData.clientId)
-  private val extractedHeadersV2 = ExtractedHeadersImpl(VersionTwo, ApiSubscriptionFieldsTestData.clientId)
+  private val extractedHeaders = ExtractedHeadersImpl(ApiSubscriptionFieldsTestData.clientId)
 
   trait SetUp {
     val mockExportsLogger: ExportsLogger = mock[ExportsLogger]
@@ -45,12 +43,9 @@ class HeaderValidatorSpec extends UnitSpec with TableDrivenPropertyChecks with M
     Table(
       ("description", "Headers", "Expected response"),
       ("Valid Headers", ValidHeaders, Right(extractedHeaders)),
-      ("Valid Headers for V2", ValidHeaders + ACCEPT_HMRC_XML_HEADER_V2 , Right(extractedHeadersV2)),
       ("Valid content type XML with no space header", ValidHeaders + (CONTENT_TYPE -> "application/xml;charset=utf-8"), Right(extractedHeaders)),
-      ("Missing accept header", ValidHeaders - ACCEPT, Left(ErrorAcceptHeaderInvalid)),
       ("Missing content type header", ValidHeaders - CONTENT_TYPE, Left(ErrorContentTypeHeaderInvalid)),
       ("Missing X-Client-ID header", ValidHeaders - XClientIdHeaderName, Left(ErrorInternalServerError)),
-      ("Invalid accept header", ValidHeaders + ACCEPT_HEADER_INVALID, Left(ErrorAcceptHeaderInvalid)),
       ("Invalid content type header JSON header", ValidHeaders + CONTENT_TYPE_HEADER_INVALID, Left(ErrorContentTypeHeaderInvalid)),
       ("Invalid content type XML without UTF-8 header", ValidHeaders + (CONTENT_TYPE -> "application/xml"), Left(ErrorContentTypeHeaderInvalid)),
       ("Invalid X-Client-ID header", ValidHeaders + X_CLIENT_ID_HEADER_INVALID, Left(ErrorInternalServerError))
@@ -59,9 +54,9 @@ class HeaderValidatorSpec extends UnitSpec with TableDrivenPropertyChecks with M
   "HeaderValidatorAction" should {
     forAll(headersTable) { (description, headers, response) =>
       s"$description" in new SetUp {
-        private val conversationIdRequest: ConversationIdRequest[_] = ConversationIdRequest(TestData.conversationId, EventStart, FakeRequest().withHeaders(headers.toSeq: _*))
+        private val apiVersionRequest: ApiVersionRequest[_] = ApiVersionRequest(TestData.conversationId, EventStart, VersionOne, FakeRequest().withHeaders(headers.toSeq: _*))
 
-        validator.validateHeaders(conversationIdRequest) shouldBe response
+        validator.validateHeaders(apiVersionRequest) shouldBe response
       }
     }
   }

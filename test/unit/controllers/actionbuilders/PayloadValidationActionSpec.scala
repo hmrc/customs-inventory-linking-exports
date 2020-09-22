@@ -37,24 +37,25 @@ import org.scalatestplus.mockito.MockitoSugar
 import play.api.mvc.{AnyContentAsText, AnyContentAsXml, Result}
 import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.customs.api.common.controllers.{ErrorResponse, ResponseContents}
+import uk.gov.hmrc.customs.inventorylinking.export.model.VersionOne
+import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ApiVersionRequest
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders.PayloadValidationAction
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{AuthorisedRequest, ConversationIdRequest, ValidatedPayloadRequest}
 import uk.gov.hmrc.customs.inventorylinking.export.services.XmlValidationService
-import util.UnitSpec
-import util.ApiSubscriptionFieldsTestData
 import util.CustomsMetricsTestData.EventStart
 import util.TestData._
+import util.{ApiSubscriptionFieldsTestData, UnitSpec}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.SAXException
 
 class PayloadValidationActionSpec extends UnitSpec with MockitoSugar {
 
   trait SetUp {
     implicit val forConversions: ConversationIdRequest[AnyContentAsXml] = TestConversationIdRequest
-    implicit val ec = Helpers.stubControllerComponents().executionContext
+    implicit val ec: ExecutionContext = Helpers.stubControllerComponents().executionContext
     val saxException = new SAXException("Boom!")
 
     val expectedXmlSchemaErrorResult: Result = ErrorResponse
@@ -88,7 +89,7 @@ class PayloadValidationActionSpec extends UnitSpec with MockitoSugar {
     }
 
     "return 400 error response when XML validation fails" in new SetUp {
-      val authorisedRequestWithNonWellFormedXml: AuthorisedRequest[AnyContentAsText] = ConversationIdRequest(conversationId, EventStart, FakeRequest().withTextBody("<foo><foo>"))
+      val authorisedRequestWithNonWellFormedXml: AuthorisedRequest[AnyContentAsText] = ApiVersionRequest(conversationId, EventStart, VersionOne, FakeRequest().withTextBody("<foo><foo>"))
         .toValidatedHeadersRequest(TestExtractedHeaders)
         .toApiSubscriptionFieldsRequest(ApiSubscriptionFieldsTestData.apiSubscriptionFields)
         .toCspAuthorisedRequest(cspAuthorisedRequest)
