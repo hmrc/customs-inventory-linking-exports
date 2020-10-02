@@ -70,7 +70,7 @@ class ExportsServiceSpec extends ComponentTestSpec
     """<?xml version='1.0' encoding='UTF-8'?>
       |<errorResponse>
       |      <code>SERVER_ERROR</code>
-      |      <message>The 'customs/inventory-linking/exports' API is currently unavailable</message>
+      |      <message>Service unavailable</message>
       |</errorResponse>
     """.stripMargin
 

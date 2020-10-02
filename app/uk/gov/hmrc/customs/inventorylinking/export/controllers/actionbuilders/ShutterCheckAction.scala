@@ -45,7 +45,7 @@ class ShutterCheckAction @Inject()(logger: ExportsLogger,
   extends ActionRefiner[ConversationIdRequest, ApiVersionRequest] {
     actionName =>
 
-    private val errorResponseVersionShuttered: Result = ErrorResponse(SERVICE_UNAVAILABLE, "SERVER_ERROR", "The 'customs/inventory-linking/exports' API is currently unavailable").XmlResult
+    private val errorResponseVersionShuttered: Result = ErrorResponse(SERVICE_UNAVAILABLE, "SERVER_ERROR", "Service unavailable").XmlResult
   
     private lazy val v1Shuttered: Boolean = config.exportsShutterConfig.v1Shuttered.getOrElse(false)
     private lazy val v2Shuttered: Boolean = config.exportsShutterConfig.v2Shuttered.getOrElse(false)
