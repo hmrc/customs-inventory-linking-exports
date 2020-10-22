@@ -27,8 +27,7 @@ import uk.gov.hmrc.customs.inventorylinking.export.connectors.ApiSubscriptionFie
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionFields, ExportsConfig}
 import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
-import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, NotFoundException}
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpReads, NotFoundException}
 import util.UnitSpec
 import util.ExternalServicesConfig._
 import util.externalservices.ExportsExternalServicesConfig._

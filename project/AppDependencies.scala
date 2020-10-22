@@ -2,11 +2,11 @@ import sbt._
 
 object AppDependencies {
 
-  val scalatestplusVersion = "3.1.3"
-  val mockitoVersion = "3.5.9"
-  val wireMockVersion = "2.27.2"
-  val customsApiCommonVersion = "1.52.0"
-  val testScope = "test,it"
+  private val scalatestplusVersion = "4.0.3"
+  private val mockitoVersion = "3.5.9"
+  private val wireMockVersion = "2.27.2"
+  private val customsApiCommonVersion = "1.53.0"
+  private val testScope = "test,it"
 
   val scalaTestPlusPlay = "org.scalatestplus.play" %% "scalatestplus-play" % scalatestplusVersion % testScope
 

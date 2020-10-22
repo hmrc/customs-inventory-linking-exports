@@ -33,8 +33,7 @@ import uk.gov.hmrc.customs.inventorylinking.export.connectors.ExportsConnector
 import uk.gov.hmrc.customs.inventorylinking.export.model.ExportsCircuitBreakerConfig
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
 import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
-import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse}
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpReads, HttpResponse}
 import util.UnitSpec
 import unit.logging.StubExportsLogger
 import util.RequestHeaders

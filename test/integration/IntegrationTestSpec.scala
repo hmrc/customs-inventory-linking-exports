@@ -24,7 +24,7 @@ import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import util.UnitSpec
 
 case class IntegrationTestModule(mockLogger: ExportsLogger) extends AbstractModule {
-  def configure(): Unit = {
+  override def configure(): Unit = {
     bind(classOf[ExportsLogger]) toInstance mockLogger
   }
 
