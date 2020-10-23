@@ -30,7 +30,7 @@ import scala.xml.{Node, Utility, XML}
 trait ComponentTestSpec extends FeatureSpec with GivenWhenThen with GuiceOneAppPerSuite
   with BeforeAndAfterAll with BeforeAndAfterEach with Eventually {
 
-  val configMap = Map(
+  val configMap: Map[String, Any] = Map(
     "microservice.services.auth.host" -> ExternalServicesConfig.Host,
     "microservice.services.auth.port" -> ExternalServicesConfig.Port,
     "microservice.services.mdg-exports.host" -> ExternalServicesConfig.Host,

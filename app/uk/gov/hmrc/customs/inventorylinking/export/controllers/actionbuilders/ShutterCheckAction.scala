@@ -46,21 +46,21 @@ class ShutterCheckAction @Inject()(logger: ExportsLogger,
     actionName =>
 
     private val errorResponseVersionShuttered: Result = ErrorResponse(SERVICE_UNAVAILABLE, "SERVER_ERROR", "Service unavailable").XmlResult
-  
+
     private lazy val v1Shuttered: Boolean = config.exportsShutterConfig.v1Shuttered.getOrElse(false)
     private lazy val v2Shuttered: Boolean = config.exportsShutterConfig.v2Shuttered.getOrElse(false)
-  
+
     protected val versionsByAcceptHeader: Map[String, ApiVersion] = Map(
       "application/vnd.hmrc.1.0+xml" -> VersionOne,
       "application/vnd.hmrc.2.0+xml" -> VersionTwo
     )
-  
+
     override def executionContext: ExecutionContext = ec
-  
+
     override def refine[A](cir: ConversationIdRequest[A]): Future[Either[Result, ApiVersionRequest[A]]] = Future.successful {
      implicit val id: ConversationIdRequest[A] = cir
      val acceptErrorResult = Left(ErrorAcceptHeaderInvalid.XmlResult.withConversationId)
-  
+
      cir.request.headers.get(ACCEPT) match {
        case None =>
          logger.error(s"Error - header '$ACCEPT' not present")
@@ -84,7 +84,7 @@ class ShutterCheckAction @Inject()(logger: ExportsLogger,
       logger.warn(s"version ${apiVersion.toString} requested but is shuttered")
       serviceUnavailableResult
     }
-    
+
     apiVersion match {
       case VersionOne if v1Shuttered =>
         unavailableWithLog(VersionOne)
