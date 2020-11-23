@@ -36,7 +36,7 @@ import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.logging.Authorization
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.xml.{NodeSeq, PrettyPrinter, TopScope}
+import scala.xml.NodeSeq
 
 @Singleton
 class ExportsConnector @Inject() (http: HttpClient,
@@ -105,7 +105,7 @@ class ExportsConnector @Inject() (http: HttpClient,
     if (responseBody.isEmpty) {
       "<empty>"
     } else {
-      new PrettyPrinter(120, 2).format(xml.XML.loadString(responseBody), TopScope)
+      responseBody
     }
   }
 
