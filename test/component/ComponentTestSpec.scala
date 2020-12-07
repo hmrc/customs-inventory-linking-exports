@@ -40,9 +40,9 @@ trait ComponentTestSpec extends FeatureSpec with GivenWhenThen with GuiceOneAppP
     "microservice.services.api-subscription-fields.host" -> ExternalServicesConfig.Host,
     "microservice.services.api-subscription-fields.port" -> ExternalServicesConfig.Port,
     "microservice.services.api-subscription-fields.context" -> ExportsExternalServicesConfig.ApiSubscriptionFieldsContext,
-    "microservice.services.customs-metrics.host" -> ExternalServicesConfig.Host,
-    "microservice.services.customs-metrics.port" -> ExternalServicesConfig.Port,
-    "microservice.services.customs-metrics.context" -> ExportsExternalServicesConfig.CustomsMetricsContext,
+    "microservice.services.customs-declarations-metrics.host" -> ExternalServicesConfig.Host,
+    "microservice.services.customs-declarations-metrics.port" -> ExternalServicesConfig.Port,
+    "microservice.services.customs-declarations-metrics.context" -> ExportsExternalServicesConfig.CustomsMetricsContext,
     "metrics.jvm" -> false
   )
 

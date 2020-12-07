@@ -31,7 +31,7 @@ class ExportsConfigService @Inject()(configValidatedNel: ConfigValidatedNelAdapt
 
   private val apiSubscriptionFieldsService = configValidatedNel.service("api-subscription-fields")
   private val apiSubscriptionFieldsServiceUrlNel = apiSubscriptionFieldsService.serviceUrl
-  private val customsMetricsService = configValidatedNel.service("customs-metrics")
+  private val customsMetricsService = configValidatedNel.service("customs-declarations-metrics")
   private val customsMetricsServiceUrlNel = customsMetricsService.serviceUrl
 
   private val v1ShutteredNel = root.maybeBoolean("shutter.v1")
