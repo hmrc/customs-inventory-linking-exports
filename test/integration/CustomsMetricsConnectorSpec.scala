@@ -54,9 +54,9 @@ class CustomsMetricsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPe
 
   override implicit lazy val app: Application =
     GuiceApplicationBuilder(overrides = Seq(IntegrationTestModule(mockExportsLogger).asGuiceableModule)).configure(Map(
-      "microservice.services.customs-metrics.host" -> Host,
-      "microservice.services.customs-metrics.port" -> Port,
-      "microservice.services.customs-metrics.context" -> ExportsExternalServicesConfig.CustomsMetricsContext
+      "microservice.services.customs-declarations-metrics.host" -> Host,
+      "microservice.services.customs-declarations-metrics.port" -> Port,
+      "microservice.services.customs-declarations-metrics.context" -> ExportsExternalServicesConfig.CustomsMetricsContext
     )).build()
 
   "MetricsConnector" should {
