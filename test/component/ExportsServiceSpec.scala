@@ -20,10 +20,14 @@ import org.scalatest.{Matchers, OptionValues}
 import play.api.Application
 import play.api.mvc.Result
 import play.api.test.Helpers._
+import uk.gov.hmrc.customs.api.common.xml.ValidateXmlAgainstSchema
 import util.RequestHeaders.X_CONVERSATION_ID_NAME
 import util.TestData._
 import util.externalservices.{ApiSubscriptionFieldsService, AuthService, CustomsMetricsService, InventoryLinkingExportsService}
 
+import java.io.StringReader
+import javax.xml.transform.stream.StreamSource
+import javax.xml.validation.Schema
 import scala.concurrent.Future
 
 class ExportsServiceSpec extends ComponentTestSpec
@@ -33,6 +37,9 @@ class ExportsServiceSpec extends ComponentTestSpec
   with InventoryLinkingExportsService
   with ApiSubscriptionFieldsService
   with AuthService {
+
+  protected val xsdErrorLocationV1: String = "/api/conf/1.0/schemas/customs/error.xsd"
+  private val schemaErrorV1: Schema = ValidateXmlAgainstSchema.getSchema(xsdErrorLocationV1).get
 
   private val internalServerError =
     """<?xml version="1.0" encoding="UTF-8"?>
@@ -129,6 +136,7 @@ class ExportsServiceSpec extends ComponentTestSpec
       status(result) shouldBe INTERNAL_SERVER_ERROR
       stringToXml(contentAsString(result)) shouldEqual stringToXml(internalServerError)
       header(X_CONVERSATION_ID_NAME, result).get shouldNot be("")
+      schemaErrorV1.newValidator().validate(new StreamSource(new StringReader(internalServerError)))
     }
 
   }
@@ -152,6 +160,7 @@ class ExportsServiceSpec extends ComponentTestSpec
 
       And("the response body is a \"invalid xml\" XML")
       stringToXml(contentAsString(resultFuture)) shouldBe stringToXml(unauthorisedError)
+      schemaErrorV1.newValidator().validate(new StreamSource(new StringReader(unauthorisedError)))
     }
 
     scenario("Response status 400 when user submits a message with an XML payload that does not adhere to schema") {
@@ -171,6 +180,7 @@ class ExportsServiceSpec extends ComponentTestSpec
 
       And("the response body is a \"Bad request\" XML")
       stringToXml(contentAsString(resultFuture)) shouldBe stringToXml(badRequestError)
+      schemaErrorV1.newValidator().validate(new StreamSource(new StringReader(badRequestError)))
     }
 
     scenario("A valid message is submitted when the service is shuttered") {
@@ -185,6 +195,7 @@ class ExportsServiceSpec extends ComponentTestSpec
       status(result) shouldBe SERVICE_UNAVAILABLE
       stringToXml(contentAsString(result)) shouldEqual stringToXml(serviceUnavailableError)
       header(X_CONVERSATION_ID_NAME, result) shouldBe None
+      schemaErrorV1.newValidator().validate(new StreamSource(new StringReader(serviceUnavailableError)))
     }
 
   }
