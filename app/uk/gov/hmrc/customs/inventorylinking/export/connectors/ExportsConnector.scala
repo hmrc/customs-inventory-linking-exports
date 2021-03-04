@@ -84,6 +84,7 @@ class ExportsConnector @Inject() (http: HttpClient,
         case status if is2xx(status) =>
           response
         case status => //1xx, 3xx, 4xx, 5xx
+          logger.error(s"Failed inventory linking exports backend call response body=${formatResponseBody(response.body)}")
           throw new Non2xxResponseException(status)
       }
     }.recoverWith {
