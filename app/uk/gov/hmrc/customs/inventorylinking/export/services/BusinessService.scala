@@ -59,14 +59,13 @@ class BusinessService @Inject()(logger: ExportsLogger,
     val xmlToSend = preparePayload(vpr.xmlBody, subscriptionFieldsId, correlationId, dateTime)
 
     connector.send(xmlToSend, dateTime, UUID.fromString(correlationId.toString)).map{
-      logger.info("Inventory linking export request processed successfully")
       _ => Right(())
     }.recover[Either[Result, Unit]]{
       case _: CircuitBreakerOpenException =>
         logger.error("unhealthy state entered")
         Left(errorResponseServiceUnavailable.XmlResult.withConversationId)
       case NonFatal(e) =>
-        logger.error(s"Inventory linking export request failed: ${e.getMessage}", e)
+        logger.error(s"Inventory linking exports request failed: ${e.getMessage}", e)
         Left(ErrorResponse.ErrorInternalServerError.XmlResult.withConversationId)
     }
   }
