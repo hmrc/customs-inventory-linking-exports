@@ -95,7 +95,7 @@ class ApiSubscriptionFieldsConnectorSpec extends UnitSpec
   }
 
   private def returnResponseForRequest(eventualResponse: Future[ApiSubscriptionFields], url: String = expectedUrl) = {
-    when(mockWSGetImpl.GET[ApiSubscriptionFields](ameq(url))
+    when(mockWSGetImpl.GET[ApiSubscriptionFields](ameq(url), any(), any())
       (any[HttpReads[ApiSubscriptionFields]](), any[HeaderCarrier](), any[ExecutionContext])).thenReturn(eventualResponse)
   }
 
