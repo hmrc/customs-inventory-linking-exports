@@ -94,7 +94,7 @@ class CustomsMetricsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPe
       stopMockServer()
 
       intercept[RuntimeException](await(sendValidRequest())).getCause.getClass shouldBe classOf[BadGatewayException]
-      verifyExportsLoggerError("Call to customs metrics failed. url=http://localhost:11111/log-times, status=502, error=POST of 'http://localhost:11111/log-times' failed. Caused by: 'Connection refused: localhost/0:0:0:0:0:0:0:1:11111'")
+      verifyExportsLoggerError("Call to customs metrics failed. url=http://localhost:11111/log-times, status=502, error=POST of 'http://localhost:11111/log-times' failed. Caused by: 'Connection refused: localhost/127.0.0.1:11111'")
 
       startMockServer()
     }
