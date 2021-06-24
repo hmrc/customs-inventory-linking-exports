@@ -55,7 +55,7 @@ class ApiDocumentationControllerSpec extends PlaySpec with MockitoSugar with Res
 
   }
 
-  private def expectedJson(v1Enabled: Boolean  = true, v2Enabled: Boolean = true) =
+  private def expectedJson(v1Enabled: Boolean, v2Enabled: Boolean) =
     Json.parse(
       s"""
          |{

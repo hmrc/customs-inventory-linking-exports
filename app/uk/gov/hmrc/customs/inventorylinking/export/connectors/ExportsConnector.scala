@@ -33,7 +33,6 @@ import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{HasConv
 import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http._
-import uk.gov.hmrc.http.logging.Authorization
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
@@ -56,9 +55,12 @@ class ExportsConnector @Inject() (http: HttpClient,
   def send[A](xml: NodeSeq, date: DateTime, correlationId: UUID)(implicit vpr: ValidatedPayloadRequest[A], hc: HeaderCarrier): Future[HttpResponse] = {
     val config = Option(serviceConfigProvider.getConfig(s"${vpr.requestedApiVersion.configPrefix}$configKey")).getOrElse(throw new IllegalArgumentException("config not found"))
     val bearerToken = "Bearer " + config.bearerToken.getOrElse(throw new IllegalStateException("no bearer token was found in config"))
-    implicit val headerCarrier: HeaderCarrier = hc.copy(extraHeaders = hc.extraHeaders ++ getHeaders(date, correlationId), authorization = Some(Authorization(bearerToken)))
+
+    implicit val headerCarrier: HeaderCarrier = hc.copy(authorization = None)
+    val exportHeaders = hc.extraHeaders ++ getHeaders(date, correlationId) ++ Seq(HeaderNames.authorisation -> bearerToken)
+
     val startTime = LocalDateTime.now
-    withCircuitBreaker(post(xml, config.url)(vpr, headerCarrier)).map{
+    withCircuitBreaker(post(xml, config.url, exportHeaders)(vpr, headerCarrier)).map{
       response => {
         logCallDuration(startTime)
         logger.debug(s"Response status ${response.status} and response body ${formatResponseBody(response.body)}")
@@ -76,10 +78,10 @@ class ExportsConnector @Inject() (http: HttpClient,
       ("X-Correlation-ID", correlationId.toString))
   }
 
-  private def post[A](xml: NodeSeq, url: String)(implicit vpr: ValidatedPayloadRequest[A], hc: HeaderCarrier) = {
+  private def post[A](xml: NodeSeq, url: String, exportHeaders: Seq[(String, String)])(implicit vpr: ValidatedPayloadRequest[A], hc: HeaderCarrier) = {
     logger.debug(s"Posting inventory linking exports.\nurl = $url\npayload = \n${xml.toString}")
 
-    http.POSTString[HttpResponse](url, xml.toString()).map{ response =>
+    http.POSTString[HttpResponse](url, xml.toString(), headers = exportHeaders).map{ response =>
       response.status match {
         case status if is2xx(status) =>
           response

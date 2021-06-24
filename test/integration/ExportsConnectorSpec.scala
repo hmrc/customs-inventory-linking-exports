@@ -28,7 +28,7 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.{ExportsConnector, Non2xxResponseException}
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
 import uk.gov.hmrc.http._
-import uk.gov.hmrc.http.logging.Authorization
+import uk.gov.hmrc.http.Authorization
 import util.ExternalServicesConfig.{AuthToken, Host, Port}
 import util.TestData
 import util.XMLTestData.ValidInventoryLinkingMovementRequestXML

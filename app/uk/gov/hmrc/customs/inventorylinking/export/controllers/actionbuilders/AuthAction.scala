@@ -28,7 +28,7 @@ import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBu
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.AuthorisedRequest
 import uk.gov.hmrc.customs.inventorylinking.export.services.CustomsAuthService
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.HeaderCarrierConverter
+import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Left
@@ -56,7 +56,7 @@ class AuthAction @Inject()(customsAuthService: CustomsAuthService,
 
   override def refine[A](asfr: ApiSubscriptionFieldsRequest[A]): Future[Either[Result, AuthorisedRequest[A]]] = {
     implicit val implicitAsfr: ApiSubscriptionFieldsRequest[A] = asfr
-    implicit def hc(implicit rh: RequestHeader): HeaderCarrier = HeaderCarrierConverter.fromHeadersAndSession(rh.headers)
+    implicit def hc(implicit rh: RequestHeader): HeaderCarrier = HeaderCarrierConverter.fromRequest(rh)
 
     authAsCspWithOptionalAuthHeaders.flatMap{
       case Right(maybeAuthorisedAsCspWithIdentifierHeaders) =>

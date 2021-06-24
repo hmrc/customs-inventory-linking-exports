@@ -28,7 +28,7 @@ import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.HasConversationId
 import uk.gov.hmrc.customs.inventorylinking.export.model.{Eori, NonCsp}
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.logging.Authorization
+import uk.gov.hmrc.http.Authorization
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Left
