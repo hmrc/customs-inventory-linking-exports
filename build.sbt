@@ -66,8 +66,7 @@ lazy val integrationComponentTestSettings =
 
 lazy val commonSettings: Seq[Setting[_]] = publishingSettings ++ gitStampSettings
 
-lazy val playPublishingSettings: Seq[sbt.Setting[_]] =
-  publishingSettings
+lazy val playPublishingSettings: Seq[sbt.Setting[_]] = publishingSettings
 
 lazy val scoverageSettings: Seq[Setting[_]] = Seq(
   coverageExcludedPackages := "<empty>;models/.data/..*;uk.gov.hmrc.customs.inventorylinking.views.*;models.*;config.*;.*(Reverse|AuthService|BuildInfo|Routes).*",

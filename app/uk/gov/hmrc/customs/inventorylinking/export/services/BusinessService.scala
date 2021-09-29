@@ -48,7 +48,6 @@ class BusinessService @Inject()(logger: ExportsLogger,
   private val errorResponseServiceUnavailable = errorInternalServerError("This service is currently unavailable")
 
   def send[A](implicit vpr: ValidatedPayloadRequest[A], hc: HeaderCarrier): Future[Either[Result, Unit]] = {
-
     callBackend(SubscriptionFieldsId(vpr.apiSubscriptionFields.fieldsId.toString))
   }
 

@@ -13,11 +13,11 @@ object AppDependencies {
 
   val scalaTestPlusPlay = "org.scalatestplus.play" %% "scalatestplus-play" % scalatestplusVersion % testScope
 
-  val scalatestplusMockito ="org.scalatestplus"   %% "scalatestplus-mockito"    % scalatestplusMockitoVersion   % testScope
+  val scalatestplusMockito = "org.scalatestplus"   %% "scalatestplus-mockito"    % scalatestplusMockitoVersion   % testScope
 
   val wireMock = "com.github.tomakehurst" % "wiremock-jre8" % wireMockVersion % testScope
 
-  val mockito =  "org.mockito" % "mockito-core" % mockitoVersion % testScope
+  val mockito = "org.mockito" % "mockito-core" % mockitoVersion % testScope
 
   val flexmark = "com.vladsch.flexmark" % "flexmark-all" % flexmarkVersion % testScope
 
