@@ -71,7 +71,7 @@ class BusinessService @Inject()(logger: ExportsLogger,
   }
 
   private def preparePayload[A](xml: NodeSeq, clientId: SubscriptionFieldsId, correlationId: CorrelationId, dateTime: DateTime)
-                               (implicit vpr: ValidatedPayloadRequest[A], hc: HeaderCarrier): NodeSeq = {
+                               (implicit vpr: ValidatedPayloadRequest[A]): NodeSeq = {
     logger.debug("preparePayload called")
     wrapper.decorate(xml, clientId, correlationId, dateTime)
   }

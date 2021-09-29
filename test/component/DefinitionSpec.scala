@@ -16,7 +16,7 @@
 
 package component
 
-import org.scalatest.Matchers
+import org.scalatest.matchers.should.Matchers
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
@@ -33,9 +33,9 @@ class DefinitionSpec extends ComponentTestSpec
     "api.access.version-2.0.enabled" -> false
   )).build()
 
-  feature("Ensure definition file") {
+  Feature("Ensure definition file") {
 
-    scenario("is correct when version 2 is disabled") {
+    Scenario("is correct when version 2 is disabled") {
 
       Given("the API is available")
       val request = FakeRequest("GET", "/api/definition")

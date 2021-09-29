@@ -22,4 +22,7 @@ addSbtPlugin("uk.gov.hmrc" % "sbt-auto-build" % "3.5.0")
 
 addSbtPlugin("net.vonbuchholtz" % "sbt-dependency-check" % "3.1.1")
 
+addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.9.18-1")
+
+
 

@@ -16,7 +16,8 @@
 
 package component
 
-import org.scalatest.{Matchers, OptionValues}
+import org.scalatest.OptionValues
+import org.scalatest.matchers.should.Matchers
 import play.api.Application
 import play.api.mvc.Result
 import play.api.test.Helpers._
@@ -95,9 +96,9 @@ class ExportsServiceSpec extends ComponentTestSpec
     stopMockServer()
   }
 
-  feature("CSPs and Software Houses submit a message") {
+  Feature("CSPs and Software Houses submit a message") {
 
-    scenario("A valid message is submitted and successfully forwarded to the backend") {
+    Scenario("A valid message is submitted and successfully forwarded to the backend") {
       Given("a CSP is authorised to use the API endpoint")
       authServiceAuthorisesCSP()
 
@@ -121,7 +122,7 @@ class ExportsServiceSpec extends ComponentTestSpec
       eventually(verifyCustomsMetricsServiceWasCalled())
     }
 
-    scenario("A valid message is submitted and the backend service fails") {
+    Scenario("A valid message is submitted and the backend service fails") {
       Given("a CSP is authorised to use the API endpoint")
       authServiceAuthorisesCSP()
 
@@ -141,8 +142,8 @@ class ExportsServiceSpec extends ComponentTestSpec
 
   }
 
-  feature("The endpoint handles errors as expected") {
-    scenario("Response status 401 when an unauthorised user submits a valid message") {
+  Feature("The endpoint handles errors as expected") {
+    Scenario("Response status 401 when an unauthorised user submits a valid message") {
       Given("an unauthorised CSP wants to submit a customs message with an invalid XML payload")
       authServiceUnauthorisesScopeForCSP()
       authServiceUnauthorisesCustomsEnrolmentForNonCSP(cspBearerToken)
@@ -163,7 +164,7 @@ class ExportsServiceSpec extends ComponentTestSpec
       schemaErrorV1.newValidator().validate(new StreamSource(new StringReader(unauthorisedError)))
     }
 
-    scenario("Response status 400 when user submits a message with an XML payload that does not adhere to schema") {
+    Scenario("Response status 400 when user submits a message with an XML payload that does not adhere to schema") {
       Given("an authorised CSP wants to submit a message with an invalid XML payload")
       authServiceAuthorisesCSP()
 
@@ -183,7 +184,7 @@ class ExportsServiceSpec extends ComponentTestSpec
       schemaErrorV1.newValidator().validate(new StreamSource(new StringReader(badRequestError)))
     }
 
-    scenario("A valid message is submitted when the service is shuttered") {
+    Scenario("A valid message is submitted when the service is shuttered") {
       Given("a CSP is authorised to use the API endpoint and submits to a shuttered version")
       implicit lazy val app: Application = super.app(configMap + ("shutter.v1" -> "true"))
       authServiceAuthorisesCSP()
