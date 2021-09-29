@@ -16,11 +16,11 @@
 
 package unit.controllers.actionbuilders
 
-import controllers.Assets.ACCEPT
 import org.mockito.Mockito.when
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status.SERVICE_UNAVAILABLE
 import play.api.mvc.Result
+import play.api.test.Helpers.ACCEPT
 import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.ErrorAcceptHeaderInvalid
