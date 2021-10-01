@@ -20,7 +20,8 @@ import akka.stream.Materializer
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
-import org.scalatest.{Assertion, BeforeAndAfterEach, Matchers}
+import org.scalatest.{Assertion, BeforeAndAfterEach}
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.mvc._
 import play.api.test.Helpers

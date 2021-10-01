@@ -16,18 +16,20 @@
 
 package component
 
-import org.scalatest._
+
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, GivenWhenThen}
 import org.scalatest.concurrent.Eventually
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import util.ExternalServicesConfig
 import util.externalservices.ExportsExternalServicesConfig
+import org.scalatest.featurespec.AnyFeatureSpec
 
 import scala.util.control.NonFatal
 import scala.xml.{Node, Utility, XML}
 
-trait ComponentTestSpec extends FeatureSpec with GivenWhenThen with GuiceOneAppPerSuite
+trait ComponentTestSpec extends AnyFeatureSpec with GivenWhenThen with GuiceOneAppPerSuite
   with BeforeAndAfterAll with BeforeAndAfterEach with Eventually {
 
   val configMap: Map[String, Any] = Map(
