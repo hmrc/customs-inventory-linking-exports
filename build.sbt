@@ -101,10 +101,11 @@ zipXsds := { mappings: Seq[PathMapping] =>
       .filter(_.isDirectory)
       .map { dir =>
         val xsdPaths = Path.allSubpaths(dir / "schemas")
-        val exampleMessagesFilter = new SimpleFileFilter(_.getPath.contains("/example_messages/"))
+        val exampleMessagesFilter = new SimpleFileFilter(_.getPath.contains("/annotated_XML_samples/"))
         val exampleMessagesPaths = Path.selectSubpaths(dir / "examples", exampleMessagesFilter)
         val zipFile = targetDir / "api" / "conf" / dir.getName / "inventory-linking-exports-schemas.zip"
         IO.zip(xsdPaths ++ exampleMessagesPaths, zipFile, None)
+        println(s"Created zip $zipFile")
         zipFile
       }
   zipFiles.pair(Path.relativeTo(targetDir)) ++ mappings
