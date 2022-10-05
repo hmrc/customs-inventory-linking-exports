@@ -30,7 +30,8 @@ class DefinitionSpec extends ComponentTestSpec
   with Matchers {
 
   override implicit lazy val app: Application = new GuiceApplicationBuilder().configure(Map(
-    "api.access.version-2.0.enabled" -> false
+    "api.access.version-2.0.enabled" -> false,
+    "metrics.enabled" -> false
   )).build()
 
   Feature("Ensure definition file") {
