@@ -51,7 +51,8 @@ class ExportsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite 
       "microservice.services.mdg-exports.host" -> Host,
       "microservice.services.mdg-exports.port" -> Port,
       "microservice.services.mdg-exports.context" -> ExportsExternalServicesConfig.ExportsServiceContext,
-      "microservice.services.mdg-exports.bearer-token" -> AuthToken
+      "microservice.services.mdg-exports.bearer-token" -> AuthToken,
+      "metrics.enabled" -> false
     )).build()
 
   private lazy val connector = app.injector.instanceOf[ExportsConnector]
