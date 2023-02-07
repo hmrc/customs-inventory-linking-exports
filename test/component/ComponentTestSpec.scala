@@ -45,7 +45,7 @@ trait ComponentTestSpec extends AnyFeatureSpec with GivenWhenThen with GuiceOneA
     "microservice.services.customs-declarations-metrics.host" -> ExternalServicesConfig.Host,
     "microservice.services.customs-declarations-metrics.port" -> ExternalServicesConfig.Port,
     "microservice.services.customs-declarations-metrics.context" -> ExportsExternalServicesConfig.CustomsMetricsContext,
-    "metrics.jvm" -> false
+    "metrics.enabled" -> false
   )
 
   def app(values: Map[String, Any] = configMap): Application =
