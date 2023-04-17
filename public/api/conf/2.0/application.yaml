@@ -1,0 +1,281 @@
+openapi: 3.0.3
+info:
+  title: Customs Inventory Linking Exports
+  contact: {}
+  version: '2.0'
+  description: |
+    # Overview
+    This API enables the functionality to support the Inventory Linking Export process. Inventory Linking controls and monitors cargo moving through temporary storage facilities, and allows the movement/transition through frontiers.
+    
+    There are three functional areas:
+    
+    * Consolidation This enables the combining of consignments into one master consignment, or splitting into multiple consignments.
+    * Movement Records the movement of consignments within Customs controlled storage facilities.
+    * Query The querying of data held within the Inventory Linking Export database.
+    
+    Within each of these functional areas, there are multiple message types, each performing a specific activity.
+    
+    # Versioning
+    When an API changes in a way that is backwards-incompatible, we increase the version number of the API. See our [reference guide](https://developer.service.hmrc.gov.uk/api-documentation/assets/common/docs/versioning.md) for more on versioning.
+    
+    # Errors
+    We use standard HTTP status codes to show whether an API request succeeded or not. They are usually in the range:
+    
+    * 200 to 299 if it succeeded, including code 202 if it was accepted by an API that needs to wait for further action
+    * 400 to 499 if it failed because of a client error by your application
+    * 500 to 599 if it failed because of an error on our server
+    
+    Errors specific to each API are shown in the Endpoints section, under Response.
+    
+    For error scenarios that are common across all APIs, and for error formats, see our [reference guide](https://developer.service.hmrc.gov.uk/api-documentation/assets/common/docs/errors.md).
+    
+    # XML Schemas
+    Schema definitions for all the API endpoints request and response payloads can be found in the following zip archive.
+    [Schemas and example messages](https://developer.service.hmrc.gov.uk/api-documentation/docs/api/download/customs-inventory-linking-exports/2.0/inventory-linking-exports-schemas.zip)
+    ZIP, 2.2MB last updated 16/03/2023
+    The ZIP file contains XML files. Open in your preferred file viewer.
+servers:
+  - url: https://test-api.service.hmrc.gov.uk
+    description: Sandbox
+  - url: https://api.service.hmrc.gov.uk/
+    description: Production
+    variables: {}
+paths:
+  /customs/inventory-linking/exports/:
+    post:
+      tags:
+        - Endpoints
+      summary: Inventory Exports Request
+      description: |-
+        Submit an Inventory Exports Request
+        #### Authorisation
+        This endpoint is [user-restricted](https://developer.service.hmrc.gov.uk/api-documentation/docs/authorisation/user-restricted-endpoints) and requires an Authorization header containing an OAuth 2.0 Bearer Token with the write:customs-inventory-linking-exports scope.
+        
+        See also [fraud prevention](https://developer.service.hmrc.gov.uk/guides/fraud-prevention/).
+      operationId: InventoryExportsRequest
+      parameters:
+        - name: Accept
+          in: header
+          description: Specifies the version of the API that you want to call. See [versioning](https://developer.service.hmrc.gov.uk/api-documentation/docs/reference-guide#versioning).
+          required: true
+          schema:
+            type: string
+            example: application/vnd.hmrc.1.0+xml
+        - name: Content-Type
+          in: header
+          description: Specifies the format of the request body, which must be XML.
+          required: true
+          schema:
+            type: string
+            example: application/xml; charset=UTF-8
+        - name: X-Badge-Identifier
+          in: header
+          description: |
+            Represents the end-user who is interacting with the subscribed application.
+            Must be 6 to 12 characters, consisting of any combination of numeric digits and/or upper-case letters.
+          required: false
+          schema:
+            type: string
+            example: ABC123
+        - name: X-Submitter-Identifier
+          in: header
+          description: |
+            The EORI associated with the originating owner of the declaration.
+            Must have a maximum length of 17 characters, consisting of any combination of numeric digits and/or letters.
+          required: false
+          schema:
+            type: string
+            example: ABC123
+      requestBody:
+        description: ''
+        content:
+          application/xml:
+            examples:
+              consolidationRequest:
+                $ref: '#/components/examples/InventoryLinkingConsolidationRequestExample'
+              movementRequest:
+                $ref: '#/components/examples/InventoryLinkingMovementRequestExample'
+              queryRequest:
+                $ref: '#/components/examples/InventoryLinkingQueryRequestExample'
+        required: true
+      responses:
+        '202':
+          description: 'Accepted'
+          headers: {}
+          content: {}
+        '400':
+          description: 'Bad Request'
+          headers: { }
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+              examples:
+                objectExample:
+                  $ref: '#/components/examples/BadRequestExample'
+        '406':
+          description: 'Not Acceptable'
+          headers: { }
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/NotAcceptable'
+              examples:
+                objectExample:
+                  $ref: '#/components/examples/NotAcceptableExample'
+        '415':
+          description: 'Unsupported Media Type'
+          headers: { }
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/UnsupportedMediaType'
+              examples:
+                objectExample:
+                  $ref: '#/components/examples/UnsupportedMediaTypeExample'
+        '500':
+          description: 'Internal Server Error'
+          headers: { }
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+              examples:
+                objectExample:
+                  $ref: '#/components/examples/InternalServerErrorExample'
+      deprecated: false
+      security:
+        - userRestricted: [ "write:customs-inventory-linking-exports" ]
+components:
+  securitySchemes:
+    userRestricted:
+      type: oauth2
+      description: |
+        HMRC supports OAuth 2.0 for authenticating user restricted API requests using an OAuth 2.0 Bearer Token in the AUTHORIZATION header.
+        See https://developer.service.hmrc.gov.uk/api-documentation/docs/authorisation/user-restricted-endpoints for details.
+      flows:
+        authorizationCode:
+          authorizationUrl: https://api.service.hmrc.gov.uk/oauth/authorize
+          tokenUrl: https://api.service.hmrc.gov.uk/oauth/token
+          refreshUrl: https://api.service.hmrc.gov.uk/oauth/refresh
+          scopes:
+            "write:customs-inventory-linking-exports": "write:customs-inventory-linking-exports"
+  schemas:
+    BadRequest:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    NotAcceptable:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+    UnsupportedMediaType:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+    InternalServerError:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+  examples:
+    InventoryLinkingConsolidationRequestExample:
+      summary: A sample Inventory Linking Consolidation Request
+      value: |
+        <!-- CST – A Consolidation message is used to shut MUCR prior to departure -->
+        <inv:inventoryLinkingConsolidationRequest xmlns:inv="http://gov.uk/customs/inventoryLinking/v1">
+          <inv:messageCode>CST</inv:messageCode>
+          <!--Maritime MUCR assigned to the consignment. Arriving at MUCR level. This value has come from Declaration -->
+          <inv:masterUCR>GB/123456789012-0203N1</inv:masterUCR>
+        </inv:inventoryLinkingConsolidationRequest>
+    InventoryLinkingMovementRequestExample:
+      summary: A sample Inventory Linking Movement Request
+      value: |
+        <!-- EAL – Movement message notification format for Entry arriving at location (Arrivals) -->
+        <inv:inventoryLinkingMovementRequest xmlns:inv="http://gov.uk/customs/inventoryLinking/v1">
+          <inv:messageCode>EAL</inv:messageCode>
+          <inv:ucrBlock>
+            <!--Air time MUCR assigned to the consignment. Arriving at MUCR level. This value has come from Declaration -->
+            <inv:ucr>GB/123456789012-0203N1</inv:ucr>
+            <inv:ucrType>M</inv:ucrType>
+          </inv:ucrBlock>
+          <!-- ID to give a unique position of the location. DVRDOVDVR Indicating Dover. This value has come from Declaration -->
+          <inv:goodsLocation>GBAUDVRDOVDVR</inv:goodsLocation>
+          <!-- This should be today's Date -->
+          <inv:goodsArrivalDateTime>2021-03-09T08:00:00</inv:goodsArrivalDateTime>
+          <inv:movementReference>Movement14</inv:movementReference>
+          <inv:transportDetails>
+            <inv:transportID>11CSCLGLOBE</inv:transportID>
+            <inv:transportMode>1</inv:transportMode>
+            <inv:transportNationality>GB</inv:transportNationality>
+          </inv:transportDetails>
+        </inv:inventoryLinkingMovementRequest>
+    InventoryLinkingQueryRequestExample:
+      summary: A sample Inventory Linking Query Request
+      value: |
+        <inv:inventoryLinkingQueryRequest xmlns:inv="http://gov.uk/customs/inventoryLinking/v1">
+          <inv:queryUCR>
+            <inv:ucr>GB/AAAA-00000</inv:ucr>
+            <inv:ucrPartNo>123A</inv:ucrPartNo>
+            <inv:ucrType>D</inv:ucrType>
+          </inv:queryUCR>
+        </inv:inventoryLinkingQueryRequest>
+    BadRequestExample:
+      summary: A sample error response
+      value: |
+        <errorResponse>
+         <code>BAD_REQUEST</code>
+         <message>Payload is not valid according to schema</message>
+         <errors>
+           <error>
+             <code>xml_validation_error</code>
+             <message>Error at line 13, column 13: no declaration found for element 'unknown'</message>
+           </error>
+         </errors>
+        </errorResponse>
+    NotAcceptableExample:
+      summary: A sample error response
+      value: |
+        <errorResponse>
+          <code>ACCEPT_HEADER_INVALID</code>
+          <message>The accept header is missing or invalid</message>
+        </errorResponse>
+    UnsupportedMediaTypeExample:
+      summary: A sample error response
+      value: |
+        <errorResponse>
+          <code>UNSUPPORTED_MEDIA_TYPE</code>
+          <message>The content type header is missing or invalid</message>
+        </errorResponse>
+    InternalServerErrorExample:
+      summary: A sample error response
+      value: |
+        <errorResponse>
+          <code>INTERNAL_SERVER_ERROR</code>
+          <message>Internal server error</message>
+        </errorResponse>
+tags:
+  - name: Endpoints
+    description: ''
