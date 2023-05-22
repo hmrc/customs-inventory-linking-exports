@@ -3,14 +3,15 @@ resolvers += Resolver.url("HMRC-open-artefacts-ivy", url("https://open.artefacts
 resolvers += Resolver.jcenterRepo
 
 addSbtPlugin("com.github.sbt"    %  "sbt-release"           % "1.0.15")
-addSbtPlugin("com.typesafe.play" %  "sbt-plugin"            % "2.8.16")
+addSbtPlugin("com.typesafe.play" %  "sbt-plugin"            % "2.8.19")
 addSbtPlugin("uk.gov.hmrc"       %  "sbt-distributables"    % "2.2.0")
 addSbtPlugin("net.virtual-void"  %  "sbt-dependency-graph"  % "0.10.0-RC1")
-addSbtPlugin("org.scoverage"     %  "sbt-scoverage"         % "1.8.1")
+addSbtPlugin("org.scoverage"     %  "sbt-scoverage"         % "2.0.7")
 addSbtPlugin("org.scalastyle"    %% "scalastyle-sbt-plugin" % "1.0.0")
 addSbtPlugin("uk.gov.hmrc"       %  "sbt-auto-build"        % "3.9.0")
-addSbtPlugin("net.vonbuchholtz"  %  "sbt-dependency-check"  % "3.1.1")
 addSbtPlugin("ch.epfl.scala"     %  "sbt-scalafix"          % "0.9.18-1")
+addSbtPlugin("com.timushev.sbt"  %  "sbt-updates"            % "0.6.3")
 
 
-
+// TODO: unnecessary? To resolve a bug with version 2.x.x of the scoverage plugin - https://github.com/sbt/sbt/issues/6997
+libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
