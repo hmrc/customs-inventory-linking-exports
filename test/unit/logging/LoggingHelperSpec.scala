@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,11 +85,11 @@ class LoggingHelperSpec extends UnitSpec with MockitoSugar {
     }
 
     "testFormatDebugFull" in {
-      LoggingHelper.formatDebugFull("Debug message.", conversationIdRequest) shouldBe s"[conversationId=$conversationId] Debug message. headers=Map(Accept -> B, X-Client-ID -> D, Content-Type -> A, X-Conversation-ID -> C, X-Badge-Identifier -> BADGE)"
+      LoggingHelper.formatDebugFull("Debug message.", conversationIdRequest) shouldBe s"[conversationId=$conversationId] Debug message. headers=TreeMap(Accept -> B, X-Client-ID -> D, Content-Type -> A, X-Conversation-ID -> C, X-Badge-Identifier -> BADGE)"
     }
 
     "testFormatDebugFull with mixed case headernames" in {
-      LoggingHelper.formatDebugFull("Debug message.", conversationIdRequestMixedCaseHeaders) shouldBe s"[conversationId=$conversationId] Debug message. headers=Map(Accept -> B, X-CliEnT-ID -> D, Content-Type -> A, X-ConVerSaTion-ID -> C, X-BaDge-IdeNtiFier -> BADGE)"
+      LoggingHelper.formatDebugFull("Debug message.", conversationIdRequestMixedCaseHeaders) shouldBe s"[conversationId=$conversationId] Debug message. headers=TreeMap(Accept -> B, X-CliEnT-ID -> D, Content-Type -> A, X-ConVerSaTion-ID -> C, X-BaDge-IdeNtiFier -> BADGE)"
     }
   }
 }
