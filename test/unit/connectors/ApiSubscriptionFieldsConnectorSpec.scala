@@ -61,10 +61,11 @@ class ApiSubscriptionFieldsConnectorSpec extends UnitSpec
   }
 
   "ApiSubscriptionFieldsConnector" can {
+
     "when making a successful request" should {
       "use the correct URL for valid path parameters and config" in {
         returnResponseForRequest(Future.successful(apiSubscriptionFields))
-        awaitSubscriptionFields shouldBe apiSubscriptionFields
+        awaitSubscriptionFields() shouldBe apiSubscriptionFields
       }
     }
 
@@ -73,7 +74,7 @@ class ApiSubscriptionFieldsConnectorSpec extends UnitSpec
         returnResponseForRequest(Future.failed(TestData.emulatedServiceFailure))
 
         val caught = intercept[TestData.EmulatedServiceFailure] {
-          awaitSubscriptionFields
+          awaitSubscriptionFields()
         }
 
         caught shouldBe TestData.emulatedServiceFailure
@@ -83,7 +84,7 @@ class ApiSubscriptionFieldsConnectorSpec extends UnitSpec
         returnResponseForRequest(Future.failed(httpException))
 
         val caught = intercept[RuntimeException] {
-          awaitSubscriptionFields
+          awaitSubscriptionFields()
         }
 
         caught.getCause shouldBe httpException
