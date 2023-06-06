@@ -100,19 +100,19 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
     when(mockExportsConfigService.exportsShutterConfig).thenReturn(allVersionsUnshuttered)
   }
 
-  private val errorResultEoriNotFoundInCustomsEnrolment = ErrorResponse(UNAUTHORIZED, errorCode = "UNAUTHORIZED",
+  private val errorResultEoriNotFoundInCustomsEnrolment: Result = ErrorResponse(UNAUTHORIZED, errorCode = "UNAUTHORIZED",
     message = "EORI number not found in Customs Enrolment").XmlResult.withHeaders(X_CONVERSATION_ID_HEADER)
 
-  private val errorResultUnauthorised = ErrorResponse(UNAUTHORIZED, errorCode = "UNAUTHORIZED",
+  private val errorResultUnauthorised: Result = ErrorResponse(UNAUTHORIZED, errorCode = "UNAUTHORIZED",
     message = "Unauthorised request").XmlResult.withHeaders(X_CONVERSATION_ID_HEADER)
 
-  private val errorResultBadgeIdentifier = errorBadRequest("X-Badge-Identifier header is missing or invalid").XmlResult.withHeaders(X_CONVERSATION_ID_HEADER)
+  private val errorResultBadgeIdentifier: Result = errorBadRequest("X-Badge-Identifier header is missing or invalid").XmlResult.withHeaders(X_CONVERSATION_ID_HEADER)
 
-  private val internalServerError = ErrorInternalServerError.XmlResult.withConversationId(TestConversationIdRequest)
+  private val internalServerError: Result = ErrorInternalServerError.XmlResult.withConversationId(TestConversationIdRequest)
 
-  private val errorResultSubmitterIdentifierInvalid = errorBadRequest("X-Submitter-Identifier header is invalid").XmlResult.withHeaders(X_CONVERSATION_ID_HEADER)
+  private val errorResultSubmitterIdentifierInvalid: Result = errorBadRequest("X-Submitter-Identifier header is invalid").XmlResult.withHeaders(X_CONVERSATION_ID_HEADER)
 
-  private lazy val missingEoriResult = errorInternalServerError("Missing authenticated eori in service lookup. Alternately, use X-Badge-Identifier or X-Submitter-Identifier headers.").XmlResult.withHeaders(X_CONVERSATION_ID_HEADER)
+  private lazy val missingEoriResult: Result = errorInternalServerError("Missing authenticated eori in service lookup. Alternately, use X-Badge-Identifier or X-Submitter-Identifier headers.").XmlResult.withHeaders(X_CONVERSATION_ID_HEADER)
 
   "InventoryLinkingExportController" should {
     "process CSP request when call is authorised for CSP (valid badge and submitter id headers present)" in new SetUp() {
@@ -302,7 +302,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
 
   }
 
-  private def bodyAsString(r: Result) = {
+  private def bodyAsString(r: Result): String = {
     bodyOf(r)(mock[Materializer])
   }
 

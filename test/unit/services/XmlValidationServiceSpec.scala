@@ -37,11 +37,11 @@ class XmlValidationServiceSpec extends UnitSpec with MockitoSugar with BeforeAnd
   private val mockConfiguration = mock[Configuration]
   private val mockXml = mock[Node]
 
-  private def testService(test: XmlValidationService => Unit) = {
+  private def testService(test: XmlValidationService => Unit): Unit = {
     test(new XmlValidationService(mockConfiguration))
   }
 
-  override protected def beforeEach() {
+  override protected def beforeEach(): Unit = {
     reset(mockConfiguration)
     when(mockConfiguration.getOptional[Seq[String]]("xsd.locations")).thenReturn(Some(xsdLocations))
     when(mockConfiguration.getOptional[Int]("xml.max-errors")).thenReturn(None)

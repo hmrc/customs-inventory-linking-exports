@@ -26,7 +26,7 @@ import util.TestData.authenticatedEoriValue
 import util.externalservices.ExportsExternalServicesConfig._
 
 trait ApiSubscriptionFieldsTestData {
-  val fieldsId = "327d9145-4965-4d28-a2c5-39dedee50334"
+  val fieldsId= "327d9145-4965-4d28-a2c5-39dedee50334"
   val TestSubscriptionFieldsId = SubscriptionFieldsId(fieldsId)
   val xClientIdValue = "SOME_X_CLIENT_ID"
   val clientId = ClientId(xClientIdValue)

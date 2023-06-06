@@ -19,6 +19,7 @@ package unit.connectors
 import com.typesafe.config.Config
 import org.mockito.ArgumentMatchers.{eq => ameq, _}
 import org.mockito.Mockito._
+import org.mockito.stubbing.OngoingStubbing
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.Eventually
 import org.scalatestplus.mockito.MockitoSugar
@@ -53,7 +54,7 @@ class ApiSubscriptionFieldsConnectorSpec extends UnitSpec
 
   private implicit val vhr = TestData.TestValidatedHeadersRequest
 
-  override protected def beforeEach() {
+  override protected def beforeEach(): Unit = {
     reset(mockExportsLogger, mockWSGetImpl, mockExportsConfigService)
     when(mockExportsConfigService.exportsConfig).thenReturn(mockExportsConfig)
     when(mockExportsConfig.apiSubscriptionFieldsBaseUrl).thenReturn("http://localhost:11111/api-subscription-fields/field")
@@ -90,11 +91,11 @@ class ApiSubscriptionFieldsConnectorSpec extends UnitSpec
     }
   }
 
-  private def awaitSubscriptionFields = {
+  private def awaitSubscriptionFields: Unit = {
     await(connector.getSubscriptionFields(apiSubscriptionKey))
   }
 
-  private def returnResponseForRequest(eventualResponse: Future[ApiSubscriptionFields], url: String = expectedUrl) = {
+  private def returnResponseForRequest(eventualResponse: Future[ApiSubscriptionFields], url: String = expectedUrl): OngoingStubbing[Future[ApiSubscriptionFields]] = {
     when(mockWSGetImpl.GET[ApiSubscriptionFields](ameq(url), any(), any())
       (any[HttpReads[ApiSubscriptionFields]](), any[HeaderCarrier](), any[ExecutionContext])).thenReturn(eventualResponse)
   }

@@ -17,7 +17,6 @@
 package integration
 
 import java.util.UUID
-
 import org.joda.time.DateTime
 import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatestplus.mockito.MockitoSugar
@@ -34,6 +33,7 @@ import util.TestData
 import util.XMLTestData.ValidInventoryLinkingMovementRequestXML
 import util.externalservices.{ExportsExternalServicesConfig, InventoryLinkingExportsService}
 
+import scala.concurrent.Future
 import scala.xml.NodeSeq
 
 class ExportsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite with MockitoSugar
@@ -64,7 +64,7 @@ class ExportsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite 
 
   private implicit val hc: HeaderCarrier = HeaderCarrier(authorization = Some(Authorization(incomingAuthToken)))
 
-  override protected def beforeAll() {
+  override protected def beforeAll(): Unit = {
     startMockServer()
   }
 
@@ -72,7 +72,7 @@ class ExportsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite 
     resetMockServer()
   }
 
-  override protected def afterAll() {
+  override protected def afterAll(): Unit = {
     stopMockServer()
   }
 
@@ -113,7 +113,7 @@ class ExportsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite 
       }
   }
 
-  private def sendValidXml(xml:NodeSeq)(implicit vpr: ValidatedPayloadRequest[_]) = {
+  private def sendValidXml(xml:NodeSeq)(implicit vpr: ValidatedPayloadRequest[_]): Future[HttpResponse] = {
     connector.send(xml, new DateTime(), correlationId)
   }
 

@@ -45,7 +45,7 @@ class ExportsConfigServiceSpec extends UnitSpec with MockitoSugar {
   private val emptyServicesConfiguration = Configuration(emptyAppConfig)
   private val mockExportsLogger = mock[ExportsLogger]
 
-  private def customsConfigService(conf: Configuration) =
+  private def customsConfigService(conf: Configuration): ExportsConfigService =
     new ExportsConfigService(new ConfigValidatedNelAdaptor(testServicesConfig(conf), conf), mockExportsLogger)
 
   "ImportsConfigService" should {
@@ -75,6 +75,6 @@ class ExportsConfigServiceSpec extends UnitSpec with MockitoSugar {
     }
   }
 
-  private def testServicesConfig(configuration: Configuration) = new ServicesConfig(configuration) {}
+  private def testServicesConfig(configuration: Configuration): ServicesConfig = new ServicesConfig(configuration) {}
 
 }

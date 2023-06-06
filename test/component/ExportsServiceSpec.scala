@@ -82,17 +82,17 @@ class ExportsServiceSpec extends ComponentTestSpec
       |</errorResponse>
     """.stripMargin
 
-  override protected def beforeAll() {
+  override protected def beforeAll(): Unit = {
     startMockServer()
   }
 
-  override protected def beforeEach() {
+  override protected def beforeEach(): Unit = {
     resetMockServer()
     startBackendService()
     startApiSubscriptionFieldsService()
   }
 
-  override protected def afterAll() {
+  override protected def afterAll(): Unit = {
     stopMockServer()
   }
 
@@ -113,7 +113,7 @@ class ExportsServiceSpec extends ComponentTestSpec
       header(X_CONVERSATION_ID_NAME, result).get shouldNot be("")
 
       And("the response body is empty")
-      contentAsString(result) shouldBe 'empty
+      contentAsString(result) shouldBe empty
 
       And("the request was authorised with AuthService")
       verifyAuthServiceCalledForCsp()
@@ -152,7 +152,7 @@ class ExportsServiceSpec extends ComponentTestSpec
       val result = route(app, ValidRequestWithSubmitterHeader.fromCsp)
 
       Then("a response with a 401 status is returned by the API")
-      result shouldBe 'defined
+      result shouldBe defined
 
       val resultFuture = result.get
 
@@ -172,7 +172,7 @@ class ExportsServiceSpec extends ComponentTestSpec
       val result = route(app, InvalidRequest.fromCsp)
 
       Then("a response with a 400 status is returned by the API")
-      result shouldBe 'defined
+      result shouldBe defined
 
       val resultFuture = result.get
 

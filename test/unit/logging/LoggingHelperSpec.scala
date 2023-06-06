@@ -18,7 +18,7 @@ package unit.logging
 
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.HeaderNames._
-import play.api.mvc.Request
+import play.api.mvc.{AnyContentAsEmpty, Request}
 import play.api.test.FakeRequest
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames
 import uk.gov.hmrc.customs.inventorylinking.export.logging.LoggingHelper
@@ -49,7 +49,7 @@ class LoggingHelperSpec extends UnitSpec with MockitoSugar {
       )
     )
 
-  private val conversationIdRequestMixedCaseHeaders =
+  private val conversationIdRequestMixedCaseHeaders: ConversationIdRequest[AnyContentAsEmpty.type] =
     ConversationIdRequest(
       conversationId,
       EventStart,
@@ -63,11 +63,9 @@ class LoggingHelperSpec extends UnitSpec with MockitoSugar {
         "IGNORE" -> "IGNORE"
       )
     )
-  private val validatedHeadersRequest = ValidatedHeadersRequest(conversationId, EventStart, VersionOne, ClientId("some-client-id"), requestMock)
+  private val validatedHeadersRequest: ValidatedHeadersRequest[Any] = ValidatedHeadersRequest(conversationId, EventStart, VersionOne, ClientId("some-client-id"), requestMock)
 
   "LoggingHelper" should {
-
-
     "testFormatInfo" in {
       LoggingHelper.formatInfo("Info message", validatedHeadersRequest) shouldBe expectedMessage("Info message")
     }
