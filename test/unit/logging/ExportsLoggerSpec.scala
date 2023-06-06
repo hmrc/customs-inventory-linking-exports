@@ -60,7 +60,6 @@ class ExportsLoggerSpec extends UnitSpec with MockitoSugar {
 
     "debugFull(s: => String)" in new SetUp {
       logger.debugFull("msg")
-      //logger.debug("msg")
 
       PassByNameVerifier(mockCdsLogger, "debug")
         .withByNameParam("[conversationId=28e5aa87-3f89-4f12-b1b1-60f2b2de66f1] msg headers=TreeMap(Content-Type -> Some-Content-Type)")
