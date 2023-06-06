@@ -91,7 +91,7 @@ class ApiSubscriptionFieldsConnectorSpec extends UnitSpec
     }
   }
 
-  private def awaitSubscriptionFields: Unit = {
+  private def awaitSubscriptionFields(): Unit = {
     await(connector.getSubscriptionFields(apiSubscriptionKey))
   }
 

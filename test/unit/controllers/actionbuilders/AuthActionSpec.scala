@@ -71,7 +71,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
     "authorise as CSP when authorised by auth API and both badge identifier and submitter headers exist" in new SetUp {
       authoriseCsp()
 
-      private val actual: AuthorisedRequest[AnyContentAsXml] = await(authAction.refine(request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId())).right.get)
+      private val actual: AuthorisedRequest[AnyContentAsXml] = await(authAction.refine(request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId())).getOrElse(throw new RuntimeException("failed to refine test authAction")))
       private val expected: AuthorisedRequest[AnyContentAsXml] = request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId()).toCspAuthorisedRequest(cspAuthorisedRequest)
       actual.authorisedAs shouldBe expected.authorisedAs
       
@@ -81,7 +81,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
     "authorise as CSP when authorised by auth API and badge identifier header exists but submitter header does not" in new SetUp {
       authoriseCsp()
 
-      private val actual = await(authAction.refine(request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeSubmitterIdString = None))).right.get)
+      private val actual = await(authAction.refine(request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeSubmitterIdString = None))).getOrElse(throw new RuntimeException("failed to refine test authAction")))
       private val expected: AuthorisedRequest[AnyContentAsXml] = request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeSubmitterIdString = None)).toCspAuthorisedRequest(cspAuthorisedRequestWithoutEori)
 
       actual.authorisedAs shouldBe expected.authorisedAs
@@ -100,7 +100,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
     "authorise as CSP when authorised by auth API and badge identifier exists, but submitter and authenticated EORI not present" in new SetUp {
       authoriseCsp()
 
-      private val actual = await(authAction.refine(request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeSubmitterIdString = None), ApiSubscriptionFieldsTestData.apiSubscriptionFieldsNoAuthenticatedEori)).right.get)
+      private val actual = await(authAction.refine(request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeSubmitterIdString = None), ApiSubscriptionFieldsTestData.apiSubscriptionFieldsNoAuthenticatedEori)).getOrElse(throw new RuntimeException("failed to refine test authAction")))
       private val expected = request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeSubmitterIdString = None)).toCspAuthorisedRequest(cspAuthorisedRequestWithoutEori)
 
       actual.authorisedAs shouldBe expected.authorisedAs
@@ -110,7 +110,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
     "authorise as CSP when authorised by auth API and badge identifier exists, but submitter not present and authenticated EORI contains only whitespace" in new SetUp {
       authoriseCsp()
 
-      private val actual = await(authAction.refine(request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeSubmitterIdString = None), ApiSubscriptionFieldsTestData.apiSubscriptionFieldsBlankAuthenticatedEori)).right.get)
+      private val actual = await(authAction.refine(request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeSubmitterIdString = None), ApiSubscriptionFieldsTestData.apiSubscriptionFieldsBlankAuthenticatedEori)).getOrElse(throw new RuntimeException("failed to refine test authAction")))
       private val expected = request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeSubmitterIdString = None)).toCspAuthorisedRequest(cspAuthorisedRequestWithoutEori)
 
       actual.authorisedAs shouldBe expected.authorisedAs
@@ -120,7 +120,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
     "authorise as CSP when authorised by auth API and submitter header and authenticated EORI exists but badge identifier header does not" in new SetUp {
       authoriseCsp()
 
-      private val actual = await(authAction.refine(request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeBadgeIdString = None))).right.get)
+      private val actual = await(authAction.refine(request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeBadgeIdString = None))).getOrElse(throw new RuntimeException("failed to refine test authAction")))
       private val expected = request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeBadgeIdString = None)).toCspAuthorisedRequest(cspAuthorisedRequestWithoutBadgeIdentifier)
       
       actual.authorisedAs shouldBe expected.authorisedAs

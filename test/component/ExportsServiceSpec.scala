@@ -157,7 +157,7 @@ class ExportsServiceSpec extends ComponentTestSpec
       val resultFuture = result.get
 
       status(resultFuture) shouldBe UNAUTHORIZED
-      headers(resultFuture).get(X_CONVERSATION_ID_NAME) shouldBe 'defined
+      headers(resultFuture).get(X_CONVERSATION_ID_NAME) shouldBe defined
 
       And("the response body is a \"invalid xml\" XML")
       stringToXml(contentAsString(resultFuture)) shouldBe stringToXml(unauthorisedError)
@@ -177,7 +177,7 @@ class ExportsServiceSpec extends ComponentTestSpec
       val resultFuture = result.get
 
       status(resultFuture) shouldBe BAD_REQUEST
-      headers(resultFuture).get(X_CONVERSATION_ID_NAME) shouldBe 'defined
+      headers(resultFuture).get(X_CONVERSATION_ID_NAME) shouldBe defined
 
       And("the response body is a \"Bad request\" XML")
       stringToXml(contentAsString(resultFuture)) shouldBe stringToXml(badRequestError)

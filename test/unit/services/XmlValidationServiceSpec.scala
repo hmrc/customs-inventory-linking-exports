@@ -104,12 +104,14 @@ class XmlValidationServiceSpec extends UnitSpec with MockitoSugar with BeforeAnd
       }
       caught.getMessage shouldBe "cvc-type.3.1.2: Element 'goodsLocation' is a simple type, so it must have no element information item [children]."
 
-      Option(caught.getException) shouldBe 'nonEmpty
+      val maybeWrapped1 = Option(caught.getException)
+      maybeWrapped1.nonEmpty shouldBe true
       val wrapped1 = caught.getException
       wrapped1.getMessage shouldBe "cvc-type.3.1.1: Element 'goodsLocation' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'random' was found."
       wrapped1.isInstanceOf[SAXException] shouldBe true
 
-      Option(wrapped1.asInstanceOf[SAXException].getException) shouldBe 'nonEmpty
+      val maybeWrapped2 = Option(wrapped1.asInstanceOf[SAXException].getException)
+      maybeWrapped2.nonEmpty shouldBe true
       val wrapped2 = wrapped1.asInstanceOf[SAXException].getException
       wrapped2.getMessage shouldBe "cvc-complex-type.3.2.2: Attribute 'foo' is not allowed to appear in element 'inventoryLinkingMovementRequest'."
       wrapped2.isInstanceOf[SAXException] shouldBe true
@@ -128,7 +130,8 @@ class XmlValidationServiceSpec extends UnitSpec with MockitoSugar with BeforeAnd
 
         caught.getMessage shouldBe "cvc-type.3.1.1: Element 'goodsLocation' is a simple type, so it cannot have attributes, excepting those whose namespace name is identical to 'http://www.w3.org/2001/XMLSchema-instance' and whose [local name] is one of 'type', 'nil', 'schemaLocation' or 'noNamespaceSchemaLocation'. However, the attribute, 'random' was found."
 
-        Option(caught.getException) shouldBe 'nonEmpty
+        val maybeWrapped1 = Option(caught.getException)
+        maybeWrapped1.nonEmpty shouldBe true
         val wrapped1 = caught.getException
         wrapped1.getMessage shouldBe "cvc-complex-type.3.2.2: Attribute 'foo' is not allowed to appear in element 'inventoryLinkingMovementRequest'."
         wrapped1.isInstanceOf[SAXException] shouldBe true
