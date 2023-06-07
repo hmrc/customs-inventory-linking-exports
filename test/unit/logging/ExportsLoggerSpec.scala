@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ class ExportsLoggerSpec extends UnitSpec with MockitoSugar {
       logger.debugFull("msg")
 
       PassByNameVerifier(mockCdsLogger, "debug")
-        .withByNameParam("[conversationId=28e5aa87-3f89-4f12-b1b1-60f2b2de66f1] msg headers=Map(Content-Type -> Some-Content-Type)")
+        .withByNameParam("[conversationId=28e5aa87-3f89-4f12-b1b1-60f2b2de66f1] msg headers=TreeMap(Content-Type -> Some-Content-Type)")
         .verify()
     }
 
@@ -70,7 +70,7 @@ class ExportsLoggerSpec extends UnitSpec with MockitoSugar {
       logger.debugFull("msg")
 
       PassByNameVerifier(mockCdsLogger, "debug")
-        .withByNameParam("[conversationId=28e5aa87-3f89-4f12-b1b1-60f2b2de66f1] msg headers=Map(ConTenT-Type -> Some-Content-Type)")
+        .withByNameParam("[conversationId=28e5aa87-3f89-4f12-b1b1-60f2b2de66f1] msg headers=TreeMap(ConTenT-Type -> Some-Content-Type)")
         .verify()
     }
 

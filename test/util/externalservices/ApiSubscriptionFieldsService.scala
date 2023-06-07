@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,15 @@
 package util.externalservices
 
 import com.github.tomakehurst.wiremock.client.WireMock._
+import com.github.tomakehurst.wiremock.matching.UrlPattern
 import play.api.test.Helpers.OK
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.ApiSubscriptionFieldsPath._
 import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionKey, VersionOne}
 import util.{ApiSubscriptionFieldsTestData, WireMockRunner}
 
 trait ApiSubscriptionFieldsService extends WireMockRunner with ApiSubscriptionFieldsTestData {
-  private def apiSubsUrl(apiSubsKey: ApiSubscriptionKey) = url(ExportsExternalServicesConfig.ApiSubscriptionFieldsContext, apiSubsKey)
-  private def urlMatchingRequestPath(apiSubs: ApiSubscriptionKey) = {
+  private def apiSubsUrl(apiSubsKey: ApiSubscriptionKey): String = url(ExportsExternalServicesConfig.ApiSubscriptionFieldsContext, apiSubsKey)
+  private def urlMatchingRequestPath(apiSubs: ApiSubscriptionKey): UrlPattern = {
     urlEqualTo(apiSubsUrl(apiSubs))
   }
 
