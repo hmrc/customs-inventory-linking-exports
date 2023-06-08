@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,7 +77,7 @@ class ExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfte
 
   private val httpFormattedDate = "Tue, 04 Jul 2017 13:45:00 UTC"
 
-  private implicit val vpr = TestCspValidatedPayloadRequest
+  private implicit val vpr = TestCspValidatedPayloadRequestWithEori
 
   "ExportsConnector" can {
 

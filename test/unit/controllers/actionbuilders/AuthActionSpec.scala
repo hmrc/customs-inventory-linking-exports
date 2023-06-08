@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,14 +23,12 @@ import play.api.mvc.AnyContentAsXml
 import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.{ErrorInternalServerError, UnauthorizedCode, errorBadRequest, errorInternalServerError}
-import uk.gov.hmrc.customs.inventorylinking.export.model.VersionOne
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ApiVersionRequest
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders.AuthAction
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.{CustomHeaderNames, HeaderValidator}
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model.ApiSubscriptionFields
+import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionFields, NonCsp, VersionOne}
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ApiSubscriptionFieldsRequest, AuthorisedRequest}
+import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ApiSubscriptionFieldsRequest, ApiVersionRequest, AuthorisedRequest}
 import uk.gov.hmrc.customs.inventorylinking.export.services.CustomsAuthService
 import util.CustomsMetricsTestData.EventStart
 import util.TestData._
@@ -72,7 +70,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       authoriseCsp()
 
       private val actual: AuthorisedRequest[AnyContentAsXml] = await(authAction.refine(request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId())).right.get)
-      private val expected: AuthorisedRequest[AnyContentAsXml] = request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId()).toCspAuthorisedRequest(cspAuthorisedRequest)
+      private val expected: AuthorisedRequest[AnyContentAsXml] = request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId()).toAuthorisedRequest(cspAuthorisedRequestWithEoriAndBadgeIdentifier)
       actual.authorisedAs shouldBe expected.authorisedAs
       
       verifyNonCspAuthorisationNotCalled
@@ -82,7 +80,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       authoriseCsp()
 
       private val actual = await(authAction.refine(request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeSubmitterIdString = None))).right.get)
-      private val expected: AuthorisedRequest[AnyContentAsXml] = request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeSubmitterIdString = None)).toCspAuthorisedRequest(cspAuthorisedRequestWithoutEori)
+      private val expected: AuthorisedRequest[AnyContentAsXml] = request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeSubmitterIdString = None)).toAuthorisedRequest(cspAuthorisedRequestWithBadgeIdentifier)
 
       actual.authorisedAs shouldBe expected.authorisedAs
       verifyNonCspAuthorisationNotCalled
@@ -101,7 +99,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       authoriseCsp()
 
       private val actual = await(authAction.refine(request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeSubmitterIdString = None), ApiSubscriptionFieldsTestData.apiSubscriptionFieldsNoAuthenticatedEori)).right.get)
-      private val expected = request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeSubmitterIdString = None)).toCspAuthorisedRequest(cspAuthorisedRequestWithoutEori)
+      private val expected = request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeSubmitterIdString = None)).toAuthorisedRequest(cspAuthorisedRequestWithBadgeIdentifier)
 
       actual.authorisedAs shouldBe expected.authorisedAs
       verifyNonCspAuthorisationNotCalled
@@ -111,7 +109,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       authoriseCsp()
 
       private val actual = await(authAction.refine(request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeSubmitterIdString = None), ApiSubscriptionFieldsTestData.apiSubscriptionFieldsBlankAuthenticatedEori)).right.get)
-      private val expected = request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeSubmitterIdString = None)).toCspAuthorisedRequest(cspAuthorisedRequestWithoutEori)
+      private val expected = request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeSubmitterIdString = None)).toAuthorisedRequest(cspAuthorisedRequestWithBadgeIdentifier)
 
       actual.authorisedAs shouldBe expected.authorisedAs
       verifyNonCspAuthorisationNotCalled
@@ -121,7 +119,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
       authoriseCsp()
 
       private val actual = await(authAction.refine(request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeBadgeIdString = None))).right.get)
-      private val expected = request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeBadgeIdString = None)).toCspAuthorisedRequest(cspAuthorisedRequestWithoutBadgeIdentifier)
+      private val expected = request(testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeBadgeIdString = None)).toAuthorisedRequest(cspAuthorisedRequestWithEori)
       
       actual.authorisedAs shouldBe expected.authorisedAs
       verifyNonCspAuthorisationNotCalled
@@ -189,7 +187,7 @@ class AuthActionSpec extends UnitSpec with MockitoSugar {
 
       private val actual = await(authAction.refine(TestApiSubscriptionFieldsRequest))
 
-      actual shouldBe Right(TestApiSubscriptionFieldsRequest.toNonCspAuthorisedRequest(declarantEori))
+      actual shouldBe Right(TestApiSubscriptionFieldsRequest.toAuthorisedRequest(NonCsp(declarantEori)))
       verifyCspAuthorisationCalled(1)
       verifyNonCspAuthorisationCalled(1)
     }

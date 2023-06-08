@@ -129,7 +129,6 @@ Change History:
 
 	<xs:complexType name="errorBlock">
 		<xs:sequence>
-		<!-- TODO -->
 			<xs:element name="errorCode" minOccurs="1">
 			<xs:simpleType>
 					<xs:restriction base="xs:string">

@@ -110,7 +110,8 @@ class CustomsAuthService @Inject()(override val authConnector: AuthConnector,
     for {
       customsEnrolment <- maybeCustomsEnrolment
       eoriIdentifier <- customsEnrolment.getIdentifier("EORINumber")
-    } yield Eori(eoriIdentifier.value)
+      eori <- Eori.fromString(eoriIdentifier.value)
+    } yield eori
   }
 
 }

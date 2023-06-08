@@ -31,6 +31,11 @@ def forkedJvmPerTestConfig(tests: Seq[TestDefinition], packages: String*): Seq[G
 lazy val testAll = TaskKey[Unit]("test-all")
 lazy val allTest = Seq(testAll := (CdsIntegrationComponentTest / test).dependsOn(Test / test).value)
 
+lazy val silencerGlobalFilters = List(
+  "Unused import",
+  "private method apply in object \\w+ is never used"
+)
+
 lazy val microservice = (project in file("."))
   .enablePlugins(PlayScala)
   .enablePlugins(SbtDistributablesPlugin)
@@ -47,7 +52,8 @@ lazy val microservice = (project in file("."))
   )
   .settings(majorVersion := 1)
   .settings(scalacOptions += "-P:silencer:pathFilters=routes")
-  .settings(scalacOptions += "-P:silencer:globalFilters=Unused import")
+  .settings(scalacOptions += s"-P:silencer:globalFilters=${silencerGlobalFilters.mkString(";")}")
+
 
 lazy val unitTestSettings =
   inConfig(Test)(Defaults.testTasks) ++
@@ -85,7 +91,7 @@ scalastyleConfig := baseDirectory.value / "project" / "scalastyle-config.xml"
 
 val compileDependencies = Seq(customsApiCommon, silencerLib, silencerPlugin)
 
-val testDependencies = Seq(scalaTestPlusPlay, scalatestplusMockito, wireMock, mockito, flexmark, Jackson, customsApiCommonTests )
+val testDependencies = Seq(scalaTestPlusPlay, scalatestplusMockito, wireMock, mockito, flexmark, Jackson, customsApiCommonTests)
 
 Compile / unmanagedResourceDirectories += baseDirectory.value / "public"
 (Runtime / managedClasspath) += (Assets / packageBin).value

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfter
   private implicit val ec = Helpers.stubControllerComponents().executionContext
   private val headerCarrier: HeaderCarrier = HeaderCarrier()
     .withExtraHeaders(RequestHeaders.API_SUBSCRIPTION_FIELDS_ID_HEADER)
-  private implicit val vpr: ValidatedPayloadRequest[AnyContentAsXml] = TestCspValidatedPayloadRequest
+  private implicit val vpr: ValidatedPayloadRequest[AnyContentAsXml] = TestCspValidatedPayloadRequestWithEori
   private val errorResponseServiceUnavailable = errorInternalServerError("This service is currently unavailable")
 
   trait SetUp {
@@ -64,7 +64,7 @@ class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfter
     protected lazy val service: BusinessService = new BusinessService(mockLogger, mockExportsConnector,
       mockPayloadDecorator, mockDateTimeProvider, stubUniqueIdsService)
 
-    protected def send(vpr: ValidatedPayloadRequest[AnyContentAsXml] = TestCspValidatedPayloadRequest, hc: HeaderCarrier = headerCarrier): Either[Result, Unit] = {
+    protected def send(vpr: ValidatedPayloadRequest[AnyContentAsXml] = TestCspValidatedPayloadRequestWithEori, hc: HeaderCarrier = headerCarrier): Either[Result, Unit] = {
       await(service.send(vpr, hc))
     }
     // https://stackoverflow.com/questions/27289757/mockito-matchers-scala-value-class-and-nullpointerexception

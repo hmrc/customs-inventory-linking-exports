@@ -65,10 +65,6 @@ object ActionBuilderModelHelper {
 
   implicit class ApiSubscriptionFieldsRequestOps[A](val asf: ApiSubscriptionFieldsRequest[A]) extends AnyVal {
 
-    def toCspAuthorisedRequest(a: AuthorisedAsCsp): AuthorisedRequest[A] = toAuthorisedRequest(a)
-
-    def toNonCspAuthorisedRequest(eori: Eori): AuthorisedRequest[A] = toAuthorisedRequest(NonCsp(eori))
-
     def toAuthorisedRequest(authorisedAs: AuthorisedAs): AuthorisedRequest[A] = AuthorisedRequest(
       asf.conversationId,
       asf.start,

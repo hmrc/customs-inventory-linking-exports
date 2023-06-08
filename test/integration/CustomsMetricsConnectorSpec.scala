@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ class CustomsMetricsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPe
 
   private lazy val connector = app.injector.instanceOf[CustomsMetricsConnector]
 
-  private implicit val vpr: ValidatedPayloadRequest[AnyContentAsXml] = TestData.TestCspValidatedPayloadRequest
+  private implicit val vpr: ValidatedPayloadRequest[AnyContentAsXml] = TestData.TestCspValidatedPayloadRequestWithEori
   private implicit val mockExportsLogger: ExportsLogger = mock[ExportsLogger]
 
   override protected def beforeAll() {

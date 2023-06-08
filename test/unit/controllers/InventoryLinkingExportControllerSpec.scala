@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -243,7 +243,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
 
 
     "respond with status 202 and conversationId in header for a processed valid non-CSP request and ignoring the submitter id in the header that doesn't match our records" in new SetUp() {
-      authoriseNonCsp(Some(Eori("whatever")))
+      authoriseNonCsp(Eori.fromString("whatever"))
 
       val result: Result = awaitSubmit(ValidRequestWithSubmitterHeader)
 

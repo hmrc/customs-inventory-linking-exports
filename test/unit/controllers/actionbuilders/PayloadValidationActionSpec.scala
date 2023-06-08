@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,7 +77,7 @@ class PayloadValidationActionSpec extends UnitSpec with MockitoSugar {
 
       private val actual: Either[Result, ValidatedPayloadRequest[AnyContentAsXml]] = await(payloadValidationAction.refine(TestCspAuthorisedRequest))
 
-      actual shouldBe Right(TestCspValidatedPayloadRequest)
+      actual shouldBe Right(TestCspValidatedPayloadRequestWithEori)
     }
 
     "return 400 error response when XML is not well formed" in new SetUp {
@@ -92,7 +92,7 @@ class PayloadValidationActionSpec extends UnitSpec with MockitoSugar {
       val authorisedRequestWithNonWellFormedXml: AuthorisedRequest[AnyContentAsText] = ApiVersionRequest(conversationId, EventStart, VersionOne, FakeRequest().withTextBody("<foo><foo>"))
         .toValidatedHeadersRequest(TestExtractedHeaders)
         .toApiSubscriptionFieldsRequest(ApiSubscriptionFieldsTestData.apiSubscriptionFields)
-        .toCspAuthorisedRequest(cspAuthorisedRequest)
+        .toAuthorisedRequest(cspAuthorisedRequestWithEori)
 
       private val actual = await(payloadValidationAction.refine(authorisedRequestWithNonWellFormedXml))
 
