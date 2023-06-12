@@ -11,3 +11,6 @@ addSbtPlugin("org.scalastyle"    %% "scalastyle-sbt-plugin" % "1.0.0")
 addSbtPlugin("uk.gov.hmrc"       %  "sbt-auto-build"        % "3.9.0")
 addSbtPlugin("ch.epfl.scala"     %  "sbt-scalafix"          % "0.9.18-1")
 addSbtPlugin("com.timushev.sbt"  %  "sbt-updates"            % "0.6.3")
+
+//To resolve a bug with version 2.x.x of the scoverage plugin - https://github.com/sbt/sbt/issues/6997
+libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
