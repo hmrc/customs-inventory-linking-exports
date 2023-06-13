@@ -57,8 +57,8 @@ class HeaderValidator @Inject()(logger: ExportsLogger) {
     theResult
   }
 
-  private def validateHeader[A](headerName: String, rule: String => Boolean, errorResponse: ErrorResponse)(implicit apiVersionRequest: ApiVersionRequest[A], h: Headers): Either[ErrorResponse, String] = {
-    h.get(headerName) match {
+  private def validateHeader[A](headerName: String, rule: String => Boolean, errorResponse: ErrorResponse)(implicit apiVersionRequest: ApiVersionRequest[A], headers: Headers): Either[ErrorResponse, String] = {
+    headers.get(headerName) match {
       case Some(value) if rule(value) =>
         Right(value)
       case Some(invalidValue) =>
