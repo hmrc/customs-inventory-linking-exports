@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import org.joda.time.{DateTime, DateTimeZone}
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.{eq => ameq, _}
 import org.mockito.Mockito._
+import org.mockito.stubbing.OngoingStubbing
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.Eventually
 import org.scalatestplus.mockito.MockitoSugar
@@ -60,7 +61,7 @@ class ExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfte
   private val xml = <xml></xml>
   private implicit lazy val hc = HeaderCarrier().withExtraHeaders(RequestHeaders.API_SUBSCRIPTION_FIELDS_ID_HEADER)
 
-  override protected def beforeEach() {
+  override protected def beforeEach(): Unit =  {
     reset(mockWsPost, mockServiceConfigProvider)
     when(mockExportsConfigService.exportsCircuitBreakerConfig).thenReturn(mockExportsCircuitBreakerConfig)
     when(mockServiceConfigProvider.getConfig("mdg-exports")).thenReturn(serviceConfig)
@@ -182,11 +183,11 @@ class ExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfte
     }
   }
 
-  private def awaitRequest[A](implicit vpr: ValidatedPayloadRequest[A]) = {
+  private def awaitRequest[A](implicit vpr: ValidatedPayloadRequest[A]): HttpResponse = {
     await(connector.send(xml, date, correlationIdUuid))
   }
 
-  private def returnResponseForRequest(eventualResponse: Future[HttpResponse]) = {
+  private def returnResponseForRequest(eventualResponse: Future[HttpResponse]): OngoingStubbing[Future[HttpResponse]] = {
     when(mockWsPost.POSTString(anyString, anyString, any[Seq[(String, String)]])(
       any[HttpReads[HttpResponse]](), any[HeaderCarrier](), any[ExecutionContext]))
       .thenReturn(eventualResponse)

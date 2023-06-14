@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ class ExportsConfigServiceSpec extends UnitSpec with MockitoSugar {
   private val emptyServicesConfiguration = Configuration(emptyAppConfig)
   private val mockExportsLogger = mock[ExportsLogger]
 
-  private def customsConfigService(conf: Configuration) =
+  private def customsConfigService(conf: Configuration): ExportsConfigService =
     new ExportsConfigService(new ConfigValidatedNelAdaptor(testServicesConfig(conf), conf), mockExportsLogger)
 
   "ImportsConfigService" should {
@@ -75,6 +75,6 @@ class ExportsConfigServiceSpec extends UnitSpec with MockitoSugar {
     }
   }
 
-  private def testServicesConfig(configuration: Configuration) = new ServicesConfig(configuration) {}
+  private def testServicesConfig(configuration: Configuration): ServicesConfig = new ServicesConfig(configuration) {}
 
 }

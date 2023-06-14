@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package util.externalservices
 
 import com.github.tomakehurst.wiremock.client.WireMock._
+import com.github.tomakehurst.wiremock.matching.StringValuePattern
 import play.api.http.Status
 import play.api.libs.json.{JsArray, Json}
 import play.api.test.Helpers._
@@ -39,7 +40,7 @@ trait AuthService {
   private val nonCspAuthorisationPredicate = Enrolment(customsEnrolmentName) and AuthProviders(GovernmentGateway)
   private val nonCspRetrieval = Retrievals.authorisedEnrolments
 
-  private def bearerTokenMatcher(bearerToken: String)= equalTo("Bearer " + bearerToken)
+  private def bearerTokenMatcher(bearerToken: String): StringValuePattern = equalTo("Bearer " + bearerToken)
 
   private def authRequestJson(predicate: Predicate, retrievals: Retrieval[_]*): String = {
     val predicateJsArray = predicate.toJson match {

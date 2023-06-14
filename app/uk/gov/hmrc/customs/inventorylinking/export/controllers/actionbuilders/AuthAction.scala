@@ -85,7 +85,7 @@ class AuthAction @Inject()(customsAuthService: CustomsAuthService,
     customsAuthService.authAsCsp.map {
       case Right(isCsp) =>
         if (isCsp) {
-            eitherCspAuthData.right.map(authAsCsp => Some(authAsCsp))
+          eitherCspAuthData.map(authAsCsp => Some(authAsCsp))
         } else {
           Right(None)
         }
@@ -96,8 +96,8 @@ class AuthAction @Inject()(customsAuthService: CustomsAuthService,
 
   def eitherCspAuthData[A](implicit vhr: HasRequest[A] with HasConversationId): Either[ErrorResponse, AuthorisedAsCsp] = {
     for {
-      maybeBadgeId <- eitherBadgeIdentifier(allowNone = true).right
-      maybeEori <- eitherEori.right
+      maybeBadgeId <- eitherBadgeIdentifier(allowNone = true)
+      maybeEori <- eitherEori
     } yield Csp(maybeEori, maybeBadgeId)
   }
 

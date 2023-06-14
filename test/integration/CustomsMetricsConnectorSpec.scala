@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,15 +40,24 @@ class CustomsMetricsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPe
   private implicit val vpr: ValidatedPayloadRequest[AnyContentAsXml] = TestData.TestCspValidatedPayloadRequest
   private implicit val mockExportsLogger: ExportsLogger = mock[ExportsLogger]
 
-  override protected def beforeAll() {
+  /**
+   * On Jenkins the localhost string is different to when run locally.
+   *
+   * @return
+   */
+  def localhostString(): String = {
+    if (System.getenv("HOME") == "/home/jenkins") "127.0.0.1" else "0:0:0:0:0:0:0:1"
+  }
+
+  override protected def beforeAll(): Unit =  {
     startMockServer()
   }
 
-  override protected def beforeEach() {
+  override protected def beforeEach(): Unit =  {
     resetMockServer()
   }
 
-  override protected def afterAll() {
+  override protected def afterAll(): Unit =  {
     stopMockServer()
   }
 
@@ -95,7 +104,7 @@ class CustomsMetricsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPe
       stopMockServer()
 
       intercept[RuntimeException](await(sendValidRequest())).getCause.getClass shouldBe classOf[BadGatewayException]
-      verifyExportsLoggerError("Call to customs metrics failed. url=http://localhost:11111/log-times, status=502, error=POST of 'http://localhost:11111/log-times' failed. Caused by: 'Connection refused: localhost/127.0.0.1:11111'")
+      verifyExportsLoggerError(s"Call to customs metrics failed. url=http://localhost:11111/log-times, status=502, error=POST of 'http://localhost:11111/log-times' failed. Caused by: 'Connection refused: localhost/${localhostString()}:11111'")
 
       startMockServer()
     }

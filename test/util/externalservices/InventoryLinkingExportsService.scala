@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ trait InventoryLinkingExportsService extends WireMockRunner {
 
   def verifyInventoryLinkingExportsServiceWasCalledWith(requestBody: String,
                                                         expectedAuthToken: String = ExternalServicesConfig.AuthToken,
-                                                        maybeUnexpectedAuthToken: Option[String] = None) {
+                                                        maybeUnexpectedAuthToken: Option[String] = None): Unit = {
     verify(1, postRequestedFor(urlMatchingRequestPath)
       .withHeader(CONTENT_TYPE, equalTo(XML + "; charset=UTF-8"))
       .withHeader(ACCEPT, equalTo(XML))
