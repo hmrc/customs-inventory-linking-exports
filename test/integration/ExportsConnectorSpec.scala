@@ -39,7 +39,7 @@ class ExportsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite 
   with InventoryLinkingExportsService with TableDrivenPropertyChecks {
 
   private val numberOfCallsToTriggerStateChange = 5
-  private val unstablePeriodDurationInMillis = 1000
+  private val unstablePeriodDurationInMillis = 10000
   private val unavailablePeriodDurationInMillis = 250
 
   override implicit lazy val app: Application =
@@ -63,7 +63,7 @@ class ExportsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite 
 
   private implicit val hc: HeaderCarrier = HeaderCarrier(authorization = Some(Authorization(incomingAuthToken)))
 
-  override protected def beforeAll(): Unit =  {
+  override protected def beforeAll(): Unit = {
     startMockServer()
   }
 
@@ -75,44 +75,44 @@ class ExportsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite 
     stopMockServer()
   }
 
-    "ExportsConnector" should {
+  "ExportsConnector" should {
 
-      //wait to clear the circuit breaker state that may of been tripped by previous tests
-      Thread.sleep(unavailablePeriodDurationInMillis)
+    //wait to clear the circuit breaker state that may of been tripped by previous tests
+    Thread.sleep(unavailablePeriodDurationInMillis)
 
-      "make a correct request" in {
-        startBackendService()
+    "make a correct request" in {
+      startBackendService()
 
-        await(sendValidXml(ValidInventoryLinkingMovementRequestXML))
+      await(sendValidXml(ValidInventoryLinkingMovementRequestXML))
 
-        verifyInventoryLinkingExportsServiceWasCalledWith(ValidInventoryLinkingMovementRequestXML.toString())
-      }
-      
-      "return a failed future when service returns 404" in {
-        setupBackendServiceToReturn(NOT_FOUND)
-        checkCorrectExceptionStatus(NOT_FOUND)
-      }
+      verifyInventoryLinkingExportsServiceWasCalledWith(ValidInventoryLinkingMovementRequestXML.toString())
+    }
 
-      "return a failed future when service returns 400" in {
-        setupBackendServiceToReturn(BAD_REQUEST)
-        checkCorrectExceptionStatus(BAD_REQUEST)
-      }
+    "return a failed future when service returns 404" in {
+      setupBackendServiceToReturn(NOT_FOUND)
+      checkCorrectExceptionStatus(NOT_FOUND)
+    }
 
-      "return a failed future when service returns 500" in {
-        setupBackendServiceToReturn(INTERNAL_SERVER_ERROR)
-        checkCorrectExceptionStatus(INTERNAL_SERVER_ERROR)
-      }
+    "return a failed future when service returns 400" in {
+      setupBackendServiceToReturn(BAD_REQUEST)
+      checkCorrectExceptionStatus(BAD_REQUEST)
+    }
 
-      "return a failed future when connection with backend service fails" in {
-        stopMockServer()
+    "return a failed future when service returns 500" in {
+      setupBackendServiceToReturn(INTERNAL_SERVER_ERROR)
+      checkCorrectExceptionStatus(INTERNAL_SERVER_ERROR)
+    }
 
-        intercept[BadGatewayException](await(sendValidXml(ValidInventoryLinkingMovementRequestXML)))
+    "return a failed future when connection with backend service fails" in {
+      stopMockServer()
 
-        startMockServer()
-      }
+      intercept[BadGatewayException](await(sendValidXml(ValidInventoryLinkingMovementRequestXML)))
+
+      startMockServer()
+    }
   }
 
-  private def sendValidXml(xml:NodeSeq)(implicit vpr: ValidatedPayloadRequest[_]): Future[HttpResponse] = {
+  private def sendValidXml(xml: NodeSeq)(implicit vpr: ValidatedPayloadRequest[_]): Future[HttpResponse] = {
     connector.send(xml, new DateTime(), correlationId)
   }
 
