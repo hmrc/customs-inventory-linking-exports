@@ -23,8 +23,8 @@ import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse._
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames._
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ApiVersionRequest, ExtractedHeadersImpl, HasConversationId, HasRequest}
 import uk.gov.hmrc.customs.inventorylinking.export.model._
+import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ApiVersionRequest, ExtractedHeadersImpl, HasConversationId, HasRequest}
 
 import javax.inject.{Inject, Singleton}
 
@@ -43,7 +43,7 @@ class HeaderValidator @Inject()(logger: ExportsLogger) {
 
     def hasContentType: Either[ErrorResponse, String] = validateHeader(CONTENT_TYPE, s => validContentTypeHeaders.contains(s.toLowerCase()), ErrorContentTypeHeaderInvalid)
 
-    def hasXClientId: Either[ErrorResponse, String] = validateHeader(XClientIdHeaderName, _.forall(!_.isWhitespace), ErrorInternalServerError)
+    def hasXClientId: Either[ErrorResponse, String] = validateHeader(XClientIdHeaderName, !_.isBlank, ErrorInternalServerError)
 
     val theResult: Either[ErrorResponse, ExtractedHeadersImpl] = for {
       contentTypeValue <- hasContentType
@@ -88,7 +88,7 @@ class HeaderValidator @Inject()(logger: ExportsLogger) {
   }
 
   def eoriMustBeValidIfPresent[A](implicit vhr: HasRequest[A] with HasConversationId): Either[ErrorResponse, Option[Eori]] = {
-    val maybeEoriHeader: Option[String] = vhr.request.headers.toSimpleMap.get(XSubmitterIdentifierHeaderName).filter(_.exists(!_.isWhitespace))
+    val maybeEoriHeader: Option[String] = vhr.request.headers.toSimpleMap.get(XSubmitterIdentifierHeaderName).filter(!_.isBlank)
     logger.debug(s"maybeEori => $maybeEoriHeader")
 
     maybeEoriHeader match {
