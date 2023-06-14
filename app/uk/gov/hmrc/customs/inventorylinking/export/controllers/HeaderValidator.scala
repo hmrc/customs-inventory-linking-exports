@@ -43,7 +43,7 @@ class HeaderValidator @Inject()(logger: ExportsLogger) {
 
     def hasContentType: Either[ErrorResponse, String] = validateHeader(CONTENT_TYPE, s => validContentTypeHeaders.contains(s.toLowerCase()), ErrorContentTypeHeaderInvalid)
 
-    def hasXClientId: Either[ErrorResponse, String] = validateHeader(XClientIdHeaderName, !_.isBlank, ErrorInternalServerError)
+    def hasXClientId: Either[ErrorResponse, String] = validateHeader(XClientIdHeaderName, _.forall(!_.isWhitespace), ErrorInternalServerError)
 
     val theResult: Either[ErrorResponse, ExtractedHeadersImpl] = for {
       contentTypeValue <- hasContentType
