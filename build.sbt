@@ -4,19 +4,16 @@ import com.typesafe.sbt.web.pipeline.Pipeline
 import play.sbt.PlayImport.PlayKeys.playDefaultPort
 import sbt.Keys._
 import sbt.Tests.{Group, SubProcess}
-import sbt.{Resolver, Test, inConfig, _}
+import sbt.{Test, inConfig, _}
 import uk.gov.hmrc.DefaultBuildSettings.{addTestReportOption, targetJvm}
 import uk.gov.hmrc.gitstamp.GitStampPlugin._
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
-import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin.publishingSettings
 
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import scala.language.postfixOps
 
 name := "customs-inventory-linking-exports"
-scalaVersion := "2.12.13"
-targetJvm := "jvm-1.8"
 
 lazy val CdsIntegrationComponentTest = config("it") extend Test
 
@@ -31,11 +28,6 @@ def forkedJvmPerTestConfig(tests: Seq[TestDefinition], packages: String*): Seq[G
 lazy val testAll = TaskKey[Unit]("test-all")
 lazy val allTest = Seq(testAll := (CdsIntegrationComponentTest / test).dependsOn(Test / test).value)
 
-lazy val silencerGlobalFilters = List(
-  "Unused import",
-  "private method apply in object \\w+ is never used"
-)
-
 lazy val microservice = (project in file("."))
   .enablePlugins(PlayScala)
   .enablePlugins(SbtDistributablesPlugin)
@@ -43,17 +35,15 @@ lazy val microservice = (project in file("."))
   .configs(testConfig: _*)
   .settings(playDefaultPort := 9823)
   .settings(
+    scalaVersion := "2.13.10",
+    targetJvm := "jvm-11",
     commonSettings,
     unitTestSettings,
     integrationComponentTestSettings,
-    playPublishingSettings,
     allTest,
     scoverageSettings
   )
   .settings(majorVersion := 1)
-  .settings(scalacOptions += "-P:silencer:pathFilters=routes")
-  .settings(scalacOptions += s"-P:silencer:globalFilters=${silencerGlobalFilters.mkString(";")}")
-
 
 lazy val unitTestSettings =
   inConfig(Test)(Defaults.testTasks) ++
@@ -72,9 +62,7 @@ lazy val integrationComponentTestSettings =
       CdsIntegrationComponentTest / testGrouping := forkedJvmPerTestConfig((Test / definedTests).value, "integration", "component")
     )
 
-lazy val commonSettings: Seq[Setting[_]] = publishingSettings ++ gitStampSettings
-
-lazy val playPublishingSettings: Seq[sbt.Setting[_]] = publishingSettings
+lazy val commonSettings: Seq[Setting[_]] = gitStampSettings
 
 lazy val scoverageSettings: Seq[Setting[_]] = Seq(
   coverageExcludedPackages := "<empty>;models/.data/..*;uk.gov.hmrc.customs.inventorylinking.views.*;models.*;config.*;.*(Reverse|AuthService|BuildInfo|Routes).*",
@@ -89,9 +77,9 @@ def unitTestFilter(name: String): Boolean = name startsWith "unit"
 
 scalastyleConfig := baseDirectory.value / "project" / "scalastyle-config.xml"
 
-val compileDependencies = Seq(customsApiCommon, silencerLib, silencerPlugin)
+val compileDependencies = Seq(customsApiCommon)
 
-val testDependencies = Seq(scalaTestPlusPlay, scalatestplusMockito, wireMock, mockito, flexmark, Jackson, customsApiCommonTests)
+val testDependencies = Seq(scalaTestPlusPlay, scalatestplusMockito, wireMock, mockito, flexmark, jackson, customsApiCommonTests )
 
 Compile / unmanagedResourceDirectories += baseDirectory.value / "public"
 (Runtime / managedClasspath) += (Assets / packageBin).value
@@ -127,3 +115,7 @@ zipXsds := { mappings: Seq[PathMapping] =>
 }
 
 pipelineStages := Seq(zipXsds)
+
+
+// TODO: unnecessary? To resolve a bug with version 2.x.x of the scoverage plugin - https://github.com/sbt/sbt/issues/6997
+libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
