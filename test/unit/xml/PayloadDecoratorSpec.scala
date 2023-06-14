@@ -37,18 +37,20 @@ class PayloadDecoratorSpec extends UnitSpec with MockitoSugar {
   private val decorator = new PayloadDecorator()
 
   "PayloadDecorator for CSP" should {
-    implicit val vpr: ValidatedPayloadRequest[AnyContentAsXml] = TestCspValidatedPayloadRequest
-    def wrapPayloadWithBadgeIdentifierAndEori(payload: NodeSeq = xmlPayload): NodeSeq = decorator.decorate(payload, TestSubscriptionFieldsId, correlationId, dateTime)
+    val vprWithEoriAndBadgeIdentifier: ValidatedPayloadRequest[AnyContentAsXml] = TestCspValidatedPayloadRequestWithEoriAndBadgeIdentifier
+    def wrapPayloadWithEoriAndBadgeIdentifier(payload: NodeSeq = xmlPayload): NodeSeq = {
+      decorator.decorate(payload, TestSubscriptionFieldsId, correlationId, dateTime)(vprWithEoriAndBadgeIdentifier)
+    }
 
     "wrap passed complete inventoryLinkingMovementRequest" in {
-      val result = wrapPayloadWithBadgeIdentifierAndEori(ValidInventoryLinkingMovementRequestXML)
+      val result = wrapPayloadWithEoriAndBadgeIdentifier(ValidInventoryLinkingMovementRequestXML)
 
        scala.xml.Utility.trim(result.head) shouldBe scala.xml.Utility.trim(wrappedValidXML.head)
     }
 
     forAll(xmlRequests) { (linkingType, xml) =>
       s"wrap passed $linkingType" in {
-        val result = wrapPayloadWithBadgeIdentifierAndEori(xml)
+        val result = wrapPayloadWithEoriAndBadgeIdentifier(xml)
 
         val header = result \ commonLabel
         val request = result \\ linkingType
@@ -59,7 +61,7 @@ class PayloadDecoratorSpec extends UnitSpec with MockitoSugar {
     }
 
     "set the timestamp in the wrapper" in {
-      val result = wrapPayloadWithBadgeIdentifierAndEori()
+      val result = wrapPayloadWithEoriAndBadgeIdentifier()
 
       val rd = result \ commonLabel \ "dateTimeStamp"
 
@@ -67,7 +69,7 @@ class PayloadDecoratorSpec extends UnitSpec with MockitoSugar {
     }
 
     "set the conversationId" in {
-      val result = wrapPayloadWithBadgeIdentifierAndEori()
+      val result = wrapPayloadWithEoriAndBadgeIdentifier()
 
       val rd = result \ commonLabel \ "conversationID"
 
@@ -75,7 +77,7 @@ class PayloadDecoratorSpec extends UnitSpec with MockitoSugar {
     }
 
     "set the correlationId" in {
-      val result = wrapPayloadWithBadgeIdentifierAndEori()
+      val result = wrapPayloadWithEoriAndBadgeIdentifier()
 
       val rd = result \ commonLabel \ "correlationID"
 
@@ -83,7 +85,7 @@ class PayloadDecoratorSpec extends UnitSpec with MockitoSugar {
     }
 
     "set the clientId" in {
-      val result = wrapPayloadWithBadgeIdentifierAndEori()
+      val result = wrapPayloadWithEoriAndBadgeIdentifier()
 
       val rd = result \ commonLabel \ "clientID"
 
@@ -91,7 +93,7 @@ class PayloadDecoratorSpec extends UnitSpec with MockitoSugar {
     }
 
     "set the badgeIdentifier when present" in {
-      val result = wrapPayloadWithBadgeIdentifierAndEori()
+      val result = decorator.decorate(xmlPayload, TestSubscriptionFieldsId, correlationId, dateTime)(TestCspValidatedPayloadRequestWithBadgeIdentifier)
 
       val rd = result \\ "badgeIdentifier"
 
@@ -99,7 +101,7 @@ class PayloadDecoratorSpec extends UnitSpec with MockitoSugar {
     }
 
     "omit the badgeIdentifier when absent" in {
-      implicit val vpr: ValidatedPayloadRequest[AnyContentAsXml] = TestCspValidatedPayloadRequestWithoutBadgeIdentifier
+      implicit val vpr: ValidatedPayloadRequest[AnyContentAsXml] = TestCspValidatedPayloadRequestWithEori
       val result = decorator.decorate(xmlPayload, TestSubscriptionFieldsId, correlationId, dateTime)
 
       val rd = result \\ "badgeIdentifier"
@@ -108,7 +110,7 @@ class PayloadDecoratorSpec extends UnitSpec with MockitoSugar {
     }
 
     "set the submitter when present" in {
-      val result = wrapPayloadWithBadgeIdentifierAndEori()
+      val result = wrapPayloadWithEoriAndBadgeIdentifier()
 
       val rd = result \\ "submitter"
 
@@ -116,30 +118,21 @@ class PayloadDecoratorSpec extends UnitSpec with MockitoSugar {
     }
     
     "set the submitter to badgeIdentifier when eori is absent" in {
-      implicit val vpr: ValidatedPayloadRequest[AnyContentAsXml] = TestCspValidatedPayloadRequestWithoutEori
+      implicit val vpr: ValidatedPayloadRequest[AnyContentAsXml] = TestCspValidatedPayloadRequestWithBadgeIdentifier
       val result = decorator.decorate(xmlPayload, TestSubscriptionFieldsId, correlationId, dateTime)
 
       val rd = result \\ "submitter"
 
       rd.head.text shouldBe badgeIdentifier.value
     }
-
-    "set the submitter to authenticated eori when both eori and badgeIdentifier are absent" in {
-      implicit val vpr: ValidatedPayloadRequest[AnyContentAsXml] = TestCspValidatedPayloadRequestWithoutEoriOrBadgeIdentifier
-      val result = decorator.decorate(xmlPayload, TestSubscriptionFieldsId, correlationId, dateTime)
-
-      val rd = result \\ "submitter"
-
-      rd.head.text shouldBe authenticatedEori.value
-    }
   }
 
   "PayloadDecorator for non-CSP" should {
     implicit val vpr: ValidatedPayloadRequest[AnyContentAsXml] = TestNonCspValidatedPayloadRequest
-    def wrapPayloadWithoutBadgeIdentifier(payload: NodeSeq = xmlPayload): NodeSeq = decorator.decorate(payload, TestSubscriptionFieldsId, correlationId, dateTime)
+    def wrapPayload(payload: NodeSeq = xmlPayload): NodeSeq = decorator.decorate(payload, TestSubscriptionFieldsId, correlationId, dateTime)
 
     "wrap passed complete inventoryLinkingMovementRequest" in {
-      val result = wrapPayloadWithoutBadgeIdentifier()
+      val result = wrapPayload()
 
       val requestDetail = result \\ "requestDetail"
       requestDetail.head.child.contains(<node1/>) shouldBe true
@@ -147,7 +140,7 @@ class PayloadDecoratorSpec extends UnitSpec with MockitoSugar {
 
     forAll(xmlRequests) { (linkingType, xml) =>
       s"wrap passed $linkingType" in {
-        val result = wrapPayloadWithoutBadgeIdentifier(xml)
+        val result = wrapPayload(xml)
 
         val header = result \ commonLabel
         val request = result \\ linkingType
@@ -158,7 +151,7 @@ class PayloadDecoratorSpec extends UnitSpec with MockitoSugar {
     }
 
     "set the timestamp in the wrapper" in {
-      val result = wrapPayloadWithoutBadgeIdentifier()
+      val result = wrapPayload()
 
       val rd = result \ commonLabel \ "dateTimeStamp"
 
@@ -166,7 +159,7 @@ class PayloadDecoratorSpec extends UnitSpec with MockitoSugar {
     }
 
     "set the conversationId" in {
-      val result = wrapPayloadWithoutBadgeIdentifier()
+      val result = wrapPayload()
 
       val rd = result \ commonLabel \ "conversationID"
 
@@ -174,7 +167,7 @@ class PayloadDecoratorSpec extends UnitSpec with MockitoSugar {
     }
 
     "set the correlationId" in {
-      val result = wrapPayloadWithoutBadgeIdentifier()
+      val result = wrapPayload()
 
       val rd = result \ commonLabel \ "correlationID"
 
@@ -182,7 +175,7 @@ class PayloadDecoratorSpec extends UnitSpec with MockitoSugar {
     }
 
     "set the clientId" in {
-      val result = wrapPayloadWithoutBadgeIdentifier()
+      val result = wrapPayload()
 
       val rd = result \ commonLabel \ "clientID"
 
@@ -190,7 +183,7 @@ class PayloadDecoratorSpec extends UnitSpec with MockitoSugar {
     }
 
     "should not set the badgeIdentifier when absent" in {
-      val result = wrapPayloadWithoutBadgeIdentifier()
+      val result = wrapPayload()
 
       val rd = result \\ "badgeIdentifier"
 
@@ -198,7 +191,7 @@ class PayloadDecoratorSpec extends UnitSpec with MockitoSugar {
     }
 
     "set the submitter identifier when present" in {
-      val result =  wrapPayloadWithoutBadgeIdentifier()
+      val result =  wrapPayload()
 
       val rd = result \\ "submitter"
 

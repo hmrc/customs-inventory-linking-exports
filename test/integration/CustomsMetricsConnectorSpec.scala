@@ -37,7 +37,7 @@ class CustomsMetricsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPe
 
   private lazy val connector = app.injector.instanceOf[CustomsMetricsConnector]
 
-  private implicit val vpr: ValidatedPayloadRequest[AnyContentAsXml] = TestData.TestCspValidatedPayloadRequest
+  private implicit val vpr: ValidatedPayloadRequest[AnyContentAsXml] = TestData.TestCspValidatedPayloadRequestWithEori
   private implicit val mockExportsLogger: ExportsLogger = mock[ExportsLogger]
 
   /**
