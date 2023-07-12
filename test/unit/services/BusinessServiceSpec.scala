@@ -18,17 +18,17 @@ package unit.services
 
 import java.util.UUID
 import java.util.concurrent.TimeUnit
-
 import akka.pattern.CircuitBreakerOpenException
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.{eq => meq, _}
 import org.mockito.Mockito.{verify, when}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
+import play.api.http.Status.FORBIDDEN
 import play.api.mvc.{AnyContentAsXml, Result}
 import play.api.test.Helpers
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
-import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.errorInternalServerError
+import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.{ErrorPayloadForbidden, errorInternalServerError}
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.ExportsConnector
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model._
@@ -36,7 +36,7 @@ import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBu
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
 import uk.gov.hmrc.customs.inventorylinking.export.services.{BusinessService, _}
 import uk.gov.hmrc.customs.inventorylinking.export.xml.PayloadDecorator
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpException, HttpResponse}
 import util.TestData._
 import util.XMLTestData._
 import util.{ApiSubscriptionFieldsTestData, RequestHeaders, UnitSpec}
@@ -55,6 +55,8 @@ class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfter
   private val errorResponseServiceUnavailable = errorInternalServerError("This service is currently unavailable")
 
   trait SetUp {
+    protected val mockConfigService = mock[ExportsConfigService]
+    protected val mockExportsConfig : ExportsConfig = mock[ExportsConfig]
     protected val mockLogger: ExportsLogger = mock[ExportsLogger]
     protected val mockExportsConnector: ExportsConnector = mock[ExportsConnector]
     protected val mockPayloadDecorator: PayloadDecorator = mock[PayloadDecorator]
@@ -62,7 +64,7 @@ class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfter
     protected val mockHttpResponse: HttpResponse = mock[HttpResponse]
 
     protected lazy val service: BusinessService = new BusinessService(mockLogger, mockExportsConnector,
-      mockPayloadDecorator, mockDateTimeProvider, stubUniqueIdsService)
+      mockPayloadDecorator, mockDateTimeProvider, stubUniqueIdsService, mockConfigService)
 
     protected def send(vpr: ValidatedPayloadRequest[AnyContentAsXml] = TestCspValidatedPayloadRequestWithEori, hc: HeaderCarrier = headerCarrier): Either[Result, Unit] = {
       await(service.send(vpr, hc))
@@ -70,6 +72,7 @@ class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfter
     // https://stackoverflow.com/questions/27289757/mockito-matchers-scala-value-class-and-nullpointerexception
     // Mockito matching was having problems so had to use the eq type then as instance of. Important that the 1st type is the
     // type of the value contained in the value class i.e. for CorrelationId the value is UUID so needs to meq type of UUID
+    when(mockConfigService.exportsConfig).thenReturn(mockExportsConfig)
     when(mockPayloadDecorator.decorate(meq(TestXmlPayload), meq[String](TestSubscriptionFieldsId.value).asInstanceOf[SubscriptionFieldsId], meq[UUID](correlationIdUuid).asInstanceOf[CorrelationId], any[DateTime])(any[ValidatedPayloadRequest[_]])).thenReturn(wrappedValidXML)
     when(mockDateTimeProvider.getUtcNow).thenReturn(dateTime)
     when(mockExportsConnector.send(any[NodeSeq], meq(dateTime), any[UUID])(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])).thenReturn(mockHttpResponse)
@@ -110,6 +113,20 @@ class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfter
       send() shouldBe Left(errorResponseServiceUnavailable.XmlResult.withConversationId)
     }
 
-  }
 
+    "return InternalServerError ErrorResponse when backend returns 403 with payloadForbidden flag off" in new SetUp() {
+      when(mockExportsConnector.send(any[NodeSeq], any[DateTime], any[UUID])(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])).thenReturn(Future.failed(new HttpException("Forbidden", FORBIDDEN)))
+
+      send() shouldBe Left(ErrorResponse.ErrorInternalServerError.XmlResult.withConversationId)
+
+    }
+
+    "return Forbidden ErrorResponse when backend returns 403 with payloadForbidden flag on" in new SetUp() {
+      when(mockExportsConfig.payloadForbiddenEnabled).thenReturn(true)
+      when(mockExportsConnector.send(any[NodeSeq], any[DateTime], any[UUID])(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])).thenReturn(Future.failed(new HttpException("Forbidden", FORBIDDEN)))
+      send() shouldBe Left(ErrorResponse.ErrorPayloadForbidden.XmlResult.withConversationId)
+
+
+    }
+  }
 }

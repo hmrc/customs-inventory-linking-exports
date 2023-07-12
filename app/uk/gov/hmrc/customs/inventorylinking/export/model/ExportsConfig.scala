@@ -17,7 +17,8 @@
 package uk.gov.hmrc.customs.inventorylinking.export.model
 
 case class ExportsConfig(apiSubscriptionFieldsBaseUrl: String,
-                         customsMetricsBaseUrl: String)
+                         customsMetricsBaseUrl: String,
+                         payloadForbiddenEnabled: Boolean)
 
 case class ExportsShutterConfig(v1Shuttered: Option[Boolean],
                                 v2Shuttered: Option[Boolean])

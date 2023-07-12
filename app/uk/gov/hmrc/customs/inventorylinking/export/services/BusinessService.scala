@@ -21,6 +21,7 @@ import java.util.UUID
 import akka.pattern.CircuitBreakerOpenException
 import javax.inject.{Inject, Singleton}
 import org.joda.time.DateTime
+import play.api.http.Status.FORBIDDEN
 import play.api.mvc.Result
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.errorInternalServerError
@@ -30,7 +31,7 @@ import uk.gov.hmrc.customs.inventorylinking.export.model._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
 import uk.gov.hmrc.customs.inventorylinking.export.xml.PayloadDecorator
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, HttpException}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Left
@@ -42,7 +43,8 @@ class BusinessService @Inject()(logger: ExportsLogger,
                                 connector: ExportsConnector,
                                 wrapper: PayloadDecorator,
                                 dateTimeProvider: DateTimeService,
-                                uniqueIdsService: UniqueIdsService)
+                                uniqueIdsService: UniqueIdsService,
+                                configService: ExportsConfigService)
                                (implicit ec: ExecutionContext) {
 
   private val errorResponseServiceUnavailable = errorInternalServerError("This service is currently unavailable")
@@ -63,6 +65,9 @@ class BusinessService @Inject()(logger: ExportsLogger,
       case _: CircuitBreakerOpenException =>
         logger.error("unhealthy state entered")
         Left(errorResponseServiceUnavailable.XmlResult.withConversationId)
+      case httpException :HttpException if configService.exportsConfig.payloadForbiddenEnabled && httpException.responseCode == FORBIDDEN =>
+        logger.warn(s"Inventory linking exports request failed with 403: ${ httpException.getMessage}")
+        Left(ErrorResponse.ErrorPayloadForbidden.XmlResult.withConversationId)
       case NonFatal(e) =>
         logger.error(s"Inventory linking exports request failed: ${e.getMessage}", e)
         Left(ErrorResponse.ErrorInternalServerError.XmlResult.withConversationId)
