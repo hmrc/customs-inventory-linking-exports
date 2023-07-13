@@ -87,6 +87,16 @@ paths:
               examples:
                 objectExample:
                   $ref: '#/components/examples/BadRequestExample'
+        '403':
+          description: 'Payload Forbidden'
+          headers: { }
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+              examples:
+                objectExample:
+                  $ref: '#/components/examples/PayloadForbiddenExample'
         '406':
           description: 'Not Acceptable'
           headers: { }
@@ -229,6 +239,13 @@ components:
            </error>
          </errors>
         </errorResponse>
+    PayloadForbiddenExample:
+          summary: PayloadForbidden
+          value: |
+            <errorResponse>
+                <code>PAYLOAD_FORBIDDEN</code>
+                <message>A firewall rejected the request</message>
+            </errorResponse>
     NotAcceptableExample:
       summary: A sample error response
       value: |
