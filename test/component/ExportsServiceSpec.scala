@@ -136,6 +136,24 @@ class ExportsServiceSpec extends ComponentTestSpec
       Then("an 500 Internal Server Error response is returned")
       status(result) shouldBe INTERNAL_SERVER_ERROR
       stringToXml(contentAsString(result)) shouldEqual stringToXml(internalServerError)
+      header(`X_CONVERSATION_ID_NAME`, result).get shouldNot be("")
+      schemaErrorV1.newValidator().validate(new StreamSource(new StringReader(internalServerError)))
+    }
+
+    Scenario(s"Return InternalServiceError response when payloadForbidden flag is off and the Back End service fails with 403") {
+      Given("a CSP is authorised to use the API endpoint")
+      authServiceAuthorisesCSP()
+
+      And("the Back End Service will return an error response")
+      startApiSubscriptionFieldsService()
+      setupBackendServiceToReturn(FORBIDDEN)
+
+      When(s"a valid Goods Arrival message request is submitted")
+      val result = route(app, ValidRequestWithSubmitterHeader.fromCsp).get
+
+      Then("an 500 Internal Server Error response is returned")
+      status(result) shouldBe INTERNAL_SERVER_ERROR
+      stringToXml(contentAsString(result)) shouldEqual stringToXml(internalServerError)
       header(X_CONVERSATION_ID_NAME, result).get shouldNot be("")
       schemaErrorV1.newValidator().validate(new StreamSource(new StringReader(internalServerError)))
     }
@@ -197,6 +215,24 @@ class ExportsServiceSpec extends ComponentTestSpec
       stringToXml(contentAsString(result)) shouldEqual stringToXml(serviceUnavailableError)
       header(X_CONVERSATION_ID_NAME, result) shouldBe None
       schemaErrorV1.newValidator().validate(new StreamSource(new StringReader(serviceUnavailableError)))
+    }
+
+    Scenario(s"Return InternalServiceError response when payloadForbidden flag is off and the Back End service fails with 403") {
+      Given("a CSP is authorised to use the API endpoint")
+      authServiceAuthorisesCSP()
+
+      And("the Back End Service will return an error response")
+      startApiSubscriptionFieldsService()
+      setupBackendServiceToReturn(FORBIDDEN)
+
+      When(s"a valid Validate Movement message request is submitted")
+      val result = route(app, ValidRequestWithSubmitterHeader.fromCsp).get
+
+      Then("an 500 Internal Server Error response is returned")
+      status(result) shouldBe INTERNAL_SERVER_ERROR
+      stringToXml(contentAsString(result)) shouldEqual stringToXml(internalServerError)
+      header(X_CONVERSATION_ID_NAME, result).get shouldNot be("")
+      schemaErrorV1.newValidator().validate(new StreamSource(new StringReader(internalServerError)))
     }
 
   }
