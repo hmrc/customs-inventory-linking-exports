@@ -37,6 +37,8 @@ class ApiSubscriptionFieldsConnector @Inject()(http: HttpClient,
     get(url)
   }
 
+                                                ///TEST
+
   private def get[A](url: String)(implicit vhr: ValidatedHeadersRequest[A]): Future[ApiSubscriptionFields] = {
     logger.debug(s"Getting fields id from api-subscription-fields service. url = $url")
     implicit val hc = HeaderCarrier()
