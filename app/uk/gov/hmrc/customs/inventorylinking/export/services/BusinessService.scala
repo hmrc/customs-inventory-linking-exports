@@ -65,7 +65,7 @@ class BusinessService @Inject()(logger: ExportsLogger,
       case _: CircuitBreakerOpenException =>
         logger.error("unhealthy state entered")
         Left(errorResponseServiceUnavailable.XmlResult.withConversationId)
-      case httpException :HttpException if configService.exportsConfig.payloadForbiddenEnabled && httpException.responseCode == FORBIDDEN =>
+      case httpException :HttpException if httpException.responseCode == FORBIDDEN =>
         logger.warn(s"Inventory linking exports request failed with 403: ${ httpException.getMessage}")
         Left(ErrorResponse.ErrorPayloadForbidden.XmlResult.withConversationId)
       case NonFatal(e) =>

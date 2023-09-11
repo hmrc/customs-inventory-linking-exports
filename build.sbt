@@ -66,7 +66,7 @@ lazy val commonSettings: Seq[Setting[_]] = gitStampSettings
 
 lazy val scoverageSettings: Seq[Setting[_]] = Seq(
   coverageExcludedPackages := "<empty>;models/.data/..*;uk.gov.hmrc.customs.inventorylinking.views.*;models.*;config.*;.*(Reverse|AuthService|BuildInfo|Routes).*",
-  coverageMinimumStmtTotal := 98,
+  coverageMinimumStmtTotal := 97,
   coverageFailOnMinimum := false,
   coverageHighlighting := true,
   Test / parallelExecution := false

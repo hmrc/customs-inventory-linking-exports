@@ -113,19 +113,10 @@ class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfter
       send() shouldBe Left(errorResponseServiceUnavailable.XmlResult.withConversationId)
     }
 
-
-    "return InternalServerError ErrorResponse when backend returns 403 with payloadForbidden flag off" in new SetUp() {
+    "return Forbidden ErrorResponse when backend returns 403" in new SetUp() {
       when(mockExportsConnector.send(any[NodeSeq], any[DateTime], any[UUID])(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])).thenReturn(Future.failed(new HttpException("Forbidden", FORBIDDEN)))
 
-      send() shouldBe Left(ErrorResponse.ErrorInternalServerError.XmlResult.withConversationId)
-
-    }
-
-    "return Forbidden ErrorResponse when backend returns 403 with payloadForbidden flag on" in new SetUp() {
-      when(mockExportsConfig.payloadForbiddenEnabled).thenReturn(true)
-      when(mockExportsConnector.send(any[NodeSeq], any[DateTime], any[UUID])(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])).thenReturn(Future.failed(new HttpException("Forbidden", FORBIDDEN)))
       send() shouldBe Left(ErrorResponse.ErrorPayloadForbidden.XmlResult.withConversationId)
-
 
     }
   }

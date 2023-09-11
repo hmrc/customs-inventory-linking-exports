@@ -33,7 +33,6 @@ class ExportsConfigService @Inject()(configValidatedNel: ConfigValidatedNelAdapt
   private val apiSubscriptionFieldsServiceUrlNel = apiSubscriptionFieldsService.serviceUrl
   private val customsMetricsService = configValidatedNel.service("customs-declarations-metrics")
   private val customsMetricsServiceUrlNel = customsMetricsService.serviceUrl
-  private val payloadForbiddenEnabled = root.boolean("payloadForbidden.enable")
   private val v1ShutteredNel = root.maybeBoolean("shutter.v1")
   private val v2ShutteredNel = root.maybeBoolean("shutter.v2")
 
@@ -41,7 +40,7 @@ class ExportsConfigService @Inject()(configValidatedNel: ConfigValidatedNelAdapt
   private val unavailablePeriodDurationInMillisNel = root.int("circuitBreaker.unavailablePeriodDurationInMillis")
   private val unstablePeriodDurationInMillisNel = root.int("circuitBreaker.unstablePeriodDurationInMillis")
 
-  private val validatedExportsConfig: CustomsValidatedNel[ExportsConfig] = (apiSubscriptionFieldsServiceUrlNel, customsMetricsServiceUrlNel, payloadForbiddenEnabled) mapN ExportsConfig
+  private val validatedExportsConfig: CustomsValidatedNel[ExportsConfig] = (apiSubscriptionFieldsServiceUrlNel, customsMetricsServiceUrlNel) mapN ExportsConfig
 
   private val validatedExportsShutterConfig: CustomsValidatedNel[ExportsShutterConfig] = (
     v1ShutteredNel, v2ShutteredNel
