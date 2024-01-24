@@ -9,8 +9,6 @@
 
     <logger name="customs-inventory-linking-exports" level="${logger.customs-inventory-linking-exports:-WARN}"/>
 
-    <logger name="org.asynchttpclient.netty.handler" level="${logger.asynchttpclient:-WARN}"/>
-
     <root level="${logger.application:-WARN}">
         <appender-ref ref="STDOUT"/>
     </root>
