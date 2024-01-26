@@ -39,13 +39,9 @@ class CustomsMetricsConnector @Inject()(http: HttpClient,
   )
 
   def post[A](request: CustomsMetricsRequest)(implicit hasConversationId: HasConversationId): Future[Unit] = {
-    post(request, config.exportsConfig.customsMetricsBaseUrl)
-  }
-
-  private def post[A](request: CustomsMetricsRequest, url: String)(implicit hasConversationId: HasConversationId): Future[Unit] = {
-
-    logger.debug(s"Sending request to customs metrics. Url: $url Payload:\n${request.toString}")
-    http.POST[CustomsMetricsRequest, HttpResponse](url, request).map{ response =>
+    val url = config.exportsConfig.customsMetricsBaseUrl
+    logger.debug(s"Sending request to customs metrics. url=$url payload=${request.toString}")
+    http.POST[CustomsMetricsRequest, HttpResponse](url, request).map { response =>
       response.status match {
         case status if is2xx(status) =>
           logger.debug("customs metrics sent successfully")
@@ -62,5 +58,4 @@ class CustomsMetricsConnector @Inject()(http: HttpClient,
         Future.failed(e)
     }
   }
-
 }

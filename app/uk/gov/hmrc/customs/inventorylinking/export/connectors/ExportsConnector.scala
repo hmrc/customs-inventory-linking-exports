@@ -16,11 +16,8 @@
 
 package uk.gov.hmrc.customs.inventorylinking.export.connectors
 
-import java.time.LocalDateTime
-import java.time.temporal.ChronoUnit
-import java.util.UUID
-
 import akka.actor.ActorSystem
+import akka.pattern.CircuitBreakerOpenException
 import com.google.inject._
 import org.joda.time.DateTime
 import play.api.http.HeaderNames.{ACCEPT, CONTENT_TYPE, DATE, X_FORWARDED_HOST}
@@ -28,23 +25,25 @@ import play.api.http.{MimeTypes, Status}
 import uk.gov.hmrc.customs.api.common.config.ServiceConfigProvider
 import uk.gov.hmrc.customs.api.common.connectors.CircuitBreakerConnector
 import uk.gov.hmrc.customs.api.common.logging.CdsLogger
+import uk.gov.hmrc.customs.inventorylinking.`export`.connectors.ExportsConnector._
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{HasConversationId, ValidatedPayloadRequest}
+import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
 import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http._
 
+import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
 
 @Singleton
-class ExportsConnector @Inject() (http: HttpClient,
-                                  logger: ExportsLogger,
-                                  serviceConfigProvider: ServiceConfigProvider,
-                                  config: ExportsConfigService,
-                                  override val cdsLogger: CdsLogger,
-                                  override val actorSystem: ActorSystem)
-                                 (implicit override val ec: ExecutionContext) extends CircuitBreakerConnector with HttpErrorFunctions with Status {
+class ExportsConnector @Inject()(http: HttpClient,
+                                 logger: ExportsLogger,
+                                 serviceConfigProvider: ServiceConfigProvider,
+                                 config: ExportsConfigService,
+                                 override val cdsLogger: CdsLogger,
+                                 override val actorSystem: ActorSystem)
+                                (implicit override val ec: ExecutionContext) extends CircuitBreakerConnector with HttpErrorFunctions {
 
   override val configKey = "mdg-exports"
 
@@ -52,20 +51,35 @@ class ExportsConnector @Inject() (http: HttpClient,
   override lazy val unstablePeriodDurationInMillis = config.exportsCircuitBreakerConfig.unstablePeriodDurationInMillis
   override lazy val unavailablePeriodDurationInMillis = config.exportsCircuitBreakerConfig.unavailablePeriodDurationInMillis
 
-  def send[A](xml: NodeSeq, date: DateTime, correlationId: UUID)(implicit vpr: ValidatedPayloadRequest[A], hc: HeaderCarrier): Future[HttpResponse] = {
+  def send[A](xml: NodeSeq,
+              date: DateTime,
+              correlationId: UUID)
+             (implicit vpr: ValidatedPayloadRequest[A], hc: HeaderCarrier): Future[Either[ExportsConnector.Error, HttpResponse]] = {
     val config = Option(serviceConfigProvider.getConfig(s"${vpr.requestedApiVersion.configPrefix}$configKey")).getOrElse(throw new IllegalArgumentException("config not found"))
     val bearerToken = "Bearer " + config.bearerToken.getOrElse(throw new IllegalStateException("no bearer token was found in config"))
 
-    implicit val headerCarrier: HeaderCarrier = hc.copy(authorization = None)
     val exportHeaders = hc.extraHeaders ++ getHeaders(date, correlationId) ++ Seq(HeaderNames.authorisation -> bearerToken)
 
-    val startTime = LocalDateTime.now
-    withCircuitBreaker(post(xml, config.url, exportHeaders)(vpr, headerCarrier)).map{
-      response => {
-        logCallDuration(startTime)
-        logger.debug(s"Response status ${response.status} and response body ${formatResponseBody(response.body)}")
+    case class Non2xxResponseException(status: Int) extends Throwable
+    val url = config.url
+    withCircuitBreaker {
+      logger.debug(s"Posting inventory linking exports.\nurl = $url\npayload = \n${xml.toString}")
+      implicit val hc: HeaderCarrier = hc.copy(authorization = None)
+      http.POSTString[HttpResponse](url, xml.toString(), headers = exportHeaders).map { response =>
+        response.status match {
+          case status if Status.isSuccessful(status) =>
+            Right(response)
+          case status => // Refactor out usage of exceptions 'eventually', but for now maintaining breakOnException() triggering behaviour
+            throw Non2xxResponseException(status)
+        }
       }
-        response
+    }.recover {
+      case _: CircuitBreakerOpenException =>
+        Left(RetryError)
+      case Non2xxResponseException(status) =>
+        Left(Non2xxResponseError(status))
+      case t: Throwable =>
+        Left(UnexpectedError(t))
     }
   }
 
@@ -77,47 +91,14 @@ class ExportsConnector @Inject() (http: HttpClient,
       (X_FORWARDED_HOST, "MDTP"),
       ("X-Correlation-ID", correlationId.toString))
   }
+}
 
-  private def post[A](xml: NodeSeq, url: String, exportHeaders: Seq[(String, String)])(implicit vpr: ValidatedPayloadRequest[A], hc: HeaderCarrier) = {
-    logger.debug(s"Posting inventory linking exports.\nurl = $url\npayload = \n${xml.toString}")
+object ExportsConnector {
+  sealed trait Error
 
-    http.POSTString[HttpResponse](url, xml.toString(), headers = exportHeaders).map{ response =>
-      response.status match {
-        case status if is2xx(status) =>
-          response
-        case status => //1xx, 3xx, 4xx, 5xx
-          logger.error(s"Failed inventory linking exports backend call response body=${formatResponseBody(response.body)}")
-          throw new Non2xxResponseException(status)
-      }
-    }.recoverWith {
-        case httpError: HttpException =>
-          logger.error(s"Call to inventory linking exports failed. url = $url status=${httpError.responseCode}")
-          Future.failed(httpError)
-        case e: Throwable =>
-          logger.error(s"Call to inventory linking exports failed. url = $url", e)
-          Future.failed(e)
-      }
-  }
+  case class Non2xxResponseError(status: Int) extends Error
 
-  protected def logCallDuration(startTime: LocalDateTime)(implicit r: HasConversationId): Unit ={
-    val callDuration = ChronoUnit.MILLIS.between(startTime, LocalDateTime.now)
-    logger.info(s"Outbound call duration was $callDuration ms")
-  }
+  case object RetryError extends Error
 
-  private def formatResponseBody(responseBody: String) = {
-    if (responseBody.isEmpty) {
-      "<empty>"
-    } else {
-      responseBody
-    }
-  }
-
-  override protected def breakOnException(t: Throwable): Boolean = t match {
-    case e: Non2xxResponseException => e.responseCode match {
-      case BAD_REQUEST => false
-      case NOT_FOUND => false
-      case _ => true
-    }
-    case _ => true
-  }
+  case class UnexpectedError(t: Throwable) extends Error
 }

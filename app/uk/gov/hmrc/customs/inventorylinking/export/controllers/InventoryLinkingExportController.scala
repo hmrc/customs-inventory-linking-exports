@@ -70,8 +70,8 @@ class InventoryLinkingExportController @Inject()(cc: ControllerComponents,
         businessService.send map {
           case Right(_) =>
             logger.info("Inventory linking exports request processed successfully")
-            metricsConnector.post(CustomsMetricsRequest(
-              "ILE", vpr.conversationId, vpr.start, conversationIdAction.timeService.zonedDateTimeUtc))
+            val request = CustomsMetricsRequest("ILE", vpr.conversationId, vpr.start, conversationIdAction.timeService.zonedDateTimeUtc)
+            metricsConnector.post(request)
             Accepted.as(MimeTypes.XML).withConversationId
           case Left(errorResult) =>
             logger.info("Inventory linking exports request failed")

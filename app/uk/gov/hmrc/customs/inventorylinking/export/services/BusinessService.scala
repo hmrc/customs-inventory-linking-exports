@@ -16,27 +16,23 @@
 
 package uk.gov.hmrc.customs.inventorylinking.export.services
 
-import java.util.UUID
-
-import akka.pattern.CircuitBreakerOpenException
-import javax.inject.{Inject, Singleton}
-import org.joda.time.DateTime
-import play.api.http.Status.FORBIDDEN
 import play.api.mvc.Result
+import play.mvc.Http.Status.{FORBIDDEN, INTERNAL_SERVER_ERROR}
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
-import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.errorInternalServerError
+import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.{ErrorInternalServerError, ErrorPayloadForbidden, errorInternalServerError}
+import uk.gov.hmrc.customs.inventorylinking.`export`.connectors.ExportsConnector.RetryError
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.ExportsConnector
+import uk.gov.hmrc.customs.inventorylinking.export.connectors.ExportsConnector._
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
 import uk.gov.hmrc.customs.inventorylinking.export.xml.PayloadDecorator
-import uk.gov.hmrc.http.{HeaderCarrier, HttpException}
+import uk.gov.hmrc.http.HeaderCarrier
 
+import java.util.UUID
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Left
-import scala.util.control.NonFatal
-import scala.xml.NodeSeq
 
 @Singleton
 class BusinessService @Inject()(logger: ExportsLogger,
@@ -46,38 +42,28 @@ class BusinessService @Inject()(logger: ExportsLogger,
                                 uniqueIdsService: UniqueIdsService,
                                 configService: ExportsConfigService)
                                (implicit ec: ExecutionContext) {
-
-  private val errorResponseServiceUnavailable = errorInternalServerError("This service is currently unavailable")
-
   def send[A](implicit vpr: ValidatedPayloadRequest[A], hc: HeaderCarrier): Future[Either[Result, Unit]] = {
-    callBackend(SubscriptionFieldsId(vpr.apiSubscriptionFields.fieldsId.toString))
-  }
-
-  private def callBackend[A](subscriptionFieldsId: SubscriptionFieldsId)
-                            (implicit vpr: ValidatedPayloadRequest[A], hc: HeaderCarrier): Future[Either[Result, Unit]] = {
+    val subscriptionFieldsId = SubscriptionFieldsId(vpr.apiSubscriptionFields.fieldsId.toString)
     val dateTime = dateTimeProvider.getUtcNow
     val correlationId = uniqueIdsService.correlation
-    val xmlToSend = preparePayload(vpr.xmlBody, subscriptionFieldsId, correlationId, dateTime)
+    val xmlToSend = wrapper.decorate(vpr.xmlBody, subscriptionFieldsId, correlationId, dateTime)
 
-    connector.send(xmlToSend, dateTime, UUID.fromString(correlationId.toString)).map{
-      _ => Right(())
-    }.recover[Either[Result, Unit]]{
-      case _: CircuitBreakerOpenException =>
-        logger.error("unhealthy state entered")
-        Left(errorResponseServiceUnavailable.XmlResult.withConversationId)
-      case httpException :HttpException if httpException.responseCode == FORBIDDEN =>
-        logger.warn(s"Inventory linking exports request failed with 403: ${ httpException.getMessage}")
-        Left(ErrorResponse.ErrorPayloadForbidden.XmlResult.withConversationId)
-      case NonFatal(e) =>
-        logger.error(s"Inventory linking exports request failed: ${e.getMessage}", e)
-        Left(ErrorResponse.ErrorInternalServerError.XmlResult.withConversationId)
+    connector.send(xmlToSend, dateTime, UUID.fromString(correlationId.toString)).map {
+      case Right(_) =>
+        Right(())
+      case Left(RetryError) =>
+        handleError("Unhealthy state entered", INTERNAL_SERVER_ERROR, errorInternalServerError("This service is currently unavailable"))
+      case Left(Non2xxResponseError(FORBIDDEN)) =>
+        handleError("Forbidden", FORBIDDEN, ErrorPayloadForbidden)
+      case Left(Non2xxResponseError(status)) =>
+        handleError(s"Received status code [$status]", INTERNAL_SERVER_ERROR, ErrorInternalServerError)
+      case Left(UnexpectedError(t)) =>
+        handleError(s"Unexpected error: ${t.getMessage}", INTERNAL_SERVER_ERROR, ErrorInternalServerError)
     }
   }
 
-  private def preparePayload[A](xml: NodeSeq, clientId: SubscriptionFieldsId, correlationId: CorrelationId, dateTime: DateTime)
-                               (implicit vpr: ValidatedPayloadRequest[A]): NodeSeq = {
-    logger.debug("preparePayload called")
-    wrapper.decorate(xml, clientId, correlationId, dateTime)
+  private def handleError(message: String, statusToReturn: Int, errorResponse: ErrorResponse): Left[Result, Nothing] = {
+    logger.error(s"exports connector call failed: $message, returning status code [$statusToReturn]")
+    Left(errorResponse.XmlResult.withConversationId)
   }
-
 }

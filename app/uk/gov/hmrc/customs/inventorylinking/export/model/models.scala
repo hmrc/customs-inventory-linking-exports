@@ -16,9 +16,9 @@
 
 package uk.gov.hmrc.customs.inventorylinking.export.model
 
-import java.util.UUID
 import play.api.libs.json.{JsString, Reads, Writes}
 
+import java.util.UUID
 import scala.util.matching.Regex
 
 case class Eori private(value: String) extends AnyVal {
@@ -28,8 +28,6 @@ case class Eori private(value: String) extends AnyVal {
 object Eori {
 
   private val ValidEoriHeaderRegex: Regex = "(^[A-Za-z]{2}[a-zA-Z0-9]{1,15}$)".r
-
-  private def apply(value: String): Eori = new Eori(value)
 
   def fromString(value: String): Option[Eori] = {
     if (ValidEoriHeaderRegex.pattern.matcher(value).matches) {
