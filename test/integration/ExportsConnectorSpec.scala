@@ -16,7 +16,6 @@
 
 package integration
 
-import uk.gov.hmrc.customs.inventorylinking.export.connectors.ExportsConnector._
 import org.joda.time.DateTime
 import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatestplus.mockito.MockitoSugar
@@ -24,8 +23,8 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._
-import uk.gov.hmrc.customs.inventorylinking.export.connectors.{ExportsConnector, Non2xxResponseException}
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
+import uk.gov.hmrc.customs.inventorylinking.export.connectors.ExportsConnector
+import uk.gov.hmrc.customs.inventorylinking.export.connectors.ExportsConnector._
 import uk.gov.hmrc.http.{Authorization, _}
 import util.ExternalServicesConfig.{AuthToken, Host, Port}
 import util.TestData
@@ -33,8 +32,6 @@ import util.XMLTestData.ValidInventoryLinkingMovementRequestXML
 import util.externalservices.{ExportsExternalServicesConfig, InventoryLinkingExportsService}
 
 import java.util.UUID
-import scala.concurrent.Future
-import scala.xml.NodeSeq
 
 class ExportsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite with MockitoSugar
   with InventoryLinkingExportsService with TableDrivenPropertyChecks {

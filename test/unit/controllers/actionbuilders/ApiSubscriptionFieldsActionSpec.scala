@@ -16,14 +16,11 @@
 
 package unit.controllers.actionbuilders
 
-import java.net.URLEncoder
-
 import org.mockito.ArgumentMatchers.{eq => ameq, _}
 import org.mockito.Mockito._
 import org.scalatestplus.mockito.MockitoSugar
-import play.api.mvc.{AnyContentAsXml, Result}
+import play.api.mvc.AnyContentAsXml
 import play.api.test.{FakeRequest, Helpers}
-import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.ApiSubscriptionFieldsConnector
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders.ApiSubscriptionFieldsAction
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
@@ -32,8 +29,9 @@ import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ApiSubs
 import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionKey, VersionOne}
 import util.CustomsMetricsTestData.EventStart
 import util.TestData.{TestExtractedHeaders, TestValidatedHeadersRequestV2, conversationId, declarantEori, testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId}
-import util.{ApiSubscriptionFieldsTestData, TestData, UnitSpec}
+import util.{ApiSubscriptionFieldsTestData, UnitSpec}
 
+import java.net.URLEncoder
 import scala.concurrent.{ExecutionContext, Future}
 
 class ApiSubscriptionFieldsActionSpec extends UnitSpec with MockitoSugar {

@@ -16,18 +16,18 @@
 
 package uk.gov.hmrc.customs.inventorylinking.export.controllers
 
-import javax.inject.{Inject, Singleton}
 import play.api.http.MimeTypes
 import play.api.mvc._
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.CustomsMetricsConnector
-import uk.gov.hmrc.customs.inventorylinking.export.model.CustomsMetricsRequest
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders._
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
+import uk.gov.hmrc.customs.inventorylinking.export.model.CustomsMetricsRequest
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
 import uk.gov.hmrc.customs.inventorylinking.export.services.BusinessService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.ExecutionContext
 
 @Singleton
@@ -53,12 +53,12 @@ class InventoryLinkingExportController @Inject()(cc: ControllerComponents,
 
   def post(): Action[AnyContent] = (
     Action andThen
-    conversationIdAction andThen
-    shutterCheckAction andThen
-    validateAndExtractHeadersAction andThen
-    fieldsAction andThen
-    authAction andThen
-    payloadValidationAction
+      conversationIdAction andThen
+      shutterCheckAction andThen
+      validateAndExtractHeadersAction andThen
+      fieldsAction andThen
+      authAction andThen
+      payloadValidationAction
     )
     .async(bodyParser = xmlOrEmptyBody) {
 
@@ -78,6 +78,6 @@ class InventoryLinkingExportController @Inject()(cc: ControllerComponents,
             errorResult
         }
 
-  }
+    }
 
 }

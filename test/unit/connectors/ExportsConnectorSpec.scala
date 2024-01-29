@@ -35,10 +35,9 @@ import uk.gov.hmrc.customs.inventorylinking.export.model.ExportsCircuitBreakerCo
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
 import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpReads, HttpResponse}
-import util.UnitSpec
 import unit.logging.StubExportsLogger
-import util.RequestHeaders
 import util.TestData._
+import util.{RequestHeaders, UnitSpec}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -61,7 +60,7 @@ class ExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfte
   private val xml = <xml></xml>
   private implicit lazy val hc = HeaderCarrier().withExtraHeaders(RequestHeaders.API_SUBSCRIPTION_FIELDS_ID_HEADER)
 
-  override protected def beforeEach(): Unit =  {
+  override protected def beforeEach(): Unit = {
     reset(mockWsPost, mockServiceConfigProvider)
     when(mockExportsConfigService.exportsCircuitBreakerConfig).thenReturn(mockExportsCircuitBreakerConfig)
     when(mockServiceConfigProvider.getConfig("mdg-exports")).thenReturn(serviceConfig)
