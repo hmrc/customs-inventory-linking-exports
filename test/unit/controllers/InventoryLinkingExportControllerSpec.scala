@@ -96,7 +96,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
 
     when(mockXmlValidationService.validate(any[NodeSeq])(any[ExecutionContext])).thenReturn(Future.successful(()))
     when(mockBusinessService.send(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])).thenReturn(Future.successful(Right(())))
-    when(mockApiSubscriptionFieldsConnector.getSubscriptionFields(any[ApiSubscriptionKey])(any[ValidatedHeadersRequest[_]])).thenReturn(Future.successful(ApiSubscriptionFieldsTestData.apiSubscriptionFields))
+    when(mockApiSubscriptionFieldsConnector.getSubscriptionFields(any[ApiSubscriptionKey])(any[ValidatedHeadersRequest[_]])).thenReturn(Future.successful(Some(ApiSubscriptionFieldsTestData.apiSubscriptionFields)))
     when(mockExportsConfigService.exportsShutterConfig).thenReturn(allVersionsUnshuttered)
   }
 
@@ -170,7 +170,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
     }
 
     "respond with status 500 for a CSP request with no X-Submitter-Identifier header, no X-Badge-Identifier header and no authenticated EORI" in new SetUp() {
-      when(mockApiSubscriptionFieldsConnector.getSubscriptionFields(any[ApiSubscriptionKey])(any[ValidatedHeadersRequest[_]])).thenReturn(Future.successful(ApiSubscriptionFieldsTestData.apiSubscriptionFieldsNoAuthenticatedEori))
+      when(mockApiSubscriptionFieldsConnector.getSubscriptionFields(any[ApiSubscriptionKey])(any[ValidatedHeadersRequest[_]])).thenReturn(Future.successful(Some(ApiSubscriptionFieldsTestData.apiSubscriptionFieldsNoAuthenticatedEori)))
       authoriseCsp()
 
       val result: Result = awaitSubmit(ValidRequestWithSubmitterHeader.withHeaders(ValidRequestWithSubmitterHeader.headers.remove(X_SUBMITTER_IDENTIFIER_NAME).remove(X_BADGE_IDENTIFIER_NAME)))

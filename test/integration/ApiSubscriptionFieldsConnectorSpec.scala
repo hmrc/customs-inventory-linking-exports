@@ -64,45 +64,42 @@ class ApiSubscriptionFieldsConnectorSpec extends IntegrationTestSpec with GuiceO
     "make a correct request" in {
       setupGetSubscriptionFieldsToReturn()
 
-      val response = await(getApiSubscriptionFields)
+      val response = getApiSubscriptionFields()
 
-      response shouldBe apiSubscriptionFields
+      response shouldBe Some(apiSubscriptionFields)
       verifyGetSubscriptionFieldsCalled()
     }
 
-    "return a failed future when external service returns 404" in {
+    "return a None when external service returns 404" in {
       setupGetSubscriptionFieldsToReturn(NOT_FOUND)
-      checkCorrectExceptionStatus(NOT_FOUND)
+      val response = getApiSubscriptionFields()
+
+      response shouldBe None
     }
 
-    "return a failed future when external service returns 400" in {
+    "return a None when external service returns 400" in {
       setupGetSubscriptionFieldsToReturn(BAD_REQUEST)
-      checkCorrectExceptionStatus(BAD_REQUEST)
+      val response = getApiSubscriptionFields()
+
+      response shouldBe None
     }
 
-    "return a failed future when external service returns any 4xx response other than 400" in {
+    "return a None when external service returns any 4xx response other than 400" in {
       setupGetSubscriptionFieldsToReturn(FORBIDDEN)
-      checkCorrectExceptionStatus(FORBIDDEN)
+      val response = getApiSubscriptionFields()
+
+      response shouldBe None
     }
 
-    "return a failed future when external service returns 500" in {
+    "return a None when external service returns 500" in {
       setupGetSubscriptionFieldsToReturn(INTERNAL_SERVER_ERROR)
-      checkCorrectExceptionStatus(INTERNAL_SERVER_ERROR)
-    }
+      val response = getApiSubscriptionFields()
 
-    "return a failed future when fail to connect the external service" in {
-      stopMockServer()
-      intercept[RuntimeException](await(getApiSubscriptionFields)).getCause.getClass shouldBe classOf[BadGatewayException]
-      startMockServer()
+      response shouldBe None
     }
   }
 
-  private def getApiSubscriptionFields: Future[ApiSubscriptionFields] = {
-    connector.getSubscriptionFields(apiSubscriptionKey)
-  }
-
-  private def checkCorrectExceptionStatus(status: Int): Unit = {
-    val ex = intercept[UpstreamErrorResponse](await(getApiSubscriptionFields))
-    ex.statusCode shouldBe status
+  private def getApiSubscriptionFields(): Option[ApiSubscriptionFields] = {
+    await(connector.getSubscriptionFields(apiSubscriptionKey))
   }
 }

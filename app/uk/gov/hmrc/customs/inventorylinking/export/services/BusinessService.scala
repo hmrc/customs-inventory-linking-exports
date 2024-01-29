@@ -62,7 +62,8 @@ class BusinessService @Inject()(logger: ExportsLogger,
     }
   }
 
-  private def handleError(message: String, statusToReturn: Int, errorResponse: ErrorResponse): Left[Result, Nothing] = {
+  private def handleError[A](message: String, statusToReturn: Int, errorResponse: ErrorResponse)
+                         (implicit vpr: ValidatedPayloadRequest[A]): Left[Result, Nothing] = {
     logger.error(s"exports connector call failed: $message, returning status code [$statusToReturn]")
     Left(errorResponse.XmlResult.withConversationId)
   }

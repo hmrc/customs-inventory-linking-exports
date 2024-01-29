@@ -64,15 +64,16 @@ class ExportsConnector @Inject()(http: HttpClient,
     val url = config.url
     withCircuitBreaker {
       logger.debug(s"Posting inventory linking exports.\nurl = $url\npayload = \n${xml.toString}")
-      implicit val hc: HeaderCarrier = hc.copy(authorization = None)
-      http.POSTString[HttpResponse](url, xml.toString(), headers = exportHeaders).map { response =>
-        response.status match {
-          case status if Status.isSuccessful(status) =>
-            Right(response)
-          case status => // Refactor out usage of exceptions 'eventually', but for now maintaining breakOnException() triggering behaviour
-            throw Non2xxResponseException(status)
+      implicit val hcWithoutAuth: HeaderCarrier = hc.copy(authorization = None)
+      http.POSTString[HttpResponse](url, xml.toString(), headers = exportHeaders)(readRaw, hcWithoutAuth, ec)
+        .map { response =>
+          response.status match {
+            case status if Status.isSuccessful(status) =>
+              Right(response)
+            case status => // Refactor out usage of exceptions 'eventually', but for now maintaining breakOnException() triggering behaviour
+              throw Non2xxResponseException(status)
+          }
         }
-      }
     }.recover {
       case _: CircuitBreakerOpenException =>
         Left(RetryError)

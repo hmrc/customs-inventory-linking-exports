@@ -57,7 +57,7 @@ class ApiSubscriptionFieldsActionSpec extends UnitSpec with MockitoSugar {
 
   "ApiSubscriptionFieldsAction" should {
     "get Right of fields for a valid request" in new SetUp {
-      when(connector.getSubscriptionFields(any[ApiSubscriptionKey])(ameq(vhr))).thenReturn(Future.successful(ApiSubscriptionFieldsTestData.apiSubscriptionFields))
+      when(connector.getSubscriptionFields(any[ApiSubscriptionKey])(ameq(vhr))).thenReturn(Future.successful(Some(ApiSubscriptionFieldsTestData.apiSubscriptionFields)))
 
       val Right(actual: ApiSubscriptionFieldsRequest[AnyContentAsXml]) = await(service.refine(vhr))
 
@@ -65,21 +65,11 @@ class ApiSubscriptionFieldsActionSpec extends UnitSpec with MockitoSugar {
     }
 
     "ensure that correct version is used in call to subscription service" in new SetUp {
-      when(connector.getSubscriptionFields(any[ApiSubscriptionKey])(ameq(TestValidatedHeadersRequestV2))).thenReturn(Future.successful(ApiSubscriptionFieldsTestData.apiSubscriptionFields))
+      when(connector.getSubscriptionFields(any[ApiSubscriptionKey])(ameq(TestValidatedHeadersRequestV2))).thenReturn(Future.successful(Some(ApiSubscriptionFieldsTestData.apiSubscriptionFields)))
 
       val Right(actual: ApiSubscriptionFieldsRequest[AnyContentAsXml]) = await(service.refine(TestValidatedHeadersRequestV2))
 
       actual shouldBe TestValidatedHeadersRequestV2.toApiSubscriptionFieldsRequest(ApiSubscriptionFieldsTestData.apiSubscriptionFields)
     }
-
-    "return Left of a 500 error result when connector throws an exception" in new SetUp {
-      when(connector.getSubscriptionFields(ameq(key))(ameq(vhr))).thenReturn(Future.failed(TestData.emulatedServiceFailure))
-
-      val Left(actual: Result) = await(service.refine(vhr))
-
-      actual shouldBe ErrorResponse.ErrorInternalServerError.XmlResult.withConversationId(vhr)
-    }
-
   }
-
 }

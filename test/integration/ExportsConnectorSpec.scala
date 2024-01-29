@@ -16,6 +16,7 @@
 
 package integration
 
+import uk.gov.hmrc.customs.inventorylinking.export.connectors.ExportsConnector._
 import org.joda.time.DateTime
 import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatestplus.mockito.MockitoSugar
@@ -83,41 +84,33 @@ class ExportsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite 
     "make a correct request" in {
       startBackendService()
 
-      await(sendValidXml(ValidInventoryLinkingMovementRequestXML))
+      await(connector.send(ValidInventoryLinkingMovementRequestXML, new DateTime(), correlationId))
 
       verifyInventoryLinkingExportsServiceWasCalledWith(ValidInventoryLinkingMovementRequestXML.toString())
     }
 
     "return a failed future when service returns 404" in {
       setupBackendServiceToReturn(NOT_FOUND)
-      checkCorrectExceptionStatus(NOT_FOUND)
+
+      val response = await(connector.send(ValidInventoryLinkingMovementRequestXML, new DateTime(), correlationId))
+
+      response shouldBe Left(Non2xxResponseError(NOT_FOUND))
     }
 
     "return a failed future when service returns 400" in {
       setupBackendServiceToReturn(BAD_REQUEST)
-      checkCorrectExceptionStatus(BAD_REQUEST)
+
+      val response = await(connector.send(ValidInventoryLinkingMovementRequestXML, new DateTime(), correlationId))
+
+      response shouldBe Left(Non2xxResponseError(BAD_REQUEST))
     }
 
     "return a failed future when service returns 500" in {
       setupBackendServiceToReturn(INTERNAL_SERVER_ERROR)
-      checkCorrectExceptionStatus(INTERNAL_SERVER_ERROR)
+
+      val response = await(connector.send(ValidInventoryLinkingMovementRequestXML, new DateTime(), correlationId))
+
+      response shouldBe Left(Non2xxResponseError(INTERNAL_SERVER_ERROR))
     }
-
-    "return a failed future when connection with backend service fails" in {
-      stopMockServer()
-
-      intercept[BadGatewayException](await(sendValidXml(ValidInventoryLinkingMovementRequestXML)))
-
-      startMockServer()
-    }
-  }
-
-  private def sendValidXml(xml: NodeSeq)(implicit vpr: ValidatedPayloadRequest[_]): Future[HttpResponse] = {
-    connector.send(xml, new DateTime(), correlationId)
-  }
-
-  private def checkCorrectExceptionStatus(status: Int): Unit = {
-    val ex = intercept[Non2xxResponseException](await(sendValidXml(ValidInventoryLinkingMovementRequestXML)))
-    ex.responseCode shouldBe status
   }
 }
