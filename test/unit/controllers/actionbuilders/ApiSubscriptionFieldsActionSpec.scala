@@ -16,14 +16,11 @@
 
 package unit.controllers.actionbuilders
 
-import java.net.URLEncoder
-
 import org.mockito.ArgumentMatchers.{eq => ameq, _}
 import org.mockito.Mockito._
 import org.scalatestplus.mockito.MockitoSugar
-import play.api.mvc.{AnyContentAsXml, Result}
+import play.api.mvc.AnyContentAsXml
 import play.api.test.{FakeRequest, Helpers}
-import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.ApiSubscriptionFieldsConnector
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders.ApiSubscriptionFieldsAction
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
@@ -32,8 +29,9 @@ import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ApiSubs
 import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionKey, VersionOne}
 import util.CustomsMetricsTestData.EventStart
 import util.TestData.{TestExtractedHeaders, TestValidatedHeadersRequestV2, conversationId, declarantEori, testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId}
-import util.{ApiSubscriptionFieldsTestData, TestData, UnitSpec}
+import util.{ApiSubscriptionFieldsTestData, UnitSpec}
 
+import java.net.URLEncoder
 import scala.concurrent.{ExecutionContext, Future}
 
 class ApiSubscriptionFieldsActionSpec extends UnitSpec with MockitoSugar {
@@ -57,7 +55,7 @@ class ApiSubscriptionFieldsActionSpec extends UnitSpec with MockitoSugar {
 
   "ApiSubscriptionFieldsAction" should {
     "get Right of fields for a valid request" in new SetUp {
-      when(connector.getSubscriptionFields(any[ApiSubscriptionKey])(ameq(vhr))).thenReturn(Future.successful(ApiSubscriptionFieldsTestData.apiSubscriptionFields))
+      when(connector.getSubscriptionFields(any[ApiSubscriptionKey])(ameq(vhr))).thenReturn(Future.successful(Some(ApiSubscriptionFieldsTestData.apiSubscriptionFields)))
 
       val Right(actual: ApiSubscriptionFieldsRequest[AnyContentAsXml]) = await(service.refine(vhr))
 
@@ -65,21 +63,11 @@ class ApiSubscriptionFieldsActionSpec extends UnitSpec with MockitoSugar {
     }
 
     "ensure that correct version is used in call to subscription service" in new SetUp {
-      when(connector.getSubscriptionFields(any[ApiSubscriptionKey])(ameq(TestValidatedHeadersRequestV2))).thenReturn(Future.successful(ApiSubscriptionFieldsTestData.apiSubscriptionFields))
+      when(connector.getSubscriptionFields(any[ApiSubscriptionKey])(ameq(TestValidatedHeadersRequestV2))).thenReturn(Future.successful(Some(ApiSubscriptionFieldsTestData.apiSubscriptionFields)))
 
       val Right(actual: ApiSubscriptionFieldsRequest[AnyContentAsXml]) = await(service.refine(TestValidatedHeadersRequestV2))
 
       actual shouldBe TestValidatedHeadersRequestV2.toApiSubscriptionFieldsRequest(ApiSubscriptionFieldsTestData.apiSubscriptionFields)
     }
-
-    "return Left of a 500 error result when connector throws an exception" in new SetUp {
-      when(connector.getSubscriptionFields(ameq(key))(ameq(vhr))).thenReturn(Future.failed(TestData.emulatedServiceFailure))
-
-      val Left(actual: Result) = await(service.refine(vhr))
-
-      actual shouldBe ErrorResponse.ErrorInternalServerError.XmlResult.withConversationId(vhr)
-    }
-
   }
-
 }

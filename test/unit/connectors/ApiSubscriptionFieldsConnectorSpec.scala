@@ -23,17 +23,18 @@ import org.mockito.stubbing.OngoingStubbing
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.Eventually
 import org.scalatestplus.mockito.MockitoSugar
+import play.api.http.Status.{NOT_FOUND, OK}
 import play.api.test.Helpers
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.ApiSubscriptionFieldsConnector
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionFields, ExportsConfig}
+import uk.gov.hmrc.customs.inventorylinking.export.model.ExportsConfig
 import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpReads, NotFoundException}
-import util.UnitSpec
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpReads, HttpResponse, NotFoundException}
 import util.ExternalServicesConfig._
 import util.externalservices.ExportsExternalServicesConfig._
-import util.{ApiSubscriptionFieldsTestData, TestData}
+import util.{ApiSubscriptionFieldsTestData, TestData, UnitSpec}
 
+import java.net.URL
 import scala.concurrent.{ExecutionContext, Future}
 
 class ApiSubscriptionFieldsConnectorSpec extends UnitSpec
@@ -54,7 +55,7 @@ class ApiSubscriptionFieldsConnectorSpec extends UnitSpec
 
   private implicit val vhr = TestData.TestValidatedHeadersRequest
 
-  override protected def beforeEach(): Unit =  {
+  override protected def beforeEach(): Unit = {
     reset(mockExportsLogger, mockWSGetImpl, mockExportsConfigService)
     when(mockExportsConfigService.exportsConfig).thenReturn(mockExportsConfig)
     when(mockExportsConfig.apiSubscriptionFieldsBaseUrl).thenReturn("http://localhost:11111/api-subscription-fields/field")
@@ -63,41 +64,26 @@ class ApiSubscriptionFieldsConnectorSpec extends UnitSpec
   "ApiSubscriptionFieldsConnector" can {
     "when making a successful request" should {
       "use the correct URL for valid path parameters and config" in {
-        returnResponseForRequest(Future.successful(apiSubscriptionFields))
-        awaitSubscriptionFields() shouldBe apiSubscriptionFields
+        returnResponseForRequest(Future.successful(HttpResponse(OK, responseJsonString)))
+        val response = await(connector.getSubscriptionFields(apiSubscriptionKey))
+        response shouldBe Some(apiSubscriptionFields)
       }
     }
 
     "when making an failing request" should {
-      "propagate an underlying error when api subscription fields call fails with a non-http exception" in {
-        returnResponseForRequest(Future.failed(TestData.emulatedServiceFailure))
+      "return a None when api subscription fields call fails with an http error" in {
+        returnResponseForRequest(Future.successful(HttpResponse(NOT_FOUND, "")))
 
-        val caught = intercept[TestData.EmulatedServiceFailure] {
-          awaitSubscriptionFields()
-        }
+        val response = await(connector.getSubscriptionFields(apiSubscriptionKey))
 
-        caught shouldBe TestData.emulatedServiceFailure
-      }
-
-      "wrap an underlying error when api subscription fields call fails with an http exception" in {
-        returnResponseForRequest(Future.failed(httpException))
-
-        val caught = intercept[RuntimeException] {
-          awaitSubscriptionFields()
-        }
-
-        caught.getCause shouldBe httpException
+        response shouldBe None
       }
     }
   }
 
-  private def awaitSubscriptionFields(): ApiSubscriptionFields = {
-    await(connector.getSubscriptionFields(apiSubscriptionKey))
-  }
-
-  private def returnResponseForRequest(eventualResponse: Future[ApiSubscriptionFields], url: String = expectedUrl): OngoingStubbing[Future[ApiSubscriptionFields]] = {
-    when(mockWSGetImpl.GET[ApiSubscriptionFields](ameq(url), any(), any())
-      (any[HttpReads[ApiSubscriptionFields]](), any[HeaderCarrier](), any[ExecutionContext])).thenReturn(eventualResponse)
+  private def returnResponseForRequest(eventualResponse: Future[HttpResponse], url: URL = new URL(expectedUrl)): OngoingStubbing[Future[HttpResponse]] = {
+    when(mockWSGetImpl.GET[HttpResponse](ameq(url))
+      (any[HttpReads[HttpResponse]](), any[HeaderCarrier](), any[ExecutionContext])).thenReturn(eventualResponse)
   }
 
   private def connectorWithConfig(config: Config) = new ApiSubscriptionFieldsConnector(mockWSGetImpl, mockExportsLogger, mockExportsConfigService)

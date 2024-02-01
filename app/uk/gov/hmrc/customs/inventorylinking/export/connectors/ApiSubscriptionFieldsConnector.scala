@@ -16,14 +16,17 @@
 
 package uk.gov.hmrc.customs.inventorylinking.export.connectors
 
-import javax.inject.{Inject, Singleton}
+import play.api.http.Status
+import play.api.libs.json.Json
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedHeadersRequest
 import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionFields, ApiSubscriptionKey}
 import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
-import uk.gov.hmrc.http.HttpReads.Implicits._
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpException}
+import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
 
+import java.net.URL
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
@@ -31,24 +34,26 @@ class ApiSubscriptionFieldsConnector @Inject()(http: HttpClient,
                                                logger: ExportsLogger,
                                                config: ExportsConfigService)
                                               (implicit ec: ExecutionContext) {
-
-  def getSubscriptionFields[A](apiSubsKey: ApiSubscriptionKey)(implicit vhr: ValidatedHeadersRequest[A]): Future[ApiSubscriptionFields] = {
-    val url = ApiSubscriptionFieldsPath.url(config.exportsConfig.apiSubscriptionFieldsBaseUrl, apiSubsKey)
-    get(url)
-  }
-
-  private def get[A](url: String)(implicit vhr: ValidatedHeadersRequest[A]): Future[ApiSubscriptionFields] = {
-    logger.debug(s"Getting fields id from api-subscription-fields service. url = $url")
+  def getSubscriptionFields[A](apiSubsKey: ApiSubscriptionKey)(implicit vhr: ValidatedHeadersRequest[A]): Future[Option[ApiSubscriptionFields]] = {
+    val url = new URL(ApiSubscriptionFieldsPath.url(config.exportsConfig.apiSubscriptionFieldsBaseUrl, apiSubsKey))
+    logger.debug(s"Getting fields id from api subscription fields service. url=$url")
     implicit val hc = HeaderCarrier()
 
-    http.GET[ApiSubscriptionFields](url)
-      .recoverWith {
-        case httpError: HttpException =>
-          Future.failed(new RuntimeException(httpError))
-
-        case e: Throwable =>
-          logger.error(s"Call to get api subscription fields failed. url = $url", e)
-          Future.failed(e)
+    http.GET(url)
+      .map { response =>
+        response.status match {
+          case status if Status.isSuccessful(status) =>
+            Json.parse(response.body).asOpt[ApiSubscriptionFields] match {
+              case Some(value) =>
+                Some(value)
+              case None =>
+                logger.error(s"Could not parse subscription fields response. url=$url")
+                None
+            }
+          case status =>
+            logger.error(s"Subscriptions fields lookup call failed. url=$url HttpStatus=$status")
+            None
+        }
       }
   }
 }

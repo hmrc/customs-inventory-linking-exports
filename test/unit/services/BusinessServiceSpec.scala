@@ -16,9 +16,6 @@
 
 package unit.services
 
-import java.util.UUID
-import java.util.concurrent.TimeUnit
-import akka.pattern.CircuitBreakerOpenException
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.{eq => meq, _}
 import org.mockito.Mockito.{verify, when}
@@ -28,21 +25,22 @@ import play.api.http.Status.FORBIDDEN
 import play.api.mvc.{AnyContentAsXml, Result}
 import play.api.test.Helpers
 import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
-import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.{ErrorPayloadForbidden, errorInternalServerError}
+import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.errorInternalServerError
+import uk.gov.hmrc.customs.inventorylinking.`export`.connectors.ExportsConnector.{Non2xxResponseError, RetryError}
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.ExportsConnector
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
-import uk.gov.hmrc.customs.inventorylinking.export.services.{BusinessService, _}
+import uk.gov.hmrc.customs.inventorylinking.export.services._
 import uk.gov.hmrc.customs.inventorylinking.export.xml.PayloadDecorator
-import uk.gov.hmrc.http.{HeaderCarrier, HttpException, HttpResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import util.TestData._
 import util.XMLTestData._
 import util.{ApiSubscriptionFieldsTestData, RequestHeaders, UnitSpec}
 
+import java.util.UUID
 import scala.concurrent.Future
-import scala.concurrent.duration.FiniteDuration
 import scala.xml.NodeSeq
 
 class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach with ApiSubscriptionFieldsTestData {
@@ -56,7 +54,7 @@ class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfter
 
   trait SetUp {
     protected val mockConfigService = mock[ExportsConfigService]
-    protected val mockExportsConfig : ExportsConfig = mock[ExportsConfig]
+    protected val mockExportsConfig: ExportsConfig = mock[ExportsConfig]
     protected val mockLogger: ExportsLogger = mock[ExportsLogger]
     protected val mockExportsConnector: ExportsConnector = mock[ExportsConnector]
     protected val mockPayloadDecorator: PayloadDecorator = mock[PayloadDecorator]
@@ -75,7 +73,7 @@ class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfter
     when(mockConfigService.exportsConfig).thenReturn(mockExportsConfig)
     when(mockPayloadDecorator.decorate(meq(TestXmlPayload), meq[String](TestSubscriptionFieldsId.value).asInstanceOf[SubscriptionFieldsId], meq[UUID](correlationIdUuid).asInstanceOf[CorrelationId], any[DateTime])(any[ValidatedPayloadRequest[_]])).thenReturn(wrappedValidXML)
     when(mockDateTimeProvider.getUtcNow).thenReturn(dateTime)
-    when(mockExportsConnector.send(any[NodeSeq], meq(dateTime), any[UUID])(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])).thenReturn(mockHttpResponse)
+    when(mockExportsConnector.send(any[NodeSeq], meq(dateTime), any[UUID])(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])).thenReturn(Right(mockHttpResponse))
   }
 
   "BusinessService" should {
@@ -98,26 +96,25 @@ class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfter
       // type of the value contained in the value class i.e. for CorrelationId the value is UUID so needs to meq type of UUID
       send() shouldBe Right(())
 
-      verify(mockPayloadDecorator).decorate(meq(TestXmlPayload), meq[String](TestSubscriptionFieldsId.value).asInstanceOf[SubscriptionFieldsId], meq[UUID](correlationIdUuid).asInstanceOf[CorrelationId], any[DateTime])(any[ValidatedPayloadRequest[_]])
-    }
-
-    "return InternalServerError ErrorResponse when backend call fails" in new SetUp() {
-      when(mockExportsConnector.send(any[NodeSeq], any[DateTime], any[UUID])(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])).thenReturn(Future.failed(emulatedServiceFailure))
-
-      send() shouldBe Left(ErrorResponse.ErrorInternalServerError.XmlResult.withConversationId)
+      verify(mockPayloadDecorator)
+        .decorate(meq(TestXmlPayload),
+          meq[String](TestSubscriptionFieldsId.value).asInstanceOf[SubscriptionFieldsId],
+          meq[UUID](correlationIdUuid).asInstanceOf[CorrelationId],
+          any[DateTime])(any[ValidatedPayloadRequest[_]])
     }
 
     "return InternalServerError ErrorResponse when backend circuit breaker trips" in new SetUp() {
-      when(mockExportsConnector.send(any[NodeSeq], any[DateTime], any[UUID])(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])).thenReturn(Future.failed(new CircuitBreakerOpenException(FiniteDuration(10, TimeUnit.SECONDS))))
+      when(mockExportsConnector.send(any[NodeSeq], any[DateTime], any[UUID])(any[ValidatedPayloadRequest[_]], any[HeaderCarrier]))
+        .thenReturn(Future.successful(Left(RetryError)))
 
       send() shouldBe Left(errorResponseServiceUnavailable.XmlResult.withConversationId)
     }
 
     "return Forbidden ErrorResponse when backend returns 403" in new SetUp() {
-      when(mockExportsConnector.send(any[NodeSeq], any[DateTime], any[UUID])(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])).thenReturn(Future.failed(new HttpException("Forbidden", FORBIDDEN)))
+      when(mockExportsConnector.send(any[NodeSeq], any[DateTime], any[UUID])(any[ValidatedPayloadRequest[_]], any[HeaderCarrier]))
+        .thenReturn(Future.successful(Left(Non2xxResponseError(FORBIDDEN))))
 
       send() shouldBe Left(ErrorResponse.ErrorPayloadForbidden.XmlResult.withConversationId)
-
     }
   }
 }
