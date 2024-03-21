@@ -18,9 +18,9 @@ package uk.gov.hmrc.customs.inventorylinking.export.services
 
 import play.api.mvc.Result
 import play.mvc.Http.Status.{FORBIDDEN, INTERNAL_SERVER_ERROR}
-import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
-import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.{ErrorInternalServerError, ErrorPayloadForbidden, errorInternalServerError}
-import uk.gov.hmrc.customs.inventorylinking.`export`.connectors.ExportsConnector.RetryError
+import uk.gov.hmrc.customs.inventorylinking.export.controllers.ErrorResponse
+import uk.gov.hmrc.customs.inventorylinking.export.controllers.ErrorResponse.{ErrorInternalServerError, ErrorPayloadForbidden, errorInternalServerError}
+import uk.gov.hmrc.customs.inventorylinking.export.connectors.ExportsConnector.RetryError
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.ExportsConnector
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.ExportsConnector._
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger

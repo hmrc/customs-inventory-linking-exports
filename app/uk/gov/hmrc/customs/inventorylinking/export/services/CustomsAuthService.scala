@@ -22,8 +22,8 @@ import play.api.http.Status.UNAUTHORIZED
 import uk.gov.hmrc.auth.core.AuthProvider.{GovernmentGateway, PrivilegedApplication}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
-import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
-import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.{ErrorInternalServerError, UnauthorizedCode}
+import uk.gov.hmrc.customs.inventorylinking.export.controllers.ErrorResponse.{ErrorInternalServerError, UnauthorizedCode}
+import uk.gov.hmrc.customs.inventorylinking.export.controllers.ErrorResponse
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.HasConversationId
 import uk.gov.hmrc.customs.inventorylinking.export.model.{Eori, NonCsp}

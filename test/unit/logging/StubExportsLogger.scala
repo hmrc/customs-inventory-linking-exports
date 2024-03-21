@@ -17,10 +17,11 @@
 package unit.logging
 
 import com.google.inject.Inject
-import javax.inject.Singleton
-import uk.gov.hmrc.customs.api.common.logging.CdsLogger
+import uk.gov.hmrc.customs.inventorylinking.export.logging.CdsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ConversationIdRequest, HasConversationId}
+
+import javax.inject.Singleton
 
 @Singleton
 class StubExportsLogger @Inject()(logger: CdsLogger) extends ExportsLogger(logger) {

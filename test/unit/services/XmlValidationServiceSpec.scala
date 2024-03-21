@@ -35,7 +35,7 @@ class XmlValidationServiceSpec extends UnitSpec with MockitoSugar with BeforeAnd
 
   private implicit val ec = Helpers.stubControllerComponents().executionContext
   private val mockConfiguration = mock[Configuration]
-  private val mockXml = mock[Node]
+  private val mockXml: Node = <xml></xml>
 
   private def testService(test: XmlValidationService => Unit): Unit = {
     test(new XmlValidationService(mockConfiguration))
@@ -149,5 +149,4 @@ class XmlValidationServiceSpec extends UnitSpec with MockitoSugar with BeforeAnd
         caught.getMessage shouldBe "requirement failed: maxErrors should be a positive number but 0 was provided instead."
     }
   }
-
 }
