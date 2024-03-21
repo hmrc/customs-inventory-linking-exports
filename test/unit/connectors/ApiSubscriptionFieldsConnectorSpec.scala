@@ -50,7 +50,6 @@ class ApiSubscriptionFieldsConnectorSpec extends UnitSpec
   private implicit val ec = Helpers.stubControllerComponents().executionContext
   private val connector = connectorWithConfig(validConfig)
 
-  private val httpException = new NotFoundException("Emulated 404 response from a web call")
   private val expectedUrl = s"http://$Host:$Port$ApiSubscriptionFieldsContext/application/SOME_X_CLIENT_ID/context/some/api/context/version/1.0"
 
   private implicit val vhr = TestData.TestValidatedHeadersRequest

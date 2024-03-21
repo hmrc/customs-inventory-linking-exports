@@ -21,8 +21,8 @@ import play.api.http.Status
 import play.api.http.Status.UNAUTHORIZED
 import play.api.mvc.AnyContentAsXml
 import play.api.test.{FakeRequest, Helpers}
-import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
-import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.{ErrorInternalServerError, UnauthorizedCode, errorBadRequest, errorInternalServerError}
+import uk.gov.hmrc.customs.inventorylinking.export.controllers.ErrorResponse
+import uk.gov.hmrc.customs.inventorylinking.export.controllers.ErrorResponse.{ErrorInternalServerError, UnauthorizedCode, errorBadRequest, errorInternalServerError}
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders.AuthAction
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.{CustomHeaderNames, HeaderValidator}
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger

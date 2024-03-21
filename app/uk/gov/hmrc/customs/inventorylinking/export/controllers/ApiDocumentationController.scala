@@ -17,22 +17,27 @@
 package uk.gov.hmrc.customs.inventorylinking.export.controllers
 
 import controllers.Assets
+
 import javax.inject.{Inject, Singleton}
 import play.api.Configuration
 import play.api.http.MimeTypes
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
-import uk.gov.hmrc.customs.api.common.controllers.DocumentationController
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 @Singleton
 class ApiDocumentationController @Inject()(assets: Assets,
                                            cc: ControllerComponents,
                                            configuration: Configuration)
-  extends DocumentationController(assets, cc) {
+  extends BackendController(cc) {
 
   private lazy val v1Enabled = configuration.getOptional[Boolean]("api.access.version-1.0.enabled").getOrElse(true)
   private lazy val v2Enabled = configuration.getOptional[Boolean]("api.access.version-2.0.enabled").getOrElse(true)
 
   def definition(): Action[AnyContent] = Action {
     Ok(uk.gov.hmrc.customs.inventorylinking.export.views.txt.definition(v1Enabled, v2Enabled)).as(MimeTypes.JSON)
+  }
+
+  def conf(version: String, file: String): Action[AnyContent] = {
+    assets.at(s"/public/api/conf/$version", file)
   }
 }

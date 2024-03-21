@@ -28,8 +28,8 @@ import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.HeaderNames
 import play.api.test.Helpers
 import play.mvc.Http.MimeTypes
-import uk.gov.hmrc.customs.api.common.config.{ServiceConfig, ServiceConfigProvider}
-import uk.gov.hmrc.customs.api.common.logging.CdsLogger
+import uk.gov.hmrc.customs.inventorylinking.export.config.{ServiceConfig, ServiceConfigProvider}
+import uk.gov.hmrc.customs.inventorylinking.export.logging.CdsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.ExportsConnector
 import uk.gov.hmrc.customs.inventorylinking.export.model.ExportsCircuitBreakerConfig
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest

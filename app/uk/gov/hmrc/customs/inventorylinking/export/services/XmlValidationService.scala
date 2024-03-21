@@ -18,15 +18,15 @@ package uk.gov.hmrc.customs.inventorylinking.export.services
 
 import java.io.FileNotFoundException
 import java.net.URL
-
 import com.google.inject.Singleton
+
 import javax.inject.Inject
 import javax.xml.XMLConstants
 import javax.xml.transform.Source
 import javax.xml.transform.stream.StreamSource
 import javax.xml.validation.{Schema, SchemaFactory}
 import play.api.Configuration
-import uk.gov.hmrc.customs.api.common.xml.ValidateXmlAgainstSchema
+import uk.gov.hmrc.customs.inventorylinking.export.xml.ValidateXmlAgainstSchema
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.{NodeSeq, SAXException}
@@ -40,7 +40,7 @@ class XmlValidationService @Inject()(configuration: Configuration) {
     def resourceUrl(resourcePath: String): URL = Option(getClass.getResource(resourcePath))
       .getOrElse(throw new FileNotFoundException(s"XML Schema resource file: $resourcePath"))
 
-    val sources = configuration.getOptional[Seq[String]](schemaPropertyName)
+    val sources= configuration.getOptional[Seq[String]](schemaPropertyName)
       .filter(_.nonEmpty)
       .getOrElse(throw new IllegalStateException(s"application.conf is missing mandatory property '$schemaPropertyName'"))
       .map(resourceUrl(_).toString)

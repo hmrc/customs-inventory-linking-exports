@@ -18,7 +18,7 @@ package uk.gov.hmrc.customs.inventorylinking.export.xml
 
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
-import uk.gov.hmrc.customs.inventorylinking.`export`.model._
+import uk.gov.hmrc.customs.inventorylinking.export.model._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
 import uk.gov.hmrc.customs.inventorylinking.export.model.{CorrelationId, NonCsp, SubscriptionFieldsId}
 

@@ -16,9 +16,11 @@
 
 package uk.gov.hmrc.customs.inventorylinking.export.services
 
+import cats.data.ValidatedNel
 import cats.implicits._
+import uk.gov.hmrc.customs.inventorylinking.export.config.ConfigValidatedNelAdaptor
+
 import javax.inject.{Inject, Singleton}
-import uk.gov.hmrc.customs.api.common.config.{ConfigValidatedNelAdaptor, CustomsValidatedNel}
 import uk.gov.hmrc.customs.inventorylinking.export.model.ExportsShutterConfig
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.{ExportsCircuitBreakerConfig, ExportsConfig}
@@ -27,6 +29,7 @@ import uk.gov.hmrc.customs.inventorylinking.export.model.{ExportsCircuitBreakerC
 class ExportsConfigService @Inject()(configValidatedNel: ConfigValidatedNelAdaptor,
                                      logger: ExportsLogger) {
 
+  type CustomsValidatedNel[A] = ValidatedNel[String, A]
   private val root = configValidatedNel.root
 
   private val apiSubscriptionFieldsService = configValidatedNel.service("api-subscription-fields")

@@ -18,7 +18,6 @@ package uk.gov.hmrc.customs.inventorylinking.export.logging
 
 import com.google.inject.Inject
 import javax.inject.Singleton
-import uk.gov.hmrc.customs.api.common.logging.CdsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.logging.LoggingHelper._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ConversationIdRequest, HasConversationId}
 

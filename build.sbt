@@ -1,4 +1,3 @@
-import AppDependencies._
 import com.typesafe.sbt.web.PathMapping
 import com.typesafe.sbt.web.pipeline.Pipeline
 import play.sbt.PlayImport.PlayKeys.playDefaultPort
@@ -77,14 +76,10 @@ def unitTestFilter(name: String): Boolean = name startsWith "unit"
 
 scalastyleConfig := baseDirectory.value / "project" / "scalastyle-config.xml"
 
-val compileDependencies = Seq(customsApiCommon)
-
-val testDependencies = Seq(scalaTestPlusPlay, scalatestplusMockito, wireMock, mockito, flexmark, jackson, customsApiCommonTests )
-
 Compile / unmanagedResourceDirectories += baseDirectory.value / "public"
 (Runtime / managedClasspath) += (Assets / packageBin).value
 
-libraryDependencies ++= compileDependencies ++ testDependencies
+libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test
 
 // Task to create a ZIP file containing all xsds for each version, under the version directory
 val zipXsds = taskKey[Pipeline.Stage]("Zips up all inventory linking exports XSDs")

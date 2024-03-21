@@ -16,11 +16,12 @@
 
 package uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders
 
+import uk.gov.hmrc.customs.inventorylinking.export.controllers.ErrorResponse
+
 import java.net.URLEncoder
 
 //import cats.implicits._
 import play.api.mvc.{ActionRefiner, Result}
-import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.ApiSubscriptionFieldsConnector
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.ApiSubscriptionKey

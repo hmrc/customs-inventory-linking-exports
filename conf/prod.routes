@@ -2,4 +2,3 @@
 ->         /                     dynamicDefinition.Routes
 
 POST       /                     @uk.gov.hmrc.customs.inventorylinking.export.controllers.InventoryLinkingExportController.post()
-GET        /admin/metrics        @com.kenshoo.play.metrics.MetricsController.metrics()

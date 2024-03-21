@@ -69,7 +69,7 @@ class ExportsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite 
     resetMockServer()
   }
 
-  override protected def afterAll() {
+  override protected def afterAll(): Unit = {
     stopMockServer()
   }
 
