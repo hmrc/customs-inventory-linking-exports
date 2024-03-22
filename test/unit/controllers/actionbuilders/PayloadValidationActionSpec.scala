@@ -36,7 +36,7 @@ import org.mockito.Mockito._
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.mvc.{AnyContentAsText, AnyContentAsXml, Result}
 import play.api.test.{FakeRequest, Helpers}
-import uk.gov.hmrc.customs.api.common.controllers.{ErrorResponse, ResponseContents}
+import uk.gov.hmrc.customs.inventorylinking.export.controllers.{ErrorResponse, ResponseContents}
 import uk.gov.hmrc.customs.inventorylinking.export.model.VersionOne
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ApiVersionRequest
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders.PayloadValidationAction

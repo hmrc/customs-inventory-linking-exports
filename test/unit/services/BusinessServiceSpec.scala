@@ -24,9 +24,9 @@ import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status.FORBIDDEN
 import play.api.mvc.{AnyContentAsXml, Result}
 import play.api.test.Helpers
-import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse
-import uk.gov.hmrc.customs.api.common.controllers.ErrorResponse.errorInternalServerError
-import uk.gov.hmrc.customs.inventorylinking.`export`.connectors.ExportsConnector.{Non2xxResponseError, RetryError}
+import uk.gov.hmrc.customs.inventorylinking.export.controllers.ErrorResponse
+import uk.gov.hmrc.customs.inventorylinking.export.controllers.ErrorResponse.errorInternalServerError
+import uk.gov.hmrc.customs.inventorylinking.export.connectors.ExportsConnector.{Non2xxResponseError, RetryError}
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.ExportsConnector
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model._

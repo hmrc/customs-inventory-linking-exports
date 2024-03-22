@@ -18,15 +18,15 @@ package uk.gov.hmrc.customs.inventorylinking.export.services
 
 import java.io.FileNotFoundException
 import java.net.URL
-
 import com.google.inject.Singleton
+
 import javax.inject.Inject
 import javax.xml.XMLConstants
 import javax.xml.transform.Source
 import javax.xml.transform.stream.StreamSource
 import javax.xml.validation.{Schema, SchemaFactory}
 import play.api.Configuration
-import uk.gov.hmrc.customs.api.common.xml.ValidateXmlAgainstSchema
+import uk.gov.hmrc.customs.inventorylinking.export.xml.ValidateXmlAgainstSchema
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.{NodeSeq, SAXException}

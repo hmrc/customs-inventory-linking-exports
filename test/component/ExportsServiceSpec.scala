@@ -19,9 +19,10 @@ package component
 import org.scalatest.OptionValues
 import org.scalatest.matchers.should.Matchers
 import play.api.Application
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.Result
 import play.api.test.Helpers._
-import uk.gov.hmrc.customs.api.common.xml.ValidateXmlAgainstSchema
+import uk.gov.hmrc.customs.inventorylinking.export.xml.ValidateXmlAgainstSchema
 import util.RequestHeaders.X_CONVERSATION_ID_NAME
 import util.TestData._
 import util.externalservices.{ApiSubscriptionFieldsService, AuthService, CustomsMetricsService, InventoryLinkingExportsService}
@@ -212,7 +213,7 @@ class ExportsServiceSpec extends ComponentTestSpec
 
     Scenario("A valid message is submitted when the service is shuttered") {
       Given("a CSP is authorised to use the API endpoint and submits to a shuttered version")
-      implicit lazy val app: Application = super.app(configMap + ("shutter.v1" -> "true"))
+      implicit lazy val app: Application = new GuiceApplicationBuilder().configure(configMap + ("shutter.v1" -> "true")).build()
       authServiceAuthorisesCSP()
 
       When("a valid message request is submitted")
