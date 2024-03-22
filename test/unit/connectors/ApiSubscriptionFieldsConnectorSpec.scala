@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import uk.gov.hmrc.customs.inventorylinking.export.connectors.ApiSubscriptionFie
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.ExportsConfig
 import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpReads, HttpResponse, NotFoundException}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpReads, HttpResponse}
 import util.ExternalServicesConfig._
 import util.externalservices.ExportsExternalServicesConfig._
 import util.{ApiSubscriptionFieldsTestData, TestData, UnitSpec}
@@ -50,7 +50,6 @@ class ApiSubscriptionFieldsConnectorSpec extends UnitSpec
   private implicit val ec = Helpers.stubControllerComponents().executionContext
   private val connector = connectorWithConfig(validConfig)
 
-  private val httpException = new NotFoundException("Emulated 404 response from a web call")
   private val expectedUrl = s"http://$Host:$Port$ApiSubscriptionFieldsContext/application/SOME_X_CLIENT_ID/context/some/api/context/version/1.0"
 
   private implicit val vhr = TestData.TestValidatedHeadersRequest

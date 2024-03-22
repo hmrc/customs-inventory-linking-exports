@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,9 @@ package unit.controllers.actionbuilders
 import org.mockito.ArgumentMatchers.{eq => ameq, _}
 import org.mockito.Mockito._
 import org.scalatestplus.mockito.MockitoSugar
-import play.api.mvc.AnyContentAsXml
+import play.api.mvc.{AnyContentAsXml, Result}
 import play.api.test.{FakeRequest, Helpers}
+import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames.XConversationIdHeaderName
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.ApiSubscriptionFieldsConnector
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders.ApiSubscriptionFieldsAction
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
@@ -68,6 +69,14 @@ class ApiSubscriptionFieldsActionSpec extends UnitSpec with MockitoSugar {
       val Right(actual: ApiSubscriptionFieldsRequest[AnyContentAsXml]) = await(service.refine(TestValidatedHeadersRequestV2))
 
       actual shouldBe TestValidatedHeadersRequestV2.toApiSubscriptionFieldsRequest(ApiSubscriptionFieldsTestData.apiSubscriptionFields)
+    }
+
+    "get Left of fields for a valid request" in new SetUp {
+      when(connector.getSubscriptionFields(any[ApiSubscriptionKey])(ameq(vhr))).thenReturn(Future.successful(None))
+
+      val Left(actual: Result) = await(service.refine(vhr))
+
+      actual.header.headers.get(XConversationIdHeaderName).get shouldBe vhr.conversationId.toString
     }
   }
 }

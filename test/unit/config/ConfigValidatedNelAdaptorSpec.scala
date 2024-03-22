@@ -22,7 +22,7 @@ import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.Configuration
-import uk.gov.hmrc.customs.inventorylinking.`export`.config.CustomsValidatedNel
+import uk.gov.hmrc.customs.inventorylinking.export.config.CustomsValidatedNel
 import uk.gov.hmrc.customs.inventorylinking.export.config.ConfigValidatedNelAdaptor
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import util.UnitSpec

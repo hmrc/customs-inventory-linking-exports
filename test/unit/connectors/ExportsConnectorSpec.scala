@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package unit.connectors
 
 import akka.actor.ActorSystem
+import akka.pattern.CircuitBreakerOpenException
 import org.joda.time.{DateTime, DateTimeZone}
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.{eq => ameq, _}
@@ -28,9 +29,10 @@ import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.HeaderNames
 import play.api.test.Helpers
 import play.mvc.Http.MimeTypes
+import uk.gov.hmrc.customs.inventorylinking.export.connectors.ExportsConnector.RetryError
 import uk.gov.hmrc.customs.inventorylinking.export.config.{ServiceConfig, ServiceConfigProvider}
-import uk.gov.hmrc.customs.inventorylinking.export.logging.CdsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.ExportsConnector
+import uk.gov.hmrc.customs.inventorylinking.export.logging.CdsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.ExportsCircuitBreakerConfig
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
 import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
@@ -39,6 +41,7 @@ import unit.logging.StubExportsLogger
 import util.TestData._
 import util.{RequestHeaders, UnitSpec}
 
+import scala.concurrent.duration.{FiniteDuration, MILLISECONDS}
 import scala.concurrent.{ExecutionContext, Future}
 
 class ExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach with Eventually {
@@ -168,6 +171,25 @@ class ExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfte
           }
           caught.getMessage shouldBe "config not found"
         }
+      }
+
+      "when bearer token is absent" should {
+        "throw an exception when no config is found" in {
+          val serviceConfig = ServiceConfig("the-url", None, "default")
+          when(mockServiceConfigProvider.getConfig("mdg-exports")).thenReturn(serviceConfig)
+
+          val caught = intercept[IllegalStateException] {
+            awaitRequest()
+          }
+          caught.getMessage shouldBe "no bearer token was found in config"
+        }
+      }
+
+      "when CircuitBreakerOpenException is threw" in {
+        returnResponseForRequest(Future.failed(new CircuitBreakerOpenException(new FiniteDuration(5, MILLISECONDS))))
+        val result = awaitRequest()
+        result.isLeft shouldBe true
+        result shouldBe Left(RetryError)
       }
     }
   }

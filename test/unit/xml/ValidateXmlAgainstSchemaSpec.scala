@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,11 +57,11 @@ class ValidateXmlAgainstSchemaSpec extends UnitSpec {
 
       val unlimitedFailure = validator.validateWithErrors(getInvalidXmlSource())
       unlimitedFailure.isLeft shouldBe true
-      unlimitedFailure.left.get.size shouldBe 4
+      unlimitedFailure.left.getOrElse(List.empty).size shouldBe 4
 
       val limitedFailure = validator.validateWithErrors(getInvalidXmlSource(), 2)
       limitedFailure.isLeft shouldBe true
-      limitedFailure.left.get.size shouldBe 2
+      limitedFailure.left.getOrElse(List.empty).size shouldBe 2
     }
   }
 
