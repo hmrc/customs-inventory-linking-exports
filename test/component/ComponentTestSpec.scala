@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,11 @@ package component
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, GivenWhenThen}
 import org.scalatest.concurrent.Eventually
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import util.ExternalServicesConfig
 import util.externalservices.ExportsExternalServicesConfig
 import org.scalatest.featurespec.AnyFeatureSpec
+import play.api.Application
 
 import scala.util.control.NonFatal
 import scala.xml.{Node, Utility, XML}
@@ -48,10 +48,9 @@ trait ComponentTestSpec extends AnyFeatureSpec with GivenWhenThen with GuiceOneA
     "metrics.enabled" -> false
   )
 
-  def app(values: Map[String, Any] = configMap): Application =
-    new GuiceApplicationBuilder().configure(values).build()
+  override implicit lazy val app: Application = new GuiceApplicationBuilder().configure(configMap).build()
 
-  override def fakeApplication(): Application = app()
+  override def fakeApplication(): Application = app
 
   protected def stringToXml(s: String): Node = {
     val xml = try {

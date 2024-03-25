@@ -17,8 +17,10 @@
 package uk.gov.hmrc.customs.inventorylinking.export.services
 
 import cats.implicits._
+import uk.gov.hmrc.customs.inventorylinking.export.config.CustomsValidatedNel
+import uk.gov.hmrc.customs.inventorylinking.export.config.ConfigValidatedNelAdaptor
+
 import javax.inject.{Inject, Singleton}
-import uk.gov.hmrc.customs.api.common.config.{ConfigValidatedNelAdaptor, CustomsValidatedNel}
 import uk.gov.hmrc.customs.inventorylinking.export.model.ExportsShutterConfig
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.{ExportsCircuitBreakerConfig, ExportsConfig}
