@@ -17,9 +17,11 @@
 package util
 
 import org.scalatest.prop.TableDrivenPropertyChecks.Table
+import uk.gov.hmrc.customs.inventorylinking.`export`.services.DateTimeService
 import util.ApiSubscriptionFieldsTestData._
 import util.TestData._
 
+import java.time.ZoneOffset
 import scala.xml.Elem
 
 object XMLTestData {
@@ -96,7 +98,7 @@ object XMLTestData {
           <gw:clientID>{TestSubscriptionFieldsId.value}</gw:clientID>
           <gw:conversationID>{conversationIdValue}</gw:conversationID>
           <gw:correlationID>{correlationIdValue}</gw:correlationID>
-          <gw:dateTimeStamp>{dateTime.toString(dateTimeFormat)}</gw:dateTimeStamp>
+          <gw:dateTimeStamp>{dateTime.atOffset(ZoneOffset.UTC).format(new DateTimeService().isoFormatNoMillis)}</gw:dateTimeStamp>
         </n1:requestCommon>
         <n1:requestDetail>
           <inventoryLinkingMovementRequest xmlns="http://gov.uk/customs/inventoryLinking/v1">

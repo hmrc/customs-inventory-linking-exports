@@ -57,6 +57,8 @@ class ValidateXmlAgainstSchemaSpec extends UnitSpec {
 
       val unlimitedFailure = validator.validateWithErrors(getInvalidXmlSource())
       unlimitedFailure.isLeft shouldBe true
+      println("HELLO WORLD")
+      println(unlimitedFailure.left.getOrElse(List.empty).toString())  //TODO FIX and check Duplicate error
       unlimitedFailure.left.getOrElse(List.empty).size shouldBe 4
 
       val limitedFailure = validator.validateWithErrors(getInvalidXmlSource(), 2)

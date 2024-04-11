@@ -16,7 +16,6 @@
 
 package integration
 
-import org.joda.time.DateTime
 import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -31,6 +30,7 @@ import util.TestData
 import util.XMLTestData.ValidInventoryLinkingMovementRequestXML
 import util.externalservices.{ExportsExternalServicesConfig, InventoryLinkingExportsService}
 
+import java.time.LocalDateTime
 import java.util.UUID
 
 class ExportsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite with MockitoSugar
@@ -81,7 +81,7 @@ class ExportsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite 
     "make a correct request" in {
       startBackendService()
 
-      await(connector.send(ValidInventoryLinkingMovementRequestXML, new DateTime(), correlationId))
+      await(connector.send(ValidInventoryLinkingMovementRequestXML, LocalDateTime.now(), correlationId))
 
       verifyInventoryLinkingExportsServiceWasCalledWith(ValidInventoryLinkingMovementRequestXML.toString())
     }
@@ -89,7 +89,7 @@ class ExportsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite 
     "return a failed future when service returns 404" in {
       setupBackendServiceToReturn(NOT_FOUND)
 
-      val response = await(connector.send(ValidInventoryLinkingMovementRequestXML, new DateTime(), correlationId))
+      val response = await(connector.send(ValidInventoryLinkingMovementRequestXML, LocalDateTime.now(), correlationId))
 
       response shouldBe Left(Non2xxResponseError(NOT_FOUND))
     }
@@ -97,7 +97,7 @@ class ExportsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite 
     "return a failed future when service returns 400" in {
       setupBackendServiceToReturn(BAD_REQUEST)
 
-      val response = await(connector.send(ValidInventoryLinkingMovementRequestXML, new DateTime(), correlationId))
+      val response = await(connector.send(ValidInventoryLinkingMovementRequestXML, LocalDateTime.now(), correlationId))
 
       response shouldBe Left(Non2xxResponseError(BAD_REQUEST))
     }
@@ -105,7 +105,7 @@ class ExportsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite 
     "return a failed future when service returns 500" in {
       setupBackendServiceToReturn(INTERNAL_SERVER_ERROR)
 
-      val response = await(connector.send(ValidInventoryLinkingMovementRequestXML, new DateTime(), correlationId))
+      val response = await(connector.send(ValidInventoryLinkingMovementRequestXML, LocalDateTime.now(), correlationId))
 
       response shouldBe Left(Non2xxResponseError(INTERNAL_SERVER_ERROR))
     }
