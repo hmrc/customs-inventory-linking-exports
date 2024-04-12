@@ -53,7 +53,9 @@ class ValidateXmlAgainstSchema(schema: Schema) {
     private lazy val errors: mutable.Buffer[SAXParseException] = mutable.Buffer.empty
 
     private def accumulateError(e: SAXParseException): Unit = self.synchronized {
-      if (errors.size < maxErrors) {
+      //Don't Add duplicate error check added due to bug (Play 3.0)
+      if (errors.size < maxErrors && !errors.exists(_.toString == e.toString)) {
+        println(s" ${e.getMessage} VS ${e.toString}")
         errors += e
       }
     }
