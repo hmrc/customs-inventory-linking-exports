@@ -46,7 +46,7 @@ To run performance tests, see [here](https://github.com/hmrc/customs-declaration
 For Customs Inventory Linking Exports documentation, see [here](https://developer.service.hmrc.gov.uk/guides/customs-declarations-end-to-end-service-guide/documentation/inventory-linking-export-declarations.html#inventory-linking-for-export-declarations).
 
 
-### API Notification Pull specific routes
+### Customs Inventory Linking Exports specific routes
 | Path - internal routes prefixed by `/customs/inventory-linking/exports` | Supported Methods | Description                          |
 |-------------------------------------------------------------------------|:-----------------:|--------------------------------------|
 | `/`                                                                     |       POST        | Submit an Inventory Exports Request. |
