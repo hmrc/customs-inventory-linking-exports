@@ -16,12 +16,12 @@
 
 package uk.gov.hmrc.customs.inventorylinking.export.connectors
 
-import akka.actor.ActorSystem
-import akka.pattern.CircuitBreakerOpenException
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.pattern.CircuitBreakerOpenException
 import com.google.inject._
-import org.joda.time.DateTime
 import play.api.http.HeaderNames.{ACCEPT, CONTENT_TYPE, DATE, X_FORWARDED_HOST}
 import play.api.http.{MimeTypes, Status}
+import uk.gov.hmrc.customs.inventorylinking.`export`.services.DateTimeService
 import uk.gov.hmrc.customs.inventorylinking.export.config.ServiceConfigProvider
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.ExportsConnector._
 import uk.gov.hmrc.customs.inventorylinking.export.logging.CdsLogger
@@ -31,6 +31,8 @@ import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http._
 
+import java.time.format.DateTimeFormatter
+import java.time.{LocalDateTime, ZoneOffset}
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
@@ -51,7 +53,7 @@ class ExportsConnector @Inject()(http: HttpClient,
   override lazy val unavailablePeriodDurationInMillis = config.exportsCircuitBreakerConfig.unavailablePeriodDurationInMillis
 
   def send[A](xml: NodeSeq,
-              date: DateTime,
+              date: LocalDateTime,
               correlationId: UUID)
              (implicit vpr: ValidatedPayloadRequest[A], hc: HeaderCarrier): Future[Either[ExportsConnector.Error, HttpResponse]] = {
     val config = Option(serviceConfigProvider.getConfig(s"${vpr.requestedApiVersion.configPrefix}$configKey")).getOrElse(throw new IllegalArgumentException("config not found"))
@@ -83,11 +85,12 @@ class ExportsConnector @Inject()(http: HttpClient,
     }
   }
 
-  private def getHeaders(date: DateTime, correlationId: UUID) = {
+  private def getHeaders(date: LocalDateTime, correlationId: UUID) = {
+    val utcDateFormat: DateTimeFormatter = new DateTimeService().utcFormattedDate
     Seq(
       (ACCEPT, MimeTypes.XML),
       (CONTENT_TYPE, MimeTypes.XML + "; charset=UTF-8"),
-      (DATE, date.toString("EEE, dd MMM yyyy HH:mm:ss z")),
+      (DATE, date.atOffset(ZoneOffset.UTC).format(utcDateFormat)),
       (X_FORWARDED_HOST, "MDTP"),
       ("X-Correlation-ID", correlationId.toString))
   }

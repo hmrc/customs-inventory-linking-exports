@@ -16,9 +16,8 @@
 
 package unit.connectors
 
-import akka.actor.ActorSystem
-import akka.pattern.CircuitBreakerOpenException
-import org.joda.time.{DateTime, DateTimeZone}
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.pattern.CircuitBreakerOpenException
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.{eq => ameq, _}
 import org.mockito.Mockito._
@@ -41,6 +40,7 @@ import unit.logging.StubExportsLogger
 import util.TestData._
 import util.{RequestHeaders, UnitSpec}
 
+import java.time.{Instant, LocalDateTime}
 import scala.concurrent.duration.{FiniteDuration, MILLISECONDS}
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -76,7 +76,8 @@ class ExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfte
   private val dayOfMonth = 4
   private val hourOfDay = 13
   private val minuteOfHour = 45
-  private val date = new DateTime(year, monthOfYear, dayOfMonth, hourOfDay, minuteOfHour, DateTimeZone.UTC)
+  private val date = LocalDateTime.of(year, monthOfYear, dayOfMonth, hourOfDay, minuteOfHour)
+
 
   private val httpFormattedDate = "Tue, 04 Jul 2017 13:45:00 UTC"
 

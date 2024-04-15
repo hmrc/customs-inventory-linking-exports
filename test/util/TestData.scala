@@ -17,8 +17,6 @@
 package util
 
 import java.util.UUID
-
-import org.joda.time.{DateTime, DateTimeZone}
 import play.api.http.HeaderNames._
 import play.api.http.MimeTypes
 import play.api.mvc.{AnyContentAsXml, Headers}
@@ -27,11 +25,12 @@ import uk.gov.hmrc.customs.inventorylinking.export.model._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders._
 import uk.gov.hmrc.customs.inventorylinking.export.services.{UniqueIdsService, UuidService}
-import util.CustomsMetricsTestData.EventStart
+import util.CustomsMetricsTestData.{EventStart, UtcZoneId}
 import util.RequestHeaders._
 import util.TestData._
 import util.XMLTestData._
 
+import java.time.LocalDateTime
 import scala.xml.Elem
 
 object TestData {
@@ -56,8 +55,8 @@ object TestData {
   val cspAuthorisedRequestWithEori = CspWithEori(declarantEori)
   val cspAuthorisedRequestWithBadgeIdentifier = CspWithBadgeId(badgeIdentifier)
 
-  val dateTime: DateTime = DateTime.now(DateTimeZone.UTC)
-  val dateTimeFormat = "YYYY-MM-dd'T'HH:mm:ss'Z'"
+  val dateTime: LocalDateTime = LocalDateTime.now(UtcZoneId)
+  val dateTimeFormat = "YYYY-MM-dd'T'HH:mm:ssX"
 
   val cspBearerToken = "CSP-Bearer-Token"
   val nonCspBearerToken = "Software-House-Bearer-Token"

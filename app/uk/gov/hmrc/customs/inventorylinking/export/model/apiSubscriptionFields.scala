@@ -17,8 +17,7 @@
 package uk.gov.hmrc.customs.inventorylinking.export.model
 
 import java.util.UUID
-
-import play.api.libs.json.{Format, Json}
+import play.api.libs.json.{Format, Json, OFormat}
 
 case class DeclarantCallbackData(authenticatedEori: Option[String])
 
@@ -29,5 +28,5 @@ object DeclarantCallbackData {
 case class ApiSubscriptionFields(fieldsId: UUID, fields: DeclarantCallbackData)
 
 object ApiSubscriptionFields {
-  implicit val format = Json.format[ApiSubscriptionFields]
+  implicit val format: OFormat[ApiSubscriptionFields] = Json.format[ApiSubscriptionFields]
 }

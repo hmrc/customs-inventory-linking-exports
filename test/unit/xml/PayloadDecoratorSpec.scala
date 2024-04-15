@@ -19,6 +19,7 @@ package unit.xml
 import org.scalatest.prop.TableDrivenPropertyChecks._
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.mvc.AnyContentAsXml
+import uk.gov.hmrc.customs.inventorylinking.`export`.services.DateTimeService
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
 import uk.gov.hmrc.customs.inventorylinking.export.xml.PayloadDecorator
 import util.UnitSpec
@@ -26,6 +27,8 @@ import util.ApiSubscriptionFieldsTestData._
 import util.TestData._
 import util.XMLTestData._
 
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import scala.xml.NodeSeq
 
 class PayloadDecoratorSpec extends UnitSpec with MockitoSugar {
@@ -65,7 +68,9 @@ class PayloadDecoratorSpec extends UnitSpec with MockitoSugar {
 
       val rd = result \ commonLabel \ "dateTimeStamp"
 
-      rd.head.text shouldBe dateTime.toString(dateTimeFormat)
+      val isoFormatDate: DateTimeFormatter = new DateTimeService().isoFormatNoMillis
+
+      rd.head.text shouldBe dateTime.atOffset(ZoneOffset.UTC).format(isoFormatDate)
     }
 
     "set the conversationId" in {
@@ -152,10 +157,12 @@ class PayloadDecoratorSpec extends UnitSpec with MockitoSugar {
 
     "set the timestamp in the wrapper" in {
       val result = wrapPayload()
-
+      val isoFormatDate: DateTimeFormatter = new DateTimeService().isoFormatNoMillis
       val rd = result \ commonLabel \ "dateTimeStamp"
 
-      rd.head.text shouldBe dateTime.toString(dateTimeFormat)
+      rd.head.text shouldBe dateTime.atOffset(ZoneOffset.UTC).format(isoFormatDate)
+
+     // dateTime.toString(dateTimeFormat)
     }
 
     "set the conversationId" in {

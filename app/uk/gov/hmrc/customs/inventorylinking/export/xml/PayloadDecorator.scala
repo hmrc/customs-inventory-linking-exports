@@ -16,12 +16,13 @@
 
 package uk.gov.hmrc.customs.inventorylinking.export.xml
 
-import org.joda.time.DateTime
-import org.joda.time.format.ISODateTimeFormat
 import uk.gov.hmrc.customs.inventorylinking.export.model._
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
 import uk.gov.hmrc.customs.inventorylinking.export.model.{CorrelationId, NonCsp, SubscriptionFieldsId}
+import uk.gov.hmrc.customs.inventorylinking.export.services.DateTimeService
 
+import java.time.format.DateTimeFormatter
+import java.time.{LocalDateTime, ZoneOffset}
 import javax.inject.Singleton
 import scala.xml.NodeSeq
 
@@ -60,7 +61,8 @@ class PayloadDecorator() {
     }
   }
 
-  def decorate[A](xml: NodeSeq, clientId: SubscriptionFieldsId, correlationId: CorrelationId, dateTime: DateTime)(implicit vpr: ValidatedPayloadRequest[A]): NodeSeq = {
+  def decorate[A](xml: NodeSeq, clientId: SubscriptionFieldsId, correlationId: CorrelationId, dateTime: LocalDateTime)(implicit vpr: ValidatedPayloadRequest[A]): NodeSeq = {
+    val isoFormatDate: DateTimeFormatter = new DateTimeService().isoFormatNoMillis
 
     <n1:InventoryLinkingExportsInboundRequest xmlns:inv="http://gov.uk/customs/inventoryLinking/v1"
                                               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -73,7 +75,7 @@ class PayloadDecorator() {
         <gw:clientID>{clientId.value}</gw:clientID>
         <gw:conversationID>{vpr.conversationId.toString}</gw:conversationID>
         <gw:correlationID>{correlationId.toString}</gw:correlationID>
-        <gw:dateTimeStamp>{dateTime.toString(ISODateTimeFormat.dateTimeNoMillis)}</gw:dateTimeStamp>
+        <gw:dateTimeStamp>{dateTime.atOffset(ZoneOffset.UTC).format(isoFormatDate)}</gw:dateTimeStamp>
       </n1:requestCommon>
       <n1:requestDetail>
         { xml }

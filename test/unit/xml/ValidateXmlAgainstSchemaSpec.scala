@@ -55,13 +55,29 @@ class ValidateXmlAgainstSchemaSpec extends UnitSpec {
     "correctly limit the number of returned errors" in {
       val validator = new ValidateXmlAgainstSchema(getSchema())
 
+      val unlimitedExpectedErrorList = {
+        "List(" +
+          "org.xml.sax.SAXParseException; lineNumber: 1; columnNumber: 117; cvc-complex-type.4: Attribute 'orderid' must appear on element 'shiporder'., " +
+          "org.xml.sax.SAXParseException; lineNumber: 3; columnNumber: 23; cvc-complex-type.2.4.a: Invalid content was found starting with element 'undefinedelement'. One of '{shipto}' is expected., " +
+          "org.xml.sax.SAXParseException; lineNumber: 18; columnNumber: 30; cvc-minInclusive-valid: Value '-5' is not facet-valid with respect to minInclusive '1' for type 'positiveInteger'., " +
+          "org.xml.sax.SAXParseException; lineNumber: 18; columnNumber: 30; cvc-type.3.1.3: The value '-5' of element 'quantity' is not valid." +
+          ")"
+      }
       val unlimitedFailure = validator.validateWithErrors(getInvalidXmlSource())
       unlimitedFailure.isLeft shouldBe true
       unlimitedFailure.left.getOrElse(List.empty).size shouldBe 4
+      unlimitedFailure.left.getOrElse(List.empty).toString() shouldBe unlimitedExpectedErrorList
 
+      val limitedExpectedErrorList = {
+        "List(" +
+          "org.xml.sax.SAXParseException; lineNumber: 1; columnNumber: 117; cvc-complex-type.4: Attribute 'orderid' must appear on element 'shiporder'., " +
+          "org.xml.sax.SAXParseException; lineNumber: 3; columnNumber: 23; cvc-complex-type.2.4.a: Invalid content was found starting with element 'undefinedelement'. One of '{shipto}' is expected." +
+          ")"
+      }
       val limitedFailure = validator.validateWithErrors(getInvalidXmlSource(), 2)
       limitedFailure.isLeft shouldBe true
       limitedFailure.left.getOrElse(List.empty).size shouldBe 2
+      limitedFailure.left.getOrElse(List.empty).toString() shouldBe limitedExpectedErrorList
     }
   }
 
