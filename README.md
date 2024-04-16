@@ -1,6 +1,6 @@
-# customs-inventory-linking-exports
+# Customs Inventory Linking Exports
 
-This service offers an interface for Inventory Linking Exports.
+The Customs Inventory Linking Exports service provides an interface that allows users to submit requests for the consolidation, movement, or querying of consignments for inventory linking purposes.
 
 The objective of the service POST API is as follows:
 
@@ -11,8 +11,49 @@ The objective of the service POST API is as follows:
 
 It is assumed that the underlying backend process is asynchronous, and that the only response to the declarant from this API is to indicate the success (or otherwise) of the validation and submission to downstream system.
 
-## Useful CURL commands for local testing
+## Development Setup
+- Run locally: `sbt run` which runs on port `9649` by default
+- Run with test endpoints: `sbt 'run -Dapplication.router=testOnlyDoNotUseInAppConf.Routes'`
+
+##  Service Manager Profiles
+The Customs Inventory Linking Exports service can be run locally from Service Manager, using the following profiles:
+
+
+| Profile Details                       | Command                                                           | Description                                                    |
+|---------------------------------------|:------------------------------------------------------------------|----------------------------------------------------------------|
+| CUSTOMS_DECLARATION_ALL               | sm2 --start CUSTOMS_DECLARATION_ALL                               | To run all CDS applications.                                   |
+| CUSTOMS_INVENTORY_LINKING_EXPORTS_ALL | sm2 --start CUSTOMS_INVENTORY_LINKING_EXPORTS_ALL                 | To run all CDS Inventory Linking Exports related applications. |
+| CUSTOMS_INVENTORY_LINKING_IMPORTS_ALL | sm2 --start CUSTOMS_INVENTORY_LINKING_IMPORTS_ALL                 | To run all CDS Inventory Linking Imports related applications. |
+
+
+## Run Tests
+- Run Unit Tests: `sbt test`
+- Run Integration Tests: `sbt IntegrationTest/test`
+- Run Unit and Integration Tests: `sbt test IntegrationTest/test`
+- Run Unit and Integration Tests with coverage report: `./run_all_tests.sh`<br/> which runs `sbt clean scalastyle coverage test it:test coverageReport"`
+
+### Useful CURL commands for local testing
 [link to curl commands](docs/curl-commands.md)
+
+### Acceptance Tests
+To run the CDS acceptance tests, see [here](https://github.com/hmrc/customs-automation-test).
+
+### Performance Tests
+To run performance tests, see [here](https://github.com/hmrc/customs-declaration-performance-test).
+
+
+## API documentation
+For Customs Inventory Linking Exports documentation, see [here](https://developer.service.hmrc.gov.uk/guides/customs-declarations-end-to-end-service-guide/documentation/inventory-linking-export-declarations.html#inventory-linking-for-export-declarations).
+
+
+### Customs Inventory Linking Exports specific routes
+| Path - internal routes prefixed by `/customs/inventory-linking/exports` | Supported Methods | Description                          |
+|-------------------------------------------------------------------------|:-----------------:|--------------------------------------|
+| `/`                                                                     |       POST        | Submit an Inventory Exports Request. |
+
+
+### Test-only specific routes
+This service does not have any specific test-only endpoints.
 
 # Custom SBT Task for generating ZIP file containing schemas
 There is an SBT task `zipXsds` that generates a ZIP file containing schemas, for each version under `/public/api/conf`. 

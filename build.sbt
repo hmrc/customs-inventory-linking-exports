@@ -3,7 +3,7 @@ import com.typesafe.sbt.web.pipeline.Pipeline
 import play.sbt.PlayImport.PlayKeys.playDefaultPort
 import sbt.Keys._
 import sbt.Tests.{Group, SubProcess}
-import sbt.{Test, inConfig, *}
+import sbt.{Test, inConfig}
 import uk.gov.hmrc.DefaultBuildSettings.{addTestReportOption, targetJvm}
 import uk.gov.hmrc.gitstamp.GitStampPlugin._
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
@@ -43,6 +43,8 @@ lazy val microservice = (project in file("."))
     scoverageSettings
   )
   .settings(majorVersion := 1)
+  .settings(playDefaultPort := 9823)
+
 
 lazy val unitTestSettings =
   inConfig(Test)(Defaults.testTasks) ++
