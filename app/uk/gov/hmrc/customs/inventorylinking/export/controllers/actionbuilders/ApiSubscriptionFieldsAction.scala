@@ -51,6 +51,7 @@ class ApiSubscriptionFieldsAction @Inject()(connector: ApiSubscriptionFieldsConn
             vhr.start,
             vhr.requestedApiVersion,
             vhr.clientId,
+            vhr.maybeAcceptanceTestScenario,
             fields,
             vhr.request
           ))

@@ -20,6 +20,7 @@ import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.HeaderNames._
 import play.api.mvc.{AnyContentAsEmpty, Request}
 import play.api.test.FakeRequest
+import uk.gov.hmrc.customs.inventorylinking.`export`.model.AcceptanceTestScenario
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames
 import uk.gov.hmrc.customs.inventorylinking.export.logging.LoggingHelper
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ConversationIdRequest, ValidatedHeadersRequest}
@@ -32,6 +33,7 @@ class LoggingHelperSpec extends UnitSpec with MockitoSugar {
 
   private def expectedMessage(message: String) = s"[conversationId=$conversationId]" +
     "[clientId=some-client-id]" +
+    "[govTestScenario=DEFAULT]" +
     s"[requestedApiVersion=1.0] $message"
   private val requestMock = mock[Request[_]]
   private val conversationIdRequest =
@@ -63,7 +65,13 @@ class LoggingHelperSpec extends UnitSpec with MockitoSugar {
         "IGNORE" -> "IGNORE"
       )
     )
-  private val validatedHeadersRequest: ValidatedHeadersRequest[Any] = ValidatedHeadersRequest(conversationId, EventStart, VersionOne, ClientId("some-client-id"), requestMock)
+  private val validatedHeadersRequest: ValidatedHeadersRequest[Any] = ValidatedHeadersRequest(
+    conversationId,
+    EventStart,
+    VersionOne,
+    ClientId("some-client-id"),
+    Some(AcceptanceTestScenario("DEFAULT")),
+    requestMock)
 
   "LoggingHelper" should {
 

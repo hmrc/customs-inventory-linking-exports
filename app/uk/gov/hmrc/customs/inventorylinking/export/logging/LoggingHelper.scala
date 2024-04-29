@@ -58,7 +58,10 @@ object LoggingHelper {
       case _ => ""
     }
     def extractedHeaders = r match {
-      case h: ExtractedHeaders => s"[clientId=${h.clientId.value}]"
+      case h: ExtractedHeaders =>
+        val clientId = s"[clientId=${h.clientId.value}]"
+        val govTestScenario = h.maybeAcceptanceTestScenario.map(a => s"[govTestScenario=${a.value}]").getOrElse("")
+        clientId + govTestScenario
       case _ => ""
     }
     def authorised = r match {
