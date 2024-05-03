@@ -17,7 +17,7 @@
 package util
 
 import org.scalatest.prop.TableDrivenPropertyChecks.Table
-import uk.gov.hmrc.customs.inventorylinking.`export`.services.DateTimeService
+import uk.gov.hmrc.customs.inventorylinking.export.services.DateTimeService
 import util.ApiSubscriptionFieldsTestData._
 import util.TestData._
 

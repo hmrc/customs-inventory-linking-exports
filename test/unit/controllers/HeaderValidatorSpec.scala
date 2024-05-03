@@ -20,7 +20,7 @@ import org.scalatest.prop.{TableDrivenPropertyChecks, TableFor3}
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.HeaderNames._
 import play.api.test.FakeRequest
-import uk.gov.hmrc.customs.inventorylinking.`export`.model.AcceptanceTestScenario
+import uk.gov.hmrc.customs.inventorylinking.export.model.AcceptanceTestScenario
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.ErrorResponse
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.ErrorResponse.{ErrorContentTypeHeaderInvalid, ErrorInternalServerError}
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames._

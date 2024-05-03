@@ -20,7 +20,7 @@ import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.HeaderNames._
 import play.api.mvc.{AnyContentAsEmpty, Request}
 import play.api.test.FakeRequest
-import uk.gov.hmrc.customs.inventorylinking.`export`.model.AcceptanceTestScenario
+import uk.gov.hmrc.customs.inventorylinking.export.model.AcceptanceTestScenario
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames
 import uk.gov.hmrc.customs.inventorylinking.export.logging.LoggingHelper
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ConversationIdRequest, ValidatedHeadersRequest}

@@ -18,7 +18,7 @@ package util.externalservices
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import play.api.test.Helpers._
-import uk.gov.hmrc.customs.inventorylinking.`export`.model.AcceptanceTestScenario
+import uk.gov.hmrc.customs.inventorylinking.export.model.AcceptanceTestScenario
 import util.RequestHeaders.GOV_TEST_SCENARIO_VALUE
 import util.{ExternalServicesConfig, WireMockRunner}
 

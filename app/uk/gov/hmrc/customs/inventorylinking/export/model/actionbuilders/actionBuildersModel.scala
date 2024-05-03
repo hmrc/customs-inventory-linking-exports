@@ -18,7 +18,7 @@ package uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders
 
 import java.time.ZonedDateTime
 import play.api.mvc.{Request, Result, WrappedRequest}
-import uk.gov.hmrc.customs.inventorylinking.`export`.model.AcceptanceTestScenario
+import uk.gov.hmrc.customs.inventorylinking.export.model.AcceptanceTestScenario
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames.XConversationIdHeaderName
 import uk.gov.hmrc.customs.inventorylinking.export.model.{AuthorisedAs, _}
 
