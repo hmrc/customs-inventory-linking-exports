@@ -21,7 +21,8 @@ import org.apache.pekko.pattern.CircuitBreakerOpenException
 import com.google.inject._
 import play.api.http.HeaderNames.{ACCEPT, CONTENT_TYPE, DATE, X_FORWARDED_HOST}
 import play.api.http.{MimeTypes, Status}
-import uk.gov.hmrc.customs.inventorylinking.`export`.services.DateTimeService
+import uk.gov.hmrc.customs.inventorylinking.export.services.DateTimeService
+import uk.gov.hmrc.customs.inventorylinking.export.model.AcceptanceTestScenario
 import uk.gov.hmrc.customs.inventorylinking.export.config.ServiceConfigProvider
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.ExportsConnector._
 import uk.gov.hmrc.customs.inventorylinking.export.logging.CdsLogger
@@ -59,7 +60,10 @@ class ExportsConnector @Inject()(http: HttpClient,
     val config = Option(serviceConfigProvider.getConfig(s"${vpr.requestedApiVersion.configPrefix}$configKey")).getOrElse(throw new IllegalArgumentException("config not found"))
     val bearerToken = "Bearer " + config.bearerToken.getOrElse(throw new IllegalStateException("no bearer token was found in config"))
 
-    val exportHeaders = hc.extraHeaders ++ getHeaders(date, correlationId) ++ Seq(HeaderNames.authorisation -> bearerToken)
+    val exportHeaders = hc.extraHeaders ++
+      getHeaders(date, correlationId) ++
+      Seq(HeaderNames.authorisation -> bearerToken) ++
+      vpr.maybeAcceptanceTestScenario.map(v => AcceptanceTestScenario.HeaderName -> v.value)
 
     case class Non2xxResponseException(status: Int) extends Throwable
     val url = config.url
