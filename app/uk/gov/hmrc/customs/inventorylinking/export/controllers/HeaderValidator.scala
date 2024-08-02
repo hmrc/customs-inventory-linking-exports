@@ -44,17 +44,14 @@ class HeaderValidator @Inject()(logger: ExportsLogger) {
 
     def hasXClientId: Either[ErrorResponse, String] = validateHeader(XClientIdHeaderName, _.forall(!_.isWhitespace), ErrorInternalServerError)
 
-    def maybeAcceptanceTestScenario: Option[AcceptanceTestScenario] = headers.get(AcceptanceTestScenario.HeaderName).map(AcceptanceTestScenario.apply)
-
     val theResult: Either[ErrorResponse, ExtractedHeadersImpl] = for {
       contentTypeValue <- hasContentType
       xClientIdValue <- hasXClientId
     } yield {
       logger.debug(
         s"\n$CONTENT_TYPE header passed validation: $contentTypeValue"
-          + s"\n$XClientIdHeaderName header passed validation: $xClientIdValue"
-          + s"\n${AcceptanceTestScenario.HeaderName} header: ${maybeAcceptanceTestScenario.getOrElse("(nothing provided)")}")
-      ExtractedHeadersImpl(ClientId(xClientIdValue), maybeAcceptanceTestScenario)
+          + s"\n$XClientIdHeaderName header passed validation: $xClientIdValue")
+      ExtractedHeadersImpl(ClientId(xClientIdValue))
     }
     theResult
   }

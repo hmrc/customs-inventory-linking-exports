@@ -40,12 +40,6 @@ object Eori {
 
 case class ClientId(value: String) extends AnyVal
 
-case class AcceptanceTestScenario(value: String) extends AnyVal
-
-object AcceptanceTestScenario {
-  val HeaderName = "Gov-Test-Scenario"
-}
-
 case class ConversationId(uuid: UUID) extends AnyVal {
   override def toString: String = uuid.toString
 }

@@ -20,7 +20,6 @@ import org.scalatest.prop.{TableDrivenPropertyChecks, TableFor3}
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.HeaderNames._
 import play.api.test.FakeRequest
-import uk.gov.hmrc.customs.inventorylinking.export.model.AcceptanceTestScenario
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.ErrorResponse
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.ErrorResponse.{ErrorContentTypeHeaderInvalid, ErrorInternalServerError}
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames._
@@ -34,7 +33,7 @@ import util.{ApiSubscriptionFieldsTestData, TestData, UnitSpec}
 
 class HeaderValidatorSpec extends UnitSpec with TableDrivenPropertyChecks with MockitoSugar {
 
-  private val extractedHeaders = ExtractedHeadersImpl(ApiSubscriptionFieldsTestData.clientId, Some(AcceptanceTestScenario(GOV_TEST_SCENARIO_VALUE)))
+  private val extractedHeaders = ExtractedHeadersImpl(ApiSubscriptionFieldsTestData.clientId)
 
   trait SetUp {
     val mockExportsLogger: ExportsLogger = mock[ExportsLogger]

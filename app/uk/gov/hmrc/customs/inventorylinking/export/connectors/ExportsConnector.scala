@@ -21,8 +21,7 @@ import org.apache.pekko.pattern.CircuitBreakerOpenException
 import com.google.inject._
 import play.api.http.HeaderNames.{ACCEPT, CONTENT_TYPE, DATE, X_FORWARDED_HOST}
 import play.api.http.{MimeTypes, Status}
-import uk.gov.hmrc.customs.inventorylinking.export.services.DateTimeService
-import uk.gov.hmrc.customs.inventorylinking.export.model.AcceptanceTestScenario
+import uk.gov.hmrc.customs.inventorylinking.`export`.services.DateTimeService
 import uk.gov.hmrc.customs.inventorylinking.export.config.ServiceConfigProvider
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.ExportsConnector._
 import uk.gov.hmrc.customs.inventorylinking.export.logging.CdsLogger
@@ -63,16 +62,11 @@ class ExportsConnector @Inject()(http: HttpClient,
     val exportHeaders = hc.extraHeaders ++
       getHeaders(date, correlationId) ++
       Seq(HeaderNames.authorisation -> bearerToken) ++
-      vpr.maybeAcceptanceTestScenario.map(v => AcceptanceTestScenario.HeaderName -> v.value) ++
       getCustomsApiStubExtraHeaders(hc)
 
-    withCircuitBreaker(post(xml, config.url, exportHeaders)(vpr, HeaderCarrier()))
-  }
-
-  case class Non2xxResponseException(status: Int) extends Throwable
-
-  private def post[A](xml: NodeSeq, url: String, exportHeaders: Seq[(String, String)])(implicit vpr: ValidatedPayloadRequest[A], hc: HeaderCarrier) = {
-
+    case class Non2xxResponseException(status: Int) extends Throwable
+    val url = config.url
+    withCircuitBreaker {
       logger.debug(s"Posting inventory linking exports.\nurl = $url\npayload = \n${xml.toString}")
       implicit val hcWithoutAuth: HeaderCarrier = hc.copy(authorization = None)
       http.POSTString[HttpResponse](url, xml.toString(), headers = exportHeaders)(readRaw, hcWithoutAuth, ec)
@@ -84,7 +78,7 @@ class ExportsConnector @Inject()(http: HttpClient,
               throw Non2xxResponseException(status)
           }
         }
-    .recover {
+    }.recover {
       case _: CircuitBreakerOpenException =>
         Left(RetryError)
       case Non2xxResponseException(status) =>

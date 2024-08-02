@@ -53,6 +53,7 @@ class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfter
   private val errorResponseServiceUnavailable = errorInternalServerError("This service is currently unavailable")
 
   trait SetUp {
+    protected val mockConfigService = mock[ExportsConfigService]
     protected val mockExportsConfig: ExportsConfig = mock[ExportsConfig]
     protected val mockLogger: ExportsLogger = mock[ExportsLogger]
     protected val mockExportsConnector: ExportsConnector = mock[ExportsConnector]
@@ -61,7 +62,7 @@ class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfter
     protected val mockHttpResponse: HttpResponse = mock[HttpResponse]
 
     protected lazy val service: BusinessService = new BusinessService(mockLogger, mockExportsConnector,
-      mockPayloadDecorator, mockDateTimeProvider, stubUniqueIdsService)
+      mockPayloadDecorator, mockDateTimeProvider, stubUniqueIdsService, mockConfigService)
 
     protected def send(vpr: ValidatedPayloadRequest[AnyContentAsXml] = TestCspValidatedPayloadRequestWithEori, hc: HeaderCarrier = headerCarrier): Either[Result, Unit] = {
       await(service.send(vpr, hc))
@@ -69,6 +70,7 @@ class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfter
     // https://stackoverflow.com/questions/27289757/mockito-matchers-scala-value-class-and-nullpointerexception
     // Mockito matching was having problems so had to use the eq type then as instance of. Important that the 1st type is the
     // type of the value contained in the value class i.e. for CorrelationId the value is UUID so needs to meq type of UUID
+    when(mockConfigService.exportsConfig).thenReturn(mockExportsConfig)
     when(mockPayloadDecorator.decorate(meq(TestXmlPayload), meq[String](TestSubscriptionFieldsId.value).asInstanceOf[SubscriptionFieldsId], meq[UUID](correlationIdUuid).asInstanceOf[CorrelationId], any[LocalDateTime])(any[ValidatedPayloadRequest[_]])).thenReturn(wrappedValidXML)
     when(mockDateTimeProvider.getUtcNow).thenReturn(dateTime)
     when(mockExportsConnector.send(any[NodeSeq], meq(dateTime), any[UUID])(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])).thenReturn(Right(mockHttpResponse))

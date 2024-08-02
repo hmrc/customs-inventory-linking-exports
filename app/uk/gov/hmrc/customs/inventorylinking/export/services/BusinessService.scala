@@ -39,7 +39,8 @@ class BusinessService @Inject()(logger: ExportsLogger,
                                 connector: ExportsConnector,
                                 wrapper: PayloadDecorator,
                                 dateTimeProvider: DateTimeService,
-                                uniqueIdsService: UniqueIdsService)
+                                uniqueIdsService: UniqueIdsService,
+                                configService: ExportsConfigService)
                                (implicit ec: ExecutionContext) {
   def send[A](implicit vpr: ValidatedPayloadRequest[A], hc: HeaderCarrier): Future[Either[Result, Unit]] = {
     val subscriptionFieldsId = SubscriptionFieldsId(vpr.apiSubscriptionFields.fieldsId.toString)
