@@ -45,7 +45,7 @@ class ExportsConnector @Inject()(http: HttpClient,
                                  config: ExportsConfigService,
                                  override val cdsLogger: CdsLogger,
                                  override val actorSystem: ActorSystem)
-                                (implicit override val ec: ExecutionContext) extends CircuitBreakerConnector with HttpErrorFunctions {
+                                (implicit override val ec: ExecutionContext) extends CircuitBreakerConnector with HttpErrorFunctions  with HeaderUtil {
 
   override val configKey = "mdg-exports"
 
@@ -63,11 +63,16 @@ class ExportsConnector @Inject()(http: HttpClient,
     val exportHeaders = hc.extraHeaders ++
       getHeaders(date, correlationId) ++
       Seq(HeaderNames.authorisation -> bearerToken) ++
-      vpr.maybeAcceptanceTestScenario.map(v => AcceptanceTestScenario.HeaderName -> v.value)
+      vpr.maybeAcceptanceTestScenario.map(v => AcceptanceTestScenario.HeaderName -> v.value) ++
+      getCustomsApiStubExtraHeaders(hc)
 
-    case class Non2xxResponseException(status: Int) extends Throwable
-    val url = config.url
-    withCircuitBreaker {
+    withCircuitBreaker(post(xml, config.url, exportHeaders)(vpr, HeaderCarrier()))
+  }
+
+  case class Non2xxResponseException(status: Int) extends Throwable
+
+  private def post[A](xml: NodeSeq, url: String, exportHeaders: Seq[(String, String)])(implicit vpr: ValidatedPayloadRequest[A], hc: HeaderCarrier) = {
+
       logger.debug(s"Posting inventory linking exports.\nurl = $url\npayload = \n${xml.toString}")
       implicit val hcWithoutAuth: HeaderCarrier = hc.copy(authorization = None)
       http.POSTString[HttpResponse](url, xml.toString(), headers = exportHeaders)(readRaw, hcWithoutAuth, ec)
@@ -79,7 +84,7 @@ class ExportsConnector @Inject()(http: HttpClient,
               throw Non2xxResponseException(status)
           }
         }
-    }.recover {
+    .recover {
       case _: CircuitBreakerOpenException =>
         Left(RetryError)
       case Non2xxResponseException(status) =>
