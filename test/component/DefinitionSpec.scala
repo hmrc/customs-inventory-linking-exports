@@ -41,6 +41,7 @@ class DefinitionSpec extends ComponentTestSpec
       Given("the API is available")
       val request = FakeRequest("GET", "/api/definition")
 
+      When("api definition is requested")
       val result: Option[Future[Result]] = route(app = app, request)
 
       Then(s"a response with a 200 status is received")

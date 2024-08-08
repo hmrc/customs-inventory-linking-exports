@@ -17,8 +17,8 @@
 package uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders
 
 import java.time.ZonedDateTime
+
 import play.api.mvc.{Request, Result, WrappedRequest}
-import uk.gov.hmrc.customs.inventorylinking.export.model.AcceptanceTestScenario
 import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames.XConversationIdHeaderName
 import uk.gov.hmrc.customs.inventorylinking.export.model.{AuthorisedAs, _}
 
@@ -47,7 +47,6 @@ object ActionBuilderModelHelper {
       avr.start,
       avr.requestedApiVersion,
       eh.clientId,
-      eh.maybeAcceptanceTestScenario,
       avr.request
     )
   }
@@ -55,14 +54,13 @@ object ActionBuilderModelHelper {
   implicit class ValidatedHeadersRequestOps[A](val vhr: ValidatedHeadersRequest[A]) extends AnyVal {
 
     def toApiSubscriptionFieldsRequest(fields: ApiSubscriptionFields): ApiSubscriptionFieldsRequest[A] = ApiSubscriptionFieldsRequest(
-      vhr.conversationId,
-      vhr.start,
-      vhr.requestedApiVersion,
-      vhr.clientId,
-      vhr.maybeAcceptanceTestScenario,
-      fields,
-      vhr.request
-    )
+        vhr.conversationId,
+        vhr.start,
+        vhr.requestedApiVersion,
+        vhr.clientId,
+        fields,
+        vhr.request
+      )
   }
 
   implicit class ApiSubscriptionFieldsRequestOps[A](val asf: ApiSubscriptionFieldsRequest[A]) extends AnyVal {
@@ -72,7 +70,6 @@ object ActionBuilderModelHelper {
       asf.start,
       asf.requestedApiVersion,
       asf.clientId,
-      asf.maybeAcceptanceTestScenario,
       asf.apiSubscriptionFields,
       authorisedAs,
       asf.request
@@ -81,16 +78,15 @@ object ActionBuilderModelHelper {
 
   implicit class AuthorisedRequestOps[A](val ar: AuthorisedRequest[A]) extends AnyVal {
     def toValidatedPayloadRequest(xmlBody: NodeSeq): ValidatedPayloadRequest[A] = ValidatedPayloadRequest(
-      ar.conversationId,
-      ar.start,
-      ar.requestedApiVersion,
-      ar.clientId,
-      ar.maybeAcceptanceTestScenario,
-      ar.apiSubscriptionFields,
-      ar.authorisedAs,
-      xmlBody,
-      ar.request
-    )
+        ar.conversationId,
+        ar.start,
+        ar.requestedApiVersion,
+        ar.clientId,
+        ar.apiSubscriptionFields,
+        ar.authorisedAs,
+        xmlBody,
+        ar.request
+      )
   }
 
 }
@@ -109,7 +105,6 @@ trait HasApiVersion {
 
 trait ExtractedHeaders {
   val clientId: ClientId
-  val maybeAcceptanceTestScenario: Option[AcceptanceTestScenario]
 }
 
 trait HasAuthorisedAs {
@@ -121,8 +116,7 @@ trait HasXmlBody {
 }
 
 case class ExtractedHeadersImpl(
-  clientId: ClientId,
-  maybeAcceptanceTestScenario: Option[AcceptanceTestScenario]
+  clientId: ClientId
 ) extends ExtractedHeaders
 
 /*
@@ -135,17 +129,17 @@ case class ExtractedHeadersImpl(
 
 // Available after ConversationIdAction action builder
 case class ConversationIdRequest[A](
-                                     conversationId: ConversationId,
-                                     start: ZonedDateTime,
-                                     request: Request[A]
-                                   ) extends WrappedRequest[A](request) with HasRequest[A] with HasConversationId
+  conversationId: ConversationId,
+  start: ZonedDateTime,
+  request: Request[A]
+) extends WrappedRequest[A](request) with HasRequest[A] with HasConversationId
 
 // Available after ShutterCheckAction
 case class ApiVersionRequest[A](conversationId: ConversationId,
                                 start: ZonedDateTime,
                                 requestedApiVersion: ApiVersion,
                                 request: Request[A]
-                               ) extends WrappedRequest[A](request) with HasRequest[A] with HasConversationId with HasApiVersion
+) extends WrappedRequest[A](request) with HasRequest[A] with HasConversationId with HasApiVersion
 
 // Available after ValidateAndExtractHeadersAction action builder
 case class ValidatedHeadersRequest[A](
@@ -153,7 +147,6 @@ case class ValidatedHeadersRequest[A](
   start: ZonedDateTime,
   requestedApiVersion: ApiVersion,
   clientId: ClientId,
-  maybeAcceptanceTestScenario: Option[AcceptanceTestScenario],
   request: Request[A]
 ) extends WrappedRequest[A](request) with HasRequest[A] with HasConversationId with HasApiVersion with ExtractedHeaders
 
@@ -163,7 +156,6 @@ case class ApiSubscriptionFieldsRequest[A](
   start: ZonedDateTime,
   requestedApiVersion: ApiVersion,
   clientId: ClientId,
-  maybeAcceptanceTestScenario: Option[AcceptanceTestScenario],
   apiSubscriptionFields: ApiSubscriptionFields,
   request: Request[A]
 ) extends WrappedRequest[A](request) with HasRequest[A] with HasConversationId with HasApiVersion with ExtractedHeaders
@@ -174,7 +166,6 @@ case class AuthorisedRequest[A](
   start: ZonedDateTime,
   requestedApiVersion: ApiVersion,
   clientId: ClientId,
-  maybeAcceptanceTestScenario: Option[AcceptanceTestScenario],
   apiSubscriptionFields: ApiSubscriptionFields,
   authorisedAs: AuthorisedAs,
   request: Request[A]
@@ -186,7 +177,6 @@ case class ValidatedPayloadRequest[A](
   start: ZonedDateTime,
   requestedApiVersion: ApiVersion,
   clientId: ClientId,
-  maybeAcceptanceTestScenario: Option[AcceptanceTestScenario],
   apiSubscriptionFields: ApiSubscriptionFields,
   authorisedAs: AuthorisedAs,
   xmlBody: NodeSeq,

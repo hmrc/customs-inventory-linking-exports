@@ -127,7 +127,7 @@ object TestData {
   val TestConversationIdRequest = ConversationIdRequest(conversationId, EventStart, TestFakeRequest)
   val TestConversationIdRequestWithV1Headers = ConversationIdRequest(conversationId, EventStart, TestFakeRequestWithV1Headers)
   val TestConversationIdRequestWithV2Headers = ConversationIdRequest(conversationId, EventStart, TestFakeRequestWithV1Headers.withHeaders(ACCEPT_HMRC_XML_HEADER_V2))
-  val TestExtractedHeaders: ExtractedHeadersImpl = ExtractedHeadersImpl(ApiSubscriptionFieldsTestData.clientId, Some(AcceptanceTestScenario(GOV_TEST_SCENARIO_VALUE)))
+  val TestExtractedHeaders: ExtractedHeadersImpl = ExtractedHeadersImpl(ApiSubscriptionFieldsTestData.clientId)
   val TestValidatedHeadersRequest: ValidatedHeadersRequest[AnyContentAsXml] = TestConversationIdRequest.toApiVersionRequest(VersionOne).toValidatedHeadersRequest(TestExtractedHeaders)
   val TestValidatedHeadersRequestV2: ValidatedHeadersRequest[AnyContentAsXml] = TestConversationIdRequest.toApiVersionRequest(VersionTwo).toValidatedHeadersRequest(TestExtractedHeaders)
   val TestApiSubscriptionFieldsRequest: ApiSubscriptionFieldsRequest[AnyContentAsXml] = TestValidatedHeadersRequest.toApiSubscriptionFieldsRequest(ApiSubscriptionFieldsTestData.apiSubscriptionFields)
@@ -170,14 +170,10 @@ object RequestHeaders {
 
   val ACCEPT_HEADER_INVALID: (String, String) = ACCEPT -> MimeTypes.XML
 
-  val GOV_TEST_SCENARIO_VALUE = "DEFAULT"
-  val GOV_TEST_SCENARIO_HEADER: (String, String) = AcceptanceTestScenario.HeaderName -> GOV_TEST_SCENARIO_VALUE
-
   val ValidHeaders = Map(
     X_CLIENT_ID_HEADER,
     CONTENT_TYPE_HEADER,
     ACCEPT_HMRC_XML_HEADER,
     API_SUBSCRIPTION_FIELDS_ID_HEADER,
-    X_BADGE_IDENTIFIER_HEADER,
-    GOV_TEST_SCENARIO_HEADER)
+    X_BADGE_IDENTIFIER_HEADER)
 }
