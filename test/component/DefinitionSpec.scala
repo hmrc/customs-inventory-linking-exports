@@ -52,13 +52,6 @@ class DefinitionSpec extends ComponentTestSpec
       contentAsJson(resultFuture) shouldBe Json.parse(
         """
           |{
-          |  "scopes": [
-          |    {
-          |      "key": "write:customs-inventory-linking-exports",
-          |      "name": "Inventory Exports Movement Request",
-          |      "description": "Submit an Inventory Exports Movement Request"
-          |    }
-          |  ],
           |  "api": {
           |    "name": "Customs Inventory Linking Exports",
           |    "description": "Customs Inventory Linking Exports",

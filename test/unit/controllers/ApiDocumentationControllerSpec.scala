@@ -59,13 +59,6 @@ class ApiDocumentationControllerSpec extends PlaySpec with MockitoSugar with Res
     Json.parse(
       s"""
          |{
-         |   "scopes":[
-         |      {
-         |        "key": "write:customs-inventory-linking-exports",
-         |        "name": "Inventory Exports Movement Request",
-         |        "description": "Submit an Inventory Exports Movement Request"
-         |      }
-         |   ],
          |   "api":{
          |      "name": "Customs Inventory Linking Exports",
          |      "description": "Customs Inventory Linking Exports",
