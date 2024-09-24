@@ -1,12 +1,12 @@
 import com.typesafe.sbt.web.PathMapping
 import com.typesafe.sbt.web.pipeline.Pipeline
 import play.sbt.PlayImport.PlayKeys.playDefaultPort
-import sbt.Keys._
+import sbt.Keys.*
 import sbt.Tests.{Group, SubProcess}
 import sbt.{Test, inConfig}
-import uk.gov.hmrc.DefaultBuildSettings.{addTestReportOption, targetJvm}
-import uk.gov.hmrc.gitstamp.GitStampPlugin._
-import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
+import uk.gov.hmrc.DefaultBuildSettings.addTestReportOption
+import uk.gov.hmrc.gitstamp.GitStampPlugin.*
+import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin.*
 
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -35,7 +35,6 @@ lazy val microservice = (project in file("."))
   .settings(playDefaultPort := 9823)
   .settings(
     scalaVersion := "2.13.12",
-    targetJvm := "jvm-11",
     commonSettings,
     unitTestSettings,
     integrationComponentTestSettings,
