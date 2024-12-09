@@ -1,5 +1,6 @@
 digital-service: CDS
 repoVisibility: public_0C3F0CE3E6E6448FAD341E7BFA50FCD333E06A20CFF05FCACE61154DDBBADF71
+description: The Customs Inventory Linking Exports service provides an interface that allows users to submit requests for the consolidation, movement, or querying of consignments for inventory linking purposes.
 test-repositories:
   - customs-declaration-performance-test
   - customs-inventory-linking-exports-performance-test
