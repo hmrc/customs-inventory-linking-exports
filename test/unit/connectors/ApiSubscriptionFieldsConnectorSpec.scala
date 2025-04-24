@@ -29,6 +29,7 @@ import uk.gov.hmrc.customs.inventorylinking.export.connectors.ApiSubscriptionFie
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.ExportsConfig
 import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
+import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpReads, HttpResponse}
 import util.ExternalServicesConfig._
 import util.externalservices.ExportsExternalServicesConfig._
@@ -45,7 +46,7 @@ class ApiSubscriptionFieldsConnectorSpec extends UnitSpec
 
   private val mockExportsConfigService = mock[ExportsConfigService]
   private val mockExportsConfig = mock[ExportsConfig]
-  private val mockWSGetImpl = mock[HttpClient]
+  private val mockWSGetImpl = mock[HttpClientV2]
   private val mockExportsLogger = mock[ExportsLogger]
   private implicit val ec = Helpers.stubControllerComponents().executionContext
   private val connector = connectorWithConfig(validConfig)
@@ -81,7 +82,7 @@ class ApiSubscriptionFieldsConnectorSpec extends UnitSpec
   }
 
   private def returnResponseForRequest(eventualResponse: Future[HttpResponse], url: URL = new URL(expectedUrl)): OngoingStubbing[Future[HttpResponse]] = {
-    when(mockWSGetImpl.GET[HttpResponse](ameq(url))
+    when(mockWSGetImpl.get(ameq(url)).execute[HttpResponse]
       (any[HttpReads[HttpResponse]](), any[HeaderCarrier](), any[ExecutionContext])).thenReturn(eventualResponse)
   }
 

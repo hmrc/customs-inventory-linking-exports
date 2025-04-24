@@ -35,6 +35,7 @@ import uk.gov.hmrc.customs.inventorylinking.export.logging.CdsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.ExportsCircuitBreakerConfig
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
 import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
+import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpReads, HttpResponse}
 import unit.logging.StubExportsLogger
 import util.TestData._
@@ -46,7 +47,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class ExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach with Eventually {
 
-  private val mockWsPost = mock[HttpClient]
+  private val mockWsPost = mock[HttpClientV2]
   private val stubExportsLogger = new StubExportsLogger(mock[CdsLogger])
   private val mockServiceConfigProvider = mock[ServiceConfigProvider]
   private val mockExportsConfigService = mock[ExportsConfigService]
@@ -93,8 +94,7 @@ class ExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfte
 
         awaitRequest()
 
-        verify(mockWsPost).POSTString(ameq(serviceConfig.url), anyString, any[Seq[(String, String)]])(
-          any[HttpReads[HttpResponse]](), any[HeaderCarrier](), any[ExecutionContext])
+        verify(mockWsPost).post(ameq(serviceConfig.url).
       }
 
       "ensure xml payload is included in the request body" in {

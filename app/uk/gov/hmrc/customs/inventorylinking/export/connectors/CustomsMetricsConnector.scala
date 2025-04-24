@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.customs.inventorylinking.export.connectors
 
+import play.api.libs.json.Json
 import play.mvc.Http.HeaderNames.{ACCEPT, CONTENT_TYPE}
 import play.mvc.Http.MimeTypes.JSON
 import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
@@ -23,13 +24,16 @@ import uk.gov.hmrc.customs.inventorylinking.export.model.CustomsMetricsRequest
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.HasConversationId
 import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
 import uk.gov.hmrc.http.HttpReads.Implicits._
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpErrorFunctions, HttpException, HttpResponse}
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{HeaderCarrier, HttpErrorFunctions, HttpException, HttpResponse, StringContextOps}
+import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.control.NonFatal
 
 @Singleton
-class CustomsMetricsConnector @Inject()(http: HttpClient,
+class CustomsMetricsConnector @Inject()(http: HttpClientV2,
                                         logger: ExportsLogger,
                                         config: ExportsConfigService)
                                        (implicit ec: ExecutionContext) extends HttpErrorFunctions {
@@ -41,7 +45,11 @@ class CustomsMetricsConnector @Inject()(http: HttpClient,
   def post[A](request: CustomsMetricsRequest)(implicit hasConversationId: HasConversationId): Future[Unit] = {
     val url = config.exportsConfig.customsMetricsBaseUrl
     logger.debug(s"Sending request to customs metrics. url=$url payload=${request.toString}")
-    http.POST[CustomsMetricsRequest, HttpResponse](url, request).map { response =>
+    http
+      .post(url"$url")
+      .withBody(Json.toJson(request))
+      .execute[HttpResponse]
+      .map { response =>
       response.status match {
         case status if is2xx(status) =>
           logger.debug("customs metrics sent successfully")
@@ -53,7 +61,7 @@ class CustomsMetricsConnector @Inject()(http: HttpClient,
       case httpError: HttpException =>
         logger.error(s"Call to customs metrics failed. url=$url, status=${httpError.responseCode}, error=${httpError.message}")
         Future.failed(new RuntimeException(httpError))
-      case e: Throwable =>
+      case NonFatal(e) =>
         logger.error(s"Call to customs metrics failed. url=$url")
         Future.failed(e)
     }

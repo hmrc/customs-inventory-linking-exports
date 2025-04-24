@@ -30,15 +30,17 @@ import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.Validate
 import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http._
+import uk.gov.hmrc.http.client.HttpClientV2
 
 import java.time.format.DateTimeFormatter
 import java.time.{LocalDateTime, ZoneOffset}
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.control.NonFatal
 import scala.xml.NodeSeq
 
 @Singleton
-class ExportsConnector @Inject()(http: HttpClient,
+class ExportsConnector @Inject()(http: HttpClientV2,
                                  logger: ExportsLogger,
                                  serviceConfigProvider: ServiceConfigProvider,
                                  config: ExportsConfigService,
@@ -69,7 +71,11 @@ class ExportsConnector @Inject()(http: HttpClient,
     withCircuitBreaker {
       logger.debug(s"Posting inventory linking exports.\nurl = $url\npayload = \n${xml.toString}")
       implicit val hcWithoutAuth: HeaderCarrier = hc.copy(authorization = None)
-      http.POSTString[HttpResponse](url, xml.toString(), headers = exportHeaders)(readRaw, hcWithoutAuth, ec)
+      http
+        .post(url"$url")(hcWithoutAuth)
+//        .setHeader(exportHeaders)
+        .withBody(xml.toString())
+        .execute[HttpResponse]
         .map { response =>
           response.status match {
             case status if Status.isSuccessful(status) =>
@@ -83,7 +89,7 @@ class ExportsConnector @Inject()(http: HttpClient,
         Left(RetryError)
       case Non2xxResponseException(status) =>
         Left(Non2xxResponseError(status))
-      case t: Throwable =>
+      case NonFatal(t) =>
         Left(UnexpectedError(t))
     }
   }
