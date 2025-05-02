@@ -16,60 +16,95 @@
 
 package unit.connectors
 
+import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, equalTo, post, postRequestedFor, urlEqualTo}
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.pattern.CircuitBreakerOpenException
-import org.mockito.ArgumentCaptor
-import org.mockito.ArgumentMatchers.{eq => ameq, _}
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
-import org.mockito.stubbing.OngoingStubbing
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.Eventually
 import org.scalatestplus.mockito.MockitoSugar
-import play.api.http.HeaderNames
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.Application
+import play.api.http.HeaderNames.{AUTHORIZATION, CONTENT_TYPE, X_FORWARDED_HOST}
+import play.api.http.Status.OK
+import play.api.http.{HeaderNames, MimeTypes}
+import play.api.inject.bind
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers
-import play.mvc.Http.MimeTypes
-import uk.gov.hmrc.customs.inventorylinking.export.connectors.ExportsConnector.RetryError
+import play.api.test.Helpers.ACCEPT
+import uk.gov.hmrc.customs.inventorylinking.`export`.connectors.CircuitBreakerConnector
+import uk.gov.hmrc.customs.inventorylinking.`export`.connectors.ExportsConnector.RetryError
 import uk.gov.hmrc.customs.inventorylinking.export.config.{ServiceConfig, ServiceConfigProvider}
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.ExportsConnector
 import uk.gov.hmrc.customs.inventorylinking.export.logging.CdsLogger
 import uk.gov.hmrc.customs.inventorylinking.export.model.ExportsCircuitBreakerConfig
 import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
 import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
-import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpReads, HttpResponse}
+import uk.gov.hmrc.http.client.{HttpClientV2, RequestBuilder}
+import uk.gov.hmrc.http.test.{HttpClientV2Support, WireMockSupport}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.play.bootstrap.http.HttpClientV2Provider
 import unit.logging.StubExportsLogger
+import util.ExternalServicesConfig.{Host, Port}
 import util.TestData._
 import util.{RequestHeaders, UnitSpec}
 
-import java.time.{Instant, LocalDateTime}
+import java.time.LocalDateTime
 import scala.concurrent.duration.{FiniteDuration, MILLISECONDS}
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
-class ExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach with Eventually {
+class ExportsConnectorSpec
+  extends UnitSpec
+    with MockitoSugar
+    with BeforeAndAfterEach
+    with Eventually
+    with GuiceOneAppPerSuite
+    with HttpClientV2Support
+    with WireMockSupport {
 
-  private val mockWsPost = mock[HttpClientV2]
-  private val stubExportsLogger = new StubExportsLogger(mock[CdsLogger])
-  private val mockServiceConfigProvider = mock[ServiceConfigProvider]
-  private val mockExportsConfigService = mock[ExportsConfigService]
+  private val mockHttpClient                  = mock[HttpClientV2]
+  private val stubExportsLogger               = new StubExportsLogger(mock[CdsLogger])
+  private val mockServiceConfigProvider       = mock[ServiceConfigProvider]
+  private val mockExportsConfigService        = mock[ExportsConfigService]
   private val mockExportsCircuitBreakerConfig = mock[ExportsCircuitBreakerConfig]
-  private val mockResponse = mock[HttpResponse]
-  private val cdsLogger = mock[CdsLogger]
-  private val actorSystem = ActorSystem("mockActorSystem")
+  private val cdsLogger                       = mock[CdsLogger]
+  private val stubCircuitBreakerConnector     = mock[CircuitBreakerConnector]
+  private val mockRequestBuilder              = mock[RequestBuilder]
+  private val actorSystem                     = ActorSystem("mockActorSystem")
+
   private implicit val ec = Helpers.stubControllerComponents().executionContext
 
-  private val connector = new ExportsConnector(mockWsPost, stubExportsLogger, mockServiceConfigProvider, mockExportsConfigService, cdsLogger, actorSystem)
+  override lazy val app: Application = new GuiceApplicationBuilder()
+    .configure(
+      "microservice.services.mdg-exports.host" -> Host,
+      "microservice.services.mdg-exports.port" -> Port,
+      "microservice.services.v2.mdg-exports.host" -> Host,
+      "microservice.services.v2.mdg-exports.port" -> Port
+    ).overrides(
+      bind[HttpClientV2].toProvider[HttpClientV2Provider],
+      bind[ExportsConfigService].toInstance(mockExportsConfigService),
+      bind[ServiceConfigProvider].toInstance(mockServiceConfigProvider),
+      bind[StubExportsLogger].toInstance(stubExportsLogger),
+      bind[CdsLogger].toInstance(cdsLogger),
+      bind[CircuitBreakerConnector].toInstance(stubCircuitBreakerConnector)
+    ).build()
 
-  private val serviceConfig = ServiceConfig("the-url", Some("bearerToken"), "default")
+  private val connector: ExportsConnector     = app.injector.instanceOf[ExportsConnector]
+  private val mockConnector: ExportsConnector = new ExportsConnector(mockHttpClient, stubExportsLogger, mockServiceConfigProvider, mockExportsConfigService, cdsLogger, actorSystem)
 
-  private val xml = <xml></xml>
+  private val serviceConfig = ServiceConfig(s"http://$Host:$Port/inventorylinking/exportsinbound/v2", Some("bearerToken"), "default")
+  private val expectedUrl   = "/inventorylinking/exportsinbound/v2"
+  private val xml           = <xml></xml>
+
   private implicit lazy val hc = HeaderCarrier().withExtraHeaders(RequestHeaders.API_SUBSCRIPTION_FIELDS_ID_HEADER)
 
   override protected def beforeEach(): Unit = {
-    reset(mockWsPost, mockServiceConfigProvider)
+    reset(mockHttpClient, mockServiceConfigProvider)
+    wireMockServer.resetRequests()
+    wireMockServer.resetMappings()
     when(mockExportsConfigService.exportsCircuitBreakerConfig).thenReturn(mockExportsCircuitBreakerConfig)
     when(mockServiceConfigProvider.getConfig("mdg-exports")).thenReturn(serviceConfig)
-    when(mockResponse.body).thenReturn("<foo/>")
-    when(mockResponse.status).thenReturn(200)
   }
 
   private val year = 2017
@@ -85,80 +120,18 @@ class ExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfte
   private implicit val vpr = TestCspValidatedPayloadRequestWithEori
 
   "ExportsConnector" can {
-
     "when making a successful request" should {
-
-
-      "ensure URL is retrieved from config" in {
-        returnResponseForRequest(Future.successful(mockResponse))
-
+      "ensure URL is retrieved from config, headers are populated and XML payload is sent" in {
+        returnResponseForRequest(HttpResponse(OK))
         awaitRequest()
-
-        verify(mockWsPost).post(ameq(serviceConfig.url).
-      }
-
-      "ensure xml payload is included in the request body" in {
-        returnResponseForRequest(Future.successful(mockResponse))
-
-        awaitRequest()
-
-        verify(mockWsPost).POSTString(anyString, ameq(xml.toString()), any[Seq[(String, String)]])(
-          any[HttpReads[HttpResponse]](), any[HeaderCarrier](), any[ExecutionContext])
-      }
-
-      "ensure the content type header is passed through in the request" in {
-        returnResponseForRequest(Future.successful(mockResponse))
-
-        awaitRequest()
-
-        val headersCaptor: ArgumentCaptor[Seq[(String, String)]] = ArgumentCaptor.forClass(classOf[Seq[(String, String)]])
-        verify(mockWsPost).POSTString(anyString, anyString, headersCaptor.capture())(
-          any[HttpReads[HttpResponse]](), any[HeaderCarrier], any[ExecutionContext])
-        headersCaptor.getValue should contain(HeaderNames.CONTENT_TYPE -> (MimeTypes.XML + "; charset=UTF-8"))
-      }
-
-      "ensure the accept header is passed through in the request" in {
-        returnResponseForRequest(Future.successful(mockResponse))
-
-        awaitRequest()
-
-        val headersCaptor: ArgumentCaptor[Seq[(String, String)]] = ArgumentCaptor.forClass(classOf[Seq[(String, String)]])
-        verify(mockWsPost).POSTString(anyString, anyString, headersCaptor.capture())(
-          any[HttpReads[HttpResponse]](), any[HeaderCarrier], any[ExecutionContext])
-        headersCaptor.getValue should contain(HeaderNames.ACCEPT -> MimeTypes.XML)
-      }
-
-      "ensure the date header is passed through in the request" in {
-        returnResponseForRequest(Future.successful(mockResponse))
-
-        awaitRequest()
-
-        val headersCaptor: ArgumentCaptor[Seq[(String, String)]] = ArgumentCaptor.forClass(classOf[Seq[(String, String)]])
-        verify(mockWsPost).POSTString(anyString, anyString, headersCaptor.capture())(
-          any[HttpReads[HttpResponse]](), any[HeaderCarrier], any[ExecutionContext])
-        headersCaptor.getValue should contain(HeaderNames.DATE -> httpFormattedDate)
-      }
-
-      "ensure the X-FORWARDED_HOST header is passed through in the request" in {
-        returnResponseForRequest(Future.successful(mockResponse))
-
-        awaitRequest()
-
-        val headersCaptor: ArgumentCaptor[Seq[(String, String)]] = ArgumentCaptor.forClass(classOf[Seq[(String, String)]])
-        verify(mockWsPost).POSTString(anyString, anyString, headersCaptor.capture())(
-          any[HttpReads[HttpResponse]](), any[HeaderCarrier], any[ExecutionContext])
-        headersCaptor.getValue should contain(HeaderNames.X_FORWARDED_HOST -> "MDTP")
-      }
-
-      "ensure the X-Correlation-Id header is passed through in the request" in {
-        returnResponseForRequest(Future.successful(mockResponse))
-
-        awaitRequest()
-
-        val headersCaptor: ArgumentCaptor[Seq[(String, String)]] = ArgumentCaptor.forClass(classOf[Seq[(String, String)]])
-        verify(mockWsPost).POSTString(anyString, anyString, headersCaptor.capture())(
-          any[HttpReads[HttpResponse]](), any[HeaderCarrier], any[ExecutionContext])
-        headersCaptor.getValue should contain("X-Correlation-ID" -> correlationIdValue)
+        wireMockServer.verify(1, postRequestedFor(urlEqualTo(expectedUrl))
+          .withRequestBody(equalTo(xml.toString()))
+          .withHeader(AUTHORIZATION, equalTo("Bearer bearerToken"))
+          .withHeader(ACCEPT, equalTo(MimeTypes.XML))
+          .withHeader(CONTENT_TYPE, equalTo(MimeTypes.XML + "; charset=UTF-8"))
+          .withHeader(X_FORWARDED_HOST, equalTo("MDTP"))
+          .withHeader(HeaderNames.DATE, equalTo(httpFormattedDate))
+          .withHeader("X-Correlation-ID", equalTo("e61f8eee-812c-4b8f-b193-06aedc60dca2")))
       }
     }
 
@@ -187,8 +160,8 @@ class ExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfte
       }
 
       "when CircuitBreakerOpenException is threw" in {
-        returnResponseForRequest(Future.failed(new CircuitBreakerOpenException(new FiniteDuration(5, MILLISECONDS))))
-        val result = awaitRequest()
+        returnResponseForRequestWithFailedCircuitBreaker()
+        val result = await(mockConnector.send(xml, date, correlationIdUuid))
         result.isLeft shouldBe true
         result shouldBe Left(RetryError)
       }
@@ -199,9 +172,21 @@ class ExportsConnectorSpec extends UnitSpec with MockitoSugar with BeforeAndAfte
     await(connector.send(xml, date, correlationIdUuid))
   }
 
-  private def returnResponseForRequest(eventualResponse: Future[HttpResponse]): OngoingStubbing[Future[HttpResponse]] = {
-    when(mockWsPost.POSTString(anyString, anyString, any[Seq[(String, String)]])(
-      any[HttpReads[HttpResponse]](), any[HeaderCarrier](), any[ExecutionContext]))
-      .thenReturn(eventualResponse)
+  private def returnResponseForRequest(eventualResponse: HttpResponse): Unit = {
+    wireMockServer.stubFor(post(urlEqualTo(expectedUrl))
+      .withRequestBody(equalTo(xml.toString()))
+      .willReturn(
+        aResponse()
+          .withBody(eventualResponse.body)
+          .withStatus(eventualResponse.status)))
+  }
+
+  private def returnResponseForRequestWithFailedCircuitBreaker(): Unit = {
+    when(mockHttpClient.post(any)(any))
+      .thenReturn(mockRequestBuilder)
+    when(mockRequestBuilder.setHeader(any())).thenReturn(mockRequestBuilder)
+    when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
+    when(mockRequestBuilder.execute[HttpResponse](any(), any()))
+      .thenReturn(Future.failed(new CircuitBreakerOpenException(new FiniteDuration(5, MILLISECONDS))))
   }
 }

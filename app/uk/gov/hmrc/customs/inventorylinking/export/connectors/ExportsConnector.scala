@@ -50,9 +50,9 @@ class ExportsConnector @Inject()(http: HttpClientV2,
 
   override val configKey = "mdg-exports"
 
-  override lazy val numberOfCallsToTriggerStateChange = config.exportsCircuitBreakerConfig.numberOfCallsToTriggerStateChange
-  override lazy val unstablePeriodDurationInMillis = config.exportsCircuitBreakerConfig.unstablePeriodDurationInMillis
-  override lazy val unavailablePeriodDurationInMillis = config.exportsCircuitBreakerConfig.unavailablePeriodDurationInMillis
+  override lazy val numberOfCallsToTriggerStateChange: Int = config.exportsCircuitBreakerConfig.numberOfCallsToTriggerStateChange
+  override lazy val unstablePeriodDurationInMillis: Int = config.exportsCircuitBreakerConfig.unstablePeriodDurationInMillis
+  override lazy val unavailablePeriodDurationInMillis: Int = config.exportsCircuitBreakerConfig.unavailablePeriodDurationInMillis
 
   def send[A](xml: NodeSeq,
               date: LocalDateTime,
@@ -73,7 +73,7 @@ class ExportsConnector @Inject()(http: HttpClientV2,
       implicit val hcWithoutAuth: HeaderCarrier = hc.copy(authorization = None)
       http
         .post(url"$url")(hcWithoutAuth)
-//        .setHeader(exportHeaders)
+        .setHeader(exportHeaders: _*)
         .withBody(xml.toString())
         .execute[HttpResponse]
         .map { response =>

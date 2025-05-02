@@ -16,76 +16,71 @@
 
 package unit.connectors
 
-import com.typesafe.config.Config
-import org.mockito.ArgumentMatchers.{eq => ameq, _}
-import org.mockito.Mockito._
-import org.mockito.stubbing.OngoingStubbing
-import org.scalatest.BeforeAndAfterEach
-import org.scalatest.concurrent.Eventually
-import org.scalatestplus.mockito.MockitoSugar
+import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, get, getRequestedFor, urlEqualTo}
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.Application
 import play.api.http.Status.{NOT_FOUND, OK}
-import play.api.test.Helpers
+import play.api.inject.bind
+import play.api.inject.guice.GuiceApplicationBuilder
 import uk.gov.hmrc.customs.inventorylinking.export.connectors.ApiSubscriptionFieldsConnector
-import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model.ExportsConfig
-import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
 import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpReads, HttpResponse}
+import uk.gov.hmrc.http.test.WireMockSupport
+import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.play.audit.http.HttpAuditing
+import uk.gov.hmrc.play.bootstrap.http.{DefaultHttpAuditing, HttpClientV2Provider}
 import util.ExternalServicesConfig._
-import util.externalservices.ExportsExternalServicesConfig._
 import util.{ApiSubscriptionFieldsTestData, TestData, UnitSpec}
 
-import java.net.URL
-import scala.concurrent.{ExecutionContext, Future}
-
 class ApiSubscriptionFieldsConnectorSpec extends UnitSpec
-  with MockitoSugar
-  with BeforeAndAfterEach
-  with Eventually
+  with GuiceOneAppPerSuite
+  with WireMockSupport
   with ApiSubscriptionFieldsTestData {
 
-  private val mockExportsConfigService = mock[ExportsConfigService]
-  private val mockExportsConfig = mock[ExportsConfig]
-  private val mockWSGetImpl = mock[HttpClientV2]
-  private val mockExportsLogger = mock[ExportsLogger]
-  private implicit val ec = Helpers.stubControllerComponents().executionContext
-  private val connector = connectorWithConfig(validConfig)
-
-  private val expectedUrl = s"http://$Host:$Port$ApiSubscriptionFieldsContext/application/SOME_X_CLIENT_ID/context/some/api/context/version/1.0"
+  private val expectedUrl = "/field/application/SOME_X_CLIENT_ID/context/some/api/context/version/1.0"
 
   private implicit val vhr = TestData.TestValidatedHeadersRequest
 
+  override lazy val app: Application = new GuiceApplicationBuilder()
+    .configure(
+      "microservice.services.api-subscription-fields.host" -> Host,
+      "microservice.services.api-subscription-fields.port" -> Port,
+    ).overrides(
+      bind[HttpAuditing].to[DefaultHttpAuditing],
+      bind[HttpClientV2].toProvider[HttpClientV2Provider]
+    ).build()
+
+  private val connector: ApiSubscriptionFieldsConnector = app.injector.instanceOf[ApiSubscriptionFieldsConnector]
+
   override protected def beforeEach(): Unit = {
-    reset(mockExportsLogger, mockWSGetImpl, mockExportsConfigService)
-    when(mockExportsConfigService.exportsConfig).thenReturn(mockExportsConfig)
-    when(mockExportsConfig.apiSubscriptionFieldsBaseUrl).thenReturn("http://localhost:11111/api-subscription-fields/field")
+    wireMockServer.resetMappings()
+    wireMockServer.resetRequests()
   }
 
   "ApiSubscriptionFieldsConnector" can {
     "when making a successful request" should {
       "use the correct URL for valid path parameters and config" in {
-        returnResponseForRequest(Future.successful(HttpResponse(OK, responseJsonString)))
+        returnResponseForRequest(HttpResponse(OK, responseJsonString))
         val response = await(connector.getSubscriptionFields(apiSubscriptionKey))
+        wireMockServer.verify(1, getRequestedFor(urlEqualTo(expectedUrl)))
         response shouldBe Some(apiSubscriptionFields)
       }
     }
 
     "when making an failing request" should {
       "return a None when api subscription fields call fails with an http error" in {
-        returnResponseForRequest(Future.successful(HttpResponse(NOT_FOUND, "")))
-
+        returnResponseForRequest(HttpResponse(NOT_FOUND, ""))
         val response = await(connector.getSubscriptionFields(apiSubscriptionKey))
-
+        wireMockServer.verify(1, getRequestedFor(urlEqualTo(expectedUrl)))
         response shouldBe None
       }
     }
   }
 
-  private def returnResponseForRequest(eventualResponse: Future[HttpResponse], url: URL = new URL(expectedUrl)): OngoingStubbing[Future[HttpResponse]] = {
-    when(mockWSGetImpl.get(ameq(url)).execute[HttpResponse]
-      (any[HttpReads[HttpResponse]](), any[HeaderCarrier](), any[ExecutionContext])).thenReturn(eventualResponse)
+  private def returnResponseForRequest(eventualResponse: HttpResponse): Unit = {
+    wireMockServer.stubFor(get(urlEqualTo(expectedUrl))
+      .willReturn(
+        aResponse()
+          .withBody(eventualResponse.body)
+          .withStatus(eventualResponse.status)))
   }
-
-  private def connectorWithConfig(config: Config) = new ApiSubscriptionFieldsConnector(mockWSGetImpl, mockExportsLogger, mockExportsConfigService)
-
 }
