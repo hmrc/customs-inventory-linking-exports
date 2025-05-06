@@ -56,7 +56,7 @@ object TestData {
   val cspAuthorisedRequestWithBadgeIdentifier = CspWithBadgeId(badgeIdentifier)
 
   val dateTime: LocalDateTime = LocalDateTime.now(UtcZoneId)
-  val dateTimeFormat = "YYYY-MM-dd'T'HH:mm:ssX"
+  val dateTimeFormat = "yyyy-MM-dd'T'HH:mm:ssX"
 
   val cspBearerToken = "CSP-Bearer-Token"
   val nonCspBearerToken = "Software-House-Bearer-Token"

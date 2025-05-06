@@ -23,14 +23,15 @@ import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.Validate
 import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionFields, ApiSubscriptionKey}
 import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{HeaderCarrier, StringContextOps}
 
 import java.net.URL
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class ApiSubscriptionFieldsConnector @Inject()(http: HttpClient,
+class ApiSubscriptionFieldsConnector @Inject()(http: HttpClientV2,
                                                logger: ExportsLogger,
                                                config: ExportsConfigService)
                                               (implicit ec: ExecutionContext) {
@@ -39,7 +40,7 @@ class ApiSubscriptionFieldsConnector @Inject()(http: HttpClient,
     logger.debug(s"Getting fields id from api subscription fields service. url=$url")
     implicit val hc = HeaderCarrier()
 
-    http.GET(url)
+    http.get(url"$url").execute
       .map { response =>
         response.status match {
           case status if Status.isSuccessful(status) =>

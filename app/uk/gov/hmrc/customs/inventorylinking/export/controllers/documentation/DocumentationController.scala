@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.customs.inventorylinking.export
+package uk.gov.hmrc.customs.inventorylinking.`export`.controllers.documentation
 
-import play.api.inject.{Binding, Module}
-import play.api.{Configuration, Environment}
-import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.play.bootstrap.http.HttpClientV2Provider
+import controllers.Assets
+import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
-class CustomsApiCommonModule extends Module {
+import javax.inject.{Inject, Singleton}
 
-  override def bindings(environment: Environment, configuration: Configuration): Seq[Binding[_]] = Seq(
-    bind[HttpClientV2].toProvider[HttpClientV2Provider]
-  )
+@Singleton
+class DocumentationController @Inject()(assets: Assets, cc: ControllerComponents)
+  extends BackendController(cc) {
 
+  def conf(version: String, file: String): Action[AnyContent] = {
+    assets.at(s"/public/api/conf/$version", file)
+  }
 }

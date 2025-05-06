@@ -41,12 +41,14 @@ class CustomsMetricsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPe
   private implicit val mockExportsLogger: ExportsLogger = mock[ExportsLogger]
 
   /**
-   * On Jenkins the localhost string is different to when run locally.
+   * On Jenkins the localhost string is equal to 127.0.0.1
+   * On Mac/Ubuntu the localhost string is equal to [0:0:0:0:0:0:0:1]
+   * On Windows WSL the localhost string is equal to 127.0.0.1
    *
    * @return
    */
   def localhostString(): String = {
-    if (System.getenv("HOME") == "/home/jenkins") "127.0.0.1" else "0:0:0:0:0:0:0:1"
+    if (System.getenv("HOME") == "/home/jenkins") "127.0.0.1" else "[0:0:0:0:0:0:0:1]"
   }
 
   override protected def beforeAll(): Unit =  {
@@ -83,28 +85,28 @@ class CustomsMetricsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPe
     "return a failed future when external service returns 404" in {
       setupCustomsMetricsServiceToReturn(NOT_FOUND)
       await(sendValidRequest()) shouldBe
-      verifyExportsLoggerError("Call to customs metrics failed. url=http://localhost:11111/log-times, status=404, error=received a non 2XX response")
+      verifyExportsLoggerError("Call to customs metrics failed. url=http://localhost:6001/log-times, status=404, error=received a non 2XX response")
     }
 
     "return a failed future when external service returns 400" in {
       setupCustomsMetricsServiceToReturn(BAD_REQUEST)
 
       await(sendValidRequest()) shouldBe
-      verifyExportsLoggerError("Call to customs metrics failed. url=http://localhost:11111/log-times, status=400, error=received a non 2XX response")
+      verifyExportsLoggerError("Call to customs metrics failed. url=http://localhost:6001/log-times, status=400, error=received a non 2XX response")
     }
 
     "return a failed future when external service returns 500" in {
       setupCustomsMetricsServiceToReturn(INTERNAL_SERVER_ERROR)
 
       await(sendValidRequest()) shouldBe
-      verifyExportsLoggerError("Call to customs metrics failed. url=http://localhost:11111/log-times, status=500, error=received a non 2XX response")
+      verifyExportsLoggerError("Call to customs metrics failed. url=http://localhost:6001/log-times, status=500, error=received a non 2XX response")
     }
 
     "return a failed future when fail to connect the external service" in {
       stopMockServer()
 
       intercept[RuntimeException](await(sendValidRequest())).getCause.getClass shouldBe classOf[BadGatewayException]
-      verifyExportsLoggerError(s"Call to customs metrics failed. url=http://localhost:11111/log-times, status=502, error=POST of 'http://localhost:11111/log-times' failed. Caused by: 'Connection refused: localhost/${localhostString()}:11111'")
+      verifyExportsLoggerError(s"Call to customs metrics failed. url=http://localhost:6001/log-times, status=502, error=POST of 'http://localhost:6001/log-times' failed. Caused by: 'Connection refused: localhost/${localhostString()}:6001'")
 
       startMockServer()
     }
