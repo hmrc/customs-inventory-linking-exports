@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.customs.inventorylinking.`export`.controllers.documentation
+package uk.gov.hmrc.customs.inventorylinking.`export`.controllers.apidocumentation
 
 import controllers.Assets
 import play.api.Configuration
 import play.api.http.MimeTypes
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import uk.gov.hmrc.customs.inventorylinking.`export`.controllers.documentation.DocumentationController
 
 import javax.inject.{Inject, Singleton}
 
