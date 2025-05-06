@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.customs.inventorylinking.export.controllers.dynamicservice
+package uk.gov.hmrc.customs.inventorylinking.`export`.definitionControllers.dynamicservice
 
 import com.google.inject.Inject
 import play.api.libs.json.{JsError, JsSuccess, Json, OWrites, Reads}
