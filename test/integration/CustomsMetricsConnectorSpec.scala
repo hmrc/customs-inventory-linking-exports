@@ -40,6 +40,17 @@ class CustomsMetricsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPe
   private implicit val vpr: ValidatedPayloadRequest[AnyContentAsXml] = TestData.TestCspValidatedPayloadRequestWithEori
   private implicit val mockExportsLogger: ExportsLogger = mock[ExportsLogger]
 
+  /**
+   * On Jenkins the localhost string is equal to 127.0.0.1
+   * On Mac/Ubuntu the localhost string is equal to 0:0:0:0:0:0:0:1
+   * On Windows WSL the localhost string is equal to 127.0.0.1
+   *
+   * @return
+   */
+  def localhostString(): String = {
+    if (System.getenv("HOME") == "/home/jenkins") "127.0.0.1" else "0:0:0:0:0:0:0:1"
+  }
+
   override protected def beforeAll(): Unit =  {
     startMockServer()
   }
@@ -95,7 +106,7 @@ class CustomsMetricsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPe
       stopMockServer()
 
       intercept[RuntimeException](await(sendValidRequest())).getCause.getClass shouldBe classOf[BadGatewayException]
-      verifyExportsLoggerError(s"Call to customs metrics failed. url=http://localhost:6001/log-times, status=502, error=POST of 'http://localhost:6001/log-times' failed. Caused by: 'Connection refused: localhost/127.0.0.1:6001'")
+      verifyExportsLoggerError(s"Call to customs metrics failed. url=http://localhost:6001/log-times, status=502, error=POST of 'http://localhost:6001/log-times' failed. Caused by: 'Connection refused: localhost/${localhostString()}:6001'")
 
       startMockServer()
     }
