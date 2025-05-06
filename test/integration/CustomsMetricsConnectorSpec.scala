@@ -42,13 +42,13 @@ class CustomsMetricsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPe
 
   /**
    * On Jenkins the localhost string is equal to 127.0.0.1
-   * On Mac/Ubuntu the localhost string is equal to 0:0:0:0:0:0:0:1
+   * On Mac/Ubuntu the localhost string is equal to [0:0:0:0:0:0:0:1]
    * On Windows WSL the localhost string is equal to 127.0.0.1
    *
    * @return
    */
   def localhostString(): String = {
-    if (System.getenv("HOME") == "/home/jenkins") "127.0.0.1" else "0:0:0:0:0:0:0:1"
+    if (System.getenv("HOME") == "/home/jenkins") "127.0.0.1" else "[0:0:0:0:0:0:0:1]"
   }
 
   override protected def beforeAll(): Unit =  {
