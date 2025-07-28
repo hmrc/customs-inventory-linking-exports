@@ -3,7 +3,7 @@ import sbt._
 object AppDependencies {
 
   val playVersion = "play-30"
-  val bootstrap = "9.11.0"
+  val bootstrap = "9.18.0"
 
   val compile = Seq(
     "org.typelevel"      %% "cats-core"                       % "2.10.0",
