@@ -24,7 +24,7 @@ import play.api.routing.Router
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import play.api.{Configuration, Environment, Mode, OptionalSourceMapper}
-import uk.gov.hmrc.customs.inventorylinking.export.config.CustomsErrorHandler
+import uk.gov.hmrc.customs.inventorylinking.exports.config.CustomsErrorHandler
 import util.UnitSpec
 
 import javax.inject.Provider

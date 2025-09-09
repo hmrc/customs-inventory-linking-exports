@@ -33,14 +33,14 @@ import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers
 import play.api.test.Helpers.ACCEPT
-import uk.gov.hmrc.customs.inventorylinking.`export`.connectors.CircuitBreakerConnector
-import uk.gov.hmrc.customs.inventorylinking.`export`.connectors.ExportsConnector.RetryError
-import uk.gov.hmrc.customs.inventorylinking.export.config.{ServiceConfig, ServiceConfigProvider}
-import uk.gov.hmrc.customs.inventorylinking.export.connectors.ExportsConnector
-import uk.gov.hmrc.customs.inventorylinking.export.logging.CdsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model.ExportsCircuitBreakerConfig
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
-import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
+import uk.gov.hmrc.customs.inventorylinking.exports.connectors.CircuitBreakerConnector
+import uk.gov.hmrc.customs.inventorylinking.exports.connectors.ExportsConnector.RetryError
+import uk.gov.hmrc.customs.inventorylinking.exports.config.{ServiceConfig, ServiceConfigProvider}
+import uk.gov.hmrc.customs.inventorylinking.exports.connectors.ExportsConnector
+import uk.gov.hmrc.customs.inventorylinking.exports.logging.CdsLogger
+import uk.gov.hmrc.customs.inventorylinking.exports.model.exportsCircuitBreakerConfig
+import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.ValidatedPayloadRequest
+import uk.gov.hmrc.customs.inventorylinking.exports.services.ExportsConfigService
 import uk.gov.hmrc.http.client.{HttpClientV2, RequestBuilder}
 import uk.gov.hmrc.http.test.{HttpClientV2Support, WireMockSupport}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}

@@ -27,16 +27,16 @@ import play.api.mvc._
 import play.api.test.Helpers
 import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.ErrorResponse
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.ErrorResponse.{ErrorInternalServerError, errorBadRequest, errorInternalServerError}
-import uk.gov.hmrc.customs.inventorylinking.export.connectors.{ApiSubscriptionFieldsConnector, CustomsMetricsConnector}
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders._
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.{HeaderValidator, InventoryLinkingExportController}
-import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{HasConversationId, ValidatedHeadersRequest, ValidatedPayloadRequest}
-import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionKey, CustomsMetricsRequest, Eori}
-import uk.gov.hmrc.customs.inventorylinking.export.services._
+import uk.gov.hmrc.customs.inventorylinking.exports.controllers.ErrorResponse
+import uk.gov.hmrc.customs.inventorylinking.exports.controllers.ErrorResponse.{ErrorInternalServerError, errorBadRequest, errorInternalServerError}
+import uk.gov.hmrc.customs.inventorylinking.exports.connectors.{ApiSubscriptionFieldsConnector, CustomsMetricsConnector}
+import uk.gov.hmrc.customs.inventorylinking.exports.controllers.actionbuilders._
+import uk.gov.hmrc.customs.inventorylinking.exports.controllers.{HeaderValidator, InventoryLinkingExportController}
+import uk.gov.hmrc.customs.inventorylinking.exports.logging.ExportsLogger
+import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.ActionBuilderModelHelper._
+import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.{HasConversationId, ValidatedHeadersRequest, ValidatedPayloadRequest}
+import uk.gov.hmrc.customs.inventorylinking.exports.model.{ApiSubscriptionKey, CustomsMetricsRequest, Eori}
+import uk.gov.hmrc.customs.inventorylinking.exports.services._
 import uk.gov.hmrc.http.HeaderCarrier
 import util.CustomsMetricsTestData.{EventEnd, EventStart}
 import util.RequestHeaders._
@@ -96,7 +96,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
     when(mockXmlValidationService.validate(any[NodeSeq])(any[ExecutionContext])).thenReturn(Future.successful(()))
     when(mockBusinessService.send(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])).thenReturn(Future.successful(Right(())))
     when(mockApiSubscriptionFieldsConnector.getSubscriptionFields(any[ApiSubscriptionKey])(any[ValidatedHeadersRequest[_]])).thenReturn(Future.successful(Some(ApiSubscriptionFieldsTestData.apiSubscriptionFields)))
-    when(mockExportsConfigService.exportsShutterConfig).thenReturn(allVersionsUnshuttered)
+    when(mockExportsConfigService.ExportsShutterConfig).thenReturn(allVersionsUnshuttered)
   }
 
   private val errorResultEoriNotFoundInCustomsEnrolment = ErrorResponse(UNAUTHORIZED, errorCode = "UNAUTHORIZED",

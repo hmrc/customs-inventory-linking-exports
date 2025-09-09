@@ -18,9 +18,9 @@ package unit.logging
 
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.test.FakeRequest
-import uk.gov.hmrc.customs.inventorylinking.export.logging.CdsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ConversationIdRequest
+import uk.gov.hmrc.customs.inventorylinking.exports.logging.CdsLogger
+import uk.gov.hmrc.customs.inventorylinking.exports.logging.ExportsLogger
+import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.ConversationIdRequest
 import util.CustomsMetricsTestData.EventStart
 import util.UnitSpec
 import util.MockitoPassByNameHelper.PassByNameVerifier

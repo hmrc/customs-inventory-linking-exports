@@ -22,14 +22,14 @@ import play.api.http.Status.SERVICE_UNAVAILABLE
 import play.api.mvc.Result
 import play.api.test.Helpers.ACCEPT
 import play.api.test.{FakeRequest, Helpers}
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.ErrorResponse
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.ErrorResponse.ErrorAcceptHeaderInvalid
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders.ShutterCheckAction
-import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper.ConversationIdRequestOps
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ConversationIdRequest
-import uk.gov.hmrc.customs.inventorylinking.export.model.{ExportsShutterConfig, VersionOne, VersionTwo}
-import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
+import uk.gov.hmrc.customs.inventorylinking.exports.controllers.ErrorResponse
+import uk.gov.hmrc.customs.inventorylinking.exports.controllers.ErrorResponse.ErrorAcceptHeaderInvalid
+import uk.gov.hmrc.customs.inventorylinking.exports.controllers.actionbuilders.ShutterCheckAction
+import uk.gov.hmrc.customs.inventorylinking.exports.logging.ExportsLogger
+import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.ActionBuilderModelHelper.ConversationIdRequestOps
+import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.ConversationIdRequest
+import uk.gov.hmrc.customs.inventorylinking.exports.model.{ExportsShutterConfig, VersionOne, VersionTwo}
+import uk.gov.hmrc.customs.inventorylinking.exports.services.ExportsConfigService
 import util.CustomsMetricsTestData.EventStart
 import util.RequestHeaders.{ACCEPT_HEADER_INVALID, ValidHeaders, X_CONVERSATION_ID_NAME}
 import util.TestData._
@@ -50,7 +50,7 @@ class ShutterCheckActionSpec extends UnitSpec with MockitoSugar {
     val versionTwoShuttered = ExportsShutterConfig(Some(false), Some(true))
     val allVersionsShutteringUnspecified = ExportsShutterConfig(None, None)
 
-    when(mockConfigService.exportsShutterConfig).thenReturn(allVersionsUnshuttered)
+    when(mockConfigService.ExportsShutterConfig).thenReturn(allVersionsUnshuttered)
 
     val action = new ShutterCheckAction(mockLogger, mockConfigService)
   }
@@ -83,28 +83,28 @@ class ShutterCheckActionSpec extends UnitSpec with MockitoSugar {
   
   "when shuttered set" should {
     "return 503 error for a valid request with v1 accept header and v1 is shuttered" in new SetUp {
-      when(mockConfigService.exportsShutterConfig).thenReturn(versionOneShuttered)
+      when(mockConfigService.ExportsShutterConfig).thenReturn(versionOneShuttered)
       val result = await(action.refine(TestConversationIdRequestWithV1Headers))
 
       result shouldBe Left(errorResponseVersionShuttered)
     }
 
     "return 503 error for a valid request with v2 accept header and v2 is shuttered" in new SetUp {
-      when(mockConfigService.exportsShutterConfig).thenReturn(versionTwoShuttered)
+      when(mockConfigService.ExportsShutterConfig).thenReturn(versionTwoShuttered)
       val result = await(action.refine(TestConversationIdRequestWithV2Headers))
 
       result shouldBe Left(errorResponseVersionShuttered)
     }
 
     "return 503 error for a valid request with v2 accept header and all versions are shuttered" in new SetUp {
-      when(mockConfigService.exportsShutterConfig).thenReturn(allVersionsShuttered)
+      when(mockConfigService.ExportsShutterConfig).thenReturn(allVersionsShuttered)
       val result = await(action.refine(TestConversationIdRequestWithV2Headers))
 
       result shouldBe Left(errorResponseVersionShuttered)
     }
 
     "be successful when a valid request with v1 accept header and no shuttering is unspecified" in new SetUp {
-      when(mockConfigService.exportsShutterConfig).thenReturn(allVersionsShutteringUnspecified)
+      when(mockConfigService.ExportsShutterConfig).thenReturn(allVersionsShutteringUnspecified)
       val result = await(action.refine(TestConversationIdRequestWithV1Headers))
 
       result shouldBe Right(TestConversationIdRequestWithV1Headers.toApiVersionRequest(VersionOne))

@@ -24,7 +24,7 @@ import org.scalatest.prop.TableDrivenPropertyChecks._
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.Configuration
 import play.api.test.Helpers
-import uk.gov.hmrc.customs.inventorylinking.export.services.XmlValidationService
+import uk.gov.hmrc.customs.inventorylinking.exports.services.XmlValidationService
 import util.UnitSpec
 import util.TestData._
 import util.XMLTestData._

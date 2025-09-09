@@ -22,8 +22,8 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._
-import uk.gov.hmrc.customs.inventorylinking.export.connectors.ExportsConnector
-import uk.gov.hmrc.customs.inventorylinking.export.connectors.ExportsConnector._
+import uk.gov.hmrc.customs.inventorylinking.exports.connectors.ExportsConnector
+import uk.gov.hmrc.customs.inventorylinking.exports.connectors.ExportsConnector._
 import uk.gov.hmrc.http.{Authorization, _}
 import util.ExternalServicesConfig.{AuthToken, Host, Port}
 import util.TestData
@@ -47,7 +47,7 @@ class ExportsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite 
       "circuitBreaker.unavailablePeriodDurationInMillis" -> unavailablePeriodDurationInMillis,
       "microservice.services.mdg-exports.host" -> Host,
       "microservice.services.mdg-exports.port" -> Port,
-      "microservice.services.mdg-exports.context" -> ExportsExternalServicesConfig.ExportsServiceContext,
+      "microservice.services.mdg-exports.context" -> ExportsExternalServicesConfig.exportsServiceContext,
       "microservice.services.mdg-exports.bearer-token" -> AuthToken,
       "metrics.enabled" -> false
     )).build()

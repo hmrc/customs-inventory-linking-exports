@@ -23,16 +23,16 @@ import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status.FORBIDDEN
 import play.api.mvc.{AnyContentAsXml, Result}
 import play.api.test.Helpers
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.ErrorResponse
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.ErrorResponse.errorInternalServerError
-import uk.gov.hmrc.customs.inventorylinking.export.connectors.ExportsConnector.{Non2xxResponseError, RetryError}
-import uk.gov.hmrc.customs.inventorylinking.export.connectors.ExportsConnector
-import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model._
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
-import uk.gov.hmrc.customs.inventorylinking.export.services._
-import uk.gov.hmrc.customs.inventorylinking.export.xml.PayloadDecorator
+import uk.gov.hmrc.customs.inventorylinking.exports.controllers.ErrorResponse
+import uk.gov.hmrc.customs.inventorylinking.exports.controllers.ErrorResponse.errorInternalServerError
+import uk.gov.hmrc.customs.inventorylinking.exports.connectors.ExportsConnector.{Non2xxResponseError, RetryError}
+import uk.gov.hmrc.customs.inventorylinking.exports.connectors.ExportsConnector
+import uk.gov.hmrc.customs.inventorylinking.exports.logging.ExportsLogger
+import uk.gov.hmrc.customs.inventorylinking.exports.model._
+import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.ActionBuilderModelHelper._
+import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.ValidatedPayloadRequest
+import uk.gov.hmrc.customs.inventorylinking.exports.services._
+import uk.gov.hmrc.customs.inventorylinking.exports.xml.PayloadDecorator
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import util.TestData._
 import util.XMLTestData._

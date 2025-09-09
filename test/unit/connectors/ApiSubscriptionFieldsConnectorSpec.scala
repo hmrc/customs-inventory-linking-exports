@@ -22,7 +22,7 @@ import play.api.Application
 import play.api.http.Status.{NOT_FOUND, OK}
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import uk.gov.hmrc.customs.inventorylinking.export.connectors.ApiSubscriptionFieldsConnector
+import uk.gov.hmrc.customs.inventorylinking.exports.connectors.ApiSubscriptionFieldsConnector
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.test.WireMockSupport
 import uk.gov.hmrc.http.HttpResponse

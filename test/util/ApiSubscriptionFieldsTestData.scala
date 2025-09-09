@@ -19,11 +19,11 @@ package util
 import java.util.UUID
 
 import com.typesafe.config.{Config, ConfigFactory}
-import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionFields, DeclarantCallbackData}
-import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionKey, ClientId, SubscriptionFieldsId, VersionOne}
+import uk.gov.hmrc.customs.inventorylinking.exports.model.{ApiSubscriptionFields, DeclarantCallbackData}
+import uk.gov.hmrc.customs.inventorylinking.exports.model.{ApiSubscriptionKey, ClientId, SubscriptionFieldsId, VersionOne}
 import util.ExternalServicesConfig.{Host, Port}
 import util.TestData.authenticatedEoriValue
-import util.externalservices.ExportsExternalServicesConfig._
+import util.externalservices.exportsExternalServicesConfig._
 
 trait ApiSubscriptionFieldsTestData {
   val fieldsId = "327d9145-4965-4d28-a2c5-39dedee50334"

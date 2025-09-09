@@ -21,10 +21,10 @@ import play.api.http.HeaderNames._
 import play.api.http.MimeTypes
 import play.api.mvc.{AnyContentAsXml, Headers}
 import play.api.test.FakeRequest
-import uk.gov.hmrc.customs.inventorylinking.export.model._
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders._
-import uk.gov.hmrc.customs.inventorylinking.export.services.{UniqueIdsService, UuidService}
+import uk.gov.hmrc.customs.inventorylinking.exports.model._
+import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.ActionBuilderModelHelper._
+import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders._
+import uk.gov.hmrc.customs.inventorylinking.exports.services.{UniqueIdsService, UuidService}
 import util.CustomsMetricsTestData.{EventStart, UtcZoneId}
 import util.RequestHeaders._
 import util.TestData._

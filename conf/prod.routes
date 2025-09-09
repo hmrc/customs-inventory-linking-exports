@@ -1,4 +1,4 @@
 ->         /                     health.Routes
 ->         /                     dynamicDefinition.Routes
 
-POST       /                     @uk.gov.hmrc.customs.inventorylinking.export.controllers.InventoryLinkingExportController.post()
+POST       /                     @uk.gov.hmrc.customs.inventorylinking.exports.controllers.InventoryLinkingExportController.post()

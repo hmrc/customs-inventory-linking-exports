@@ -22,7 +22,7 @@ import org.scalatest.concurrent.Eventually
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.inject.guice.GuiceApplicationBuilder
 import util.ExternalServicesConfig
-import util.externalservices.ExportsExternalServicesConfig
+import util.externalservices.exportsExternalServicesConfig
 import org.scalatest.featurespec.AnyFeatureSpec
 import play.api.Application
 
@@ -37,7 +37,7 @@ trait ComponentTestSpec extends AnyFeatureSpec with GivenWhenThen with GuiceOneA
     "microservice.services.auth.port" -> ExternalServicesConfig.Port,
     "microservice.services.mdg-exports.host" -> ExternalServicesConfig.Host,
     "microservice.services.mdg-exports.port" -> ExternalServicesConfig.Port,
-    "microservice.services.mdg-exports.context" -> ExportsExternalServicesConfig.ExportsServiceContext,
+    "microservice.services.mdg-exports.context" -> ExportsExternalServicesConfig.exportsServiceContext,
     "microservice.services.mdg-exports.bearer-token" -> ExternalServicesConfig.AuthToken,
     "microservice.services.api-subscription-fields.host" -> ExternalServicesConfig.Host,
     "microservice.services.api-subscription-fields.port" -> ExternalServicesConfig.Port,

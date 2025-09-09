@@ -20,7 +20,7 @@ import com.google.inject.AbstractModule
 import org.scalatest.concurrent.Eventually
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import play.api.inject.guice.GuiceableModule
-import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
+import uk.gov.hmrc.customs.inventorylinking.exports.logging.ExportsLogger
 import util.UnitSpec
 
 case class IntegrationTestModule(mockLogger: ExportsLogger) extends AbstractModule {

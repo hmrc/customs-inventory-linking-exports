@@ -14,7 +14,7 @@ object AppDependencies {
     "org.wiremock"                  % "wiremock-standalone"          % "3.5.2"    % Test,
     "org.mockito"                   % "mockito-core"                 % "5.11.0"   % Test,
     "com.fasterxml.jackson.module" %% "jackson-module-scala"         % "2.17.0"   % Test,
-    "org.mockito"                  %% "mockito-scala-scalatest"      % "1.17.31"  % Test,
+    "org.scalatestplus"                  %% "mockito-4-11"      % "3.2.17.0"  % Test,
     "uk.gov.hmrc"                  %% s"bootstrap-test-$playVersion" % bootstrap  % Test
   )
 

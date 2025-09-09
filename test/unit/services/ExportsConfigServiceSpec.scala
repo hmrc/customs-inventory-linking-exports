@@ -19,9 +19,9 @@ package unit.services
 import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.Configuration
-import uk.gov.hmrc.customs.inventorylinking.export.config.ConfigValidatedNelAdaptor
-import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
+import uk.gov.hmrc.customs.inventorylinking.exports.config.ConfigValidatedNelAdaptor
+import uk.gov.hmrc.customs.inventorylinking.exports.logging.ExportsLogger
+import uk.gov.hmrc.customs.inventorylinking.exports.services.ExportsConfigService
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import util.UnitSpec
 

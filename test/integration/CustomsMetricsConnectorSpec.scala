@@ -22,9 +22,9 @@ import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.AnyContentAsXml
 import play.api.test.Helpers.{BAD_REQUEST, INTERNAL_SERVER_ERROR, NOT_FOUND}
-import uk.gov.hmrc.customs.inventorylinking.export.connectors.CustomsMetricsConnector
-import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
+import uk.gov.hmrc.customs.inventorylinking.exports.connectors.CustomsMetricsConnector
+import uk.gov.hmrc.customs.inventorylinking.exports.logging.ExportsLogger
+import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.ValidatedPayloadRequest
 import uk.gov.hmrc.http._
 import util.CustomsMetricsTestData.ValidCustomsMetricsRequest
 import util.ExternalServicesConfig.{Host, Port}

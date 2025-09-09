@@ -26,7 +26,7 @@ import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.authorise.Predicate
 import uk.gov.hmrc.auth.core.retrieve.Retrieval
 import uk.gov.hmrc.auth.core.retrieve.v2._
-import uk.gov.hmrc.customs.inventorylinking.export.model.Eori
+import uk.gov.hmrc.customs.inventorylinking.exports.model.Eori
 import util.TestData
 import util.TestData.declarantEori
 

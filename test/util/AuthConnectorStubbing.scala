@@ -23,7 +23,7 @@ import uk.gov.hmrc.auth.core.AuthProvider.{GovernmentGateway, PrivilegedApplicat
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.EmptyRetrieval
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
-import uk.gov.hmrc.customs.inventorylinking.export.model.Eori
+import uk.gov.hmrc.customs.inventorylinking.exports.model.Eori
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}

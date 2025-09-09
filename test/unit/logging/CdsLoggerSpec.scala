@@ -20,7 +20,7 @@ import java.io.{ByteArrayOutputStream, PrintStream}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatestplus.mockito.MockitoSugar
-import uk.gov.hmrc.customs.inventorylinking.export.logging.CdsLogger
+import uk.gov.hmrc.customs.inventorylinking.exports.logging.CdsLogger
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import util.UnitSpec
 

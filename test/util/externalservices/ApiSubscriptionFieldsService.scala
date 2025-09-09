@@ -19,8 +19,8 @@ package util.externalservices
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.matching.UrlPattern
 import play.api.test.Helpers.OK
-import uk.gov.hmrc.customs.inventorylinking.export.connectors.ApiSubscriptionFieldsPath._
-import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionKey, VersionOne}
+import uk.gov.hmrc.customs.inventorylinking.exports.connectors.ApiSubscriptionFieldsPath._
+import uk.gov.hmrc.customs.inventorylinking.exports.model.{ApiSubscriptionKey, VersionOne}
 import util.{ApiSubscriptionFieldsTestData, WireMockRunner}
 
 trait ApiSubscriptionFieldsService extends WireMockRunner with ApiSubscriptionFieldsTestData {

@@ -18,7 +18,7 @@ package unit.connectors
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
-import uk.gov.hmrc.customs.inventorylinking.`export`.connectors.HeaderUtil
+import uk.gov.hmrc.customs.inventorylinking.exports.connectors.HeaderUtil
 import uk.gov.hmrc.http.HeaderCarrier
 
 class HeaderUtilSpec extends AnyWordSpecLike with Matchers with HeaderUtil {

@@ -22,14 +22,14 @@ import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.mvc.{AnyContentAsXml, Result}
 import play.api.test.Helpers
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.ErrorResponse.ErrorContentTypeHeaderInvalid
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames.XConversationIdHeaderName
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.HeaderValidator
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders.ValidateAndExtractHeadersAction
-import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model.VersionOne
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper.ConversationIdRequestOps
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ApiVersionRequest, ValidatedHeadersRequest}
+import uk.gov.hmrc.customs.inventorylinking.exports.controllers.ErrorResponse.ErrorContentTypeHeaderInvalid
+import uk.gov.hmrc.customs.inventorylinking.exports.controllers.CustomHeaderNames.XConversationIdHeaderName
+import uk.gov.hmrc.customs.inventorylinking.exports.controllers.HeaderValidator
+import uk.gov.hmrc.customs.inventorylinking.exports.controllers.actionbuilders.ValidateAndExtractHeadersAction
+import uk.gov.hmrc.customs.inventorylinking.exports.logging.ExportsLogger
+import uk.gov.hmrc.customs.inventorylinking.exports.model.VersionOne
+import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.ActionBuilderModelHelper.ConversationIdRequestOps
+import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.{ApiVersionRequest, ValidatedHeadersRequest}
 import util.TestData.{TestConversationIdRequest, TestExtractedHeaders, TestValidatedHeadersRequest, conversationIdValue}
 import util.UnitSpec
 
