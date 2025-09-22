@@ -17,23 +17,23 @@
 package unit.services
 
 import java.io.FileNotFoundException
-
 import org.mockito.Mockito.{reset, verify, when}
 import org.scalatest.BeforeAndAfterEach
-import org.scalatest.prop.TableDrivenPropertyChecks._
+import org.scalatest.prop.TableDrivenPropertyChecks.*
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.Configuration
 import play.api.test.Helpers
 import uk.gov.hmrc.customs.inventorylinking.exports.services.XmlValidationService
 import util.UnitSpec
-import util.TestData._
-import util.XMLTestData._
+import util.TestData.*
+import util.XMLTestData.*
 
+import scala.concurrent.ExecutionContext
 import scala.xml.{Node, SAXException}
 
 class XmlValidationServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach {
 
-  private implicit val ec = Helpers.stubControllerComponents().executionContext
+  private implicit val ec: ExecutionContext = Helpers.stubControllerComponents().executionContext
   private val mockConfiguration = mock[Configuration]
   private val mockXml = mock[Node]
 

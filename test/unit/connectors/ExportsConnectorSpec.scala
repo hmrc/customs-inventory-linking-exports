@@ -20,7 +20,7 @@ import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, equalTo, post
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.pattern.CircuitBreakerOpenException
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito._
+import org.mockito.Mockito.*
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.Eventually
 import org.scalatestplus.mockito.MockitoSugar
@@ -31,6 +31,7 @@ import play.api.http.Status.OK
 import play.api.http.{HeaderNames, MimeTypes}
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.mvc.AnyContentAsXml
 import play.api.test.Helpers
 import play.api.test.Helpers.ACCEPT
 import uk.gov.hmrc.customs.inventorylinking.exports.connectors.CircuitBreakerConnector
@@ -38,7 +39,7 @@ import uk.gov.hmrc.customs.inventorylinking.exports.connectors.ExportsConnector.
 import uk.gov.hmrc.customs.inventorylinking.exports.config.{ServiceConfig, ServiceConfigProvider}
 import uk.gov.hmrc.customs.inventorylinking.exports.connectors.ExportsConnector
 import uk.gov.hmrc.customs.inventorylinking.exports.logging.CdsLogger
-import uk.gov.hmrc.customs.inventorylinking.exports.model.exportsCircuitBreakerConfig
+import uk.gov.hmrc.customs.inventorylinking.exports.model.ExportsCircuitBreakerConfig
 import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.ValidatedPayloadRequest
 import uk.gov.hmrc.customs.inventorylinking.exports.services.ExportsConfigService
 import uk.gov.hmrc.http.client.{HttpClientV2, RequestBuilder}
@@ -47,12 +48,12 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.http.HttpClientV2Provider
 import unit.logging.StubExportsLogger
 import util.ExternalServicesConfig.{Host, Port}
-import util.TestData._
+import util.TestData.*
 import util.{RequestHeaders, UnitSpec}
 
 import java.time.LocalDateTime
 import scala.concurrent.duration.{FiniteDuration, MILLISECONDS}
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class ExportsConnectorSpec
   extends UnitSpec
@@ -73,7 +74,7 @@ class ExportsConnectorSpec
   private val mockRequestBuilder              = mock[RequestBuilder]
   private val actorSystem                     = ActorSystem("mockActorSystem")
 
-  private implicit val ec = Helpers.stubControllerComponents().executionContext
+  private implicit val ec: ExecutionContext = Helpers.stubControllerComponents().executionContext
 
   override lazy val app: Application = new GuiceApplicationBuilder()
     .configure(
@@ -97,7 +98,7 @@ class ExportsConnectorSpec
   private val expectedUrl   = "/inventorylinking/exportsinbound/v2"
   private val xml           = <xml></xml>
 
-  private implicit lazy val hc = HeaderCarrier().withExtraHeaders(RequestHeaders.API_SUBSCRIPTION_FIELDS_ID_HEADER)
+  private implicit lazy val hc: HeaderCarrier = HeaderCarrier().withExtraHeaders(RequestHeaders.API_SUBSCRIPTION_FIELDS_ID_HEADER)
 
   override protected def beforeEach(): Unit = {
     reset(mockHttpClient, mockServiceConfigProvider)
@@ -117,7 +118,7 @@ class ExportsConnectorSpec
 
   private val httpFormattedDate = "Tue, 04 Jul 2017 13:45:00 UTC"
 
-  private implicit val vpr = TestCspValidatedPayloadRequestWithEori
+  private implicit val vpr: ValidatedPayloadRequest[AnyContentAsXml]  = TestCspValidatedPayloadRequestWithEori
 
   "ExportsConnector" can {
     "when making a successful request" should {

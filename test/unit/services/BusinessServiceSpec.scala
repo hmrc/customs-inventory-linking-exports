@@ -16,7 +16,7 @@
 
 package unit.services
 
-import org.mockito.ArgumentMatchers.{eq => meq, _}
+import org.mockito.ArgumentMatchers.{eq as meq, *}
 import org.mockito.Mockito.{verify, when}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
@@ -28,25 +28,25 @@ import uk.gov.hmrc.customs.inventorylinking.exports.controllers.ErrorResponse.er
 import uk.gov.hmrc.customs.inventorylinking.exports.connectors.ExportsConnector.{Non2xxResponseError, RetryError}
 import uk.gov.hmrc.customs.inventorylinking.exports.connectors.ExportsConnector
 import uk.gov.hmrc.customs.inventorylinking.exports.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.exports.model._
-import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.ActionBuilderModelHelper._
+import uk.gov.hmrc.customs.inventorylinking.exports.model.*
+import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.ActionBuilderModelHelper.*
 import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.ValidatedPayloadRequest
-import uk.gov.hmrc.customs.inventorylinking.exports.services._
+import uk.gov.hmrc.customs.inventorylinking.exports.services.*
 import uk.gov.hmrc.customs.inventorylinking.exports.xml.PayloadDecorator
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import util.TestData._
-import util.XMLTestData._
+import util.TestData.*
+import util.XMLTestData.*
 import util.{ApiSubscriptionFieldsTestData, RequestHeaders, UnitSpec}
 
 import java.time.LocalDateTime
 import java.util.UUID
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
 
 class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach with ApiSubscriptionFieldsTestData {
 
   private val dateTime = LocalDateTime.now()
-  private implicit val ec = Helpers.stubControllerComponents().executionContext
+  private implicit val ec: ExecutionContext = Helpers.stubControllerComponents().executionContext
   private val headerCarrier: HeaderCarrier = HeaderCarrier()
     .withExtraHeaders(RequestHeaders.API_SUBSCRIPTION_FIELDS_ID_HEADER)
   private implicit val vpr: ValidatedPayloadRequest[AnyContentAsXml] = TestCspValidatedPayloadRequestWithEori
@@ -71,9 +71,9 @@ class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfter
     // Mockito matching was having problems so had to use the eq type then as instance of. Important that the 1st type is the
     // type of the value contained in the value class i.e. for CorrelationId the value is UUID so needs to meq type of UUID
     when(mockConfigService.exportsConfig).thenReturn(mockExportsConfig)
-    when(mockPayloadDecorator.decorate(meq(TestXmlPayload), meq[String](TestSubscriptionFieldsId.value).asInstanceOf[SubscriptionFieldsId], meq[UUID](correlationIdUuid).asInstanceOf[CorrelationId], any[LocalDateTime])(any[ValidatedPayloadRequest[_]])).thenReturn(wrappedValidXML)
+    when(mockPayloadDecorator.decorate(meq(TestXmlPayload), meq[String](TestSubscriptionFieldsId.value).asInstanceOf[SubscriptionFieldsId], meq[UUID](correlationIdUuid).asInstanceOf[CorrelationId], any[LocalDateTime])(any[ValidatedPayloadRequest[Any]])).thenReturn(wrappedValidXML)
     when(mockDateTimeProvider.getUtcNow).thenReturn(dateTime)
-    when(mockExportsConnector.send(any[NodeSeq], meq(dateTime), any[UUID])(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])).thenReturn(Right(mockHttpResponse))
+    when(mockExportsConnector.send(any[NodeSeq], meq(dateTime), any[UUID])(any[ValidatedPayloadRequest[Any]], any[HeaderCarrier])).thenReturn(Right(mockHttpResponse))
   }
 
   "BusinessService" should {
@@ -81,13 +81,13 @@ class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfter
     "send transformed xml to connector" in new SetUp() {
       send() shouldBe Right(())
 
-      verify(mockExportsConnector).send(meq(wrappedValidXML), any[LocalDateTime], any[UUID])(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])
+      verify(mockExportsConnector).send(meq(wrappedValidXML), any[LocalDateTime], any[UUID])(any[ValidatedPayloadRequest[Any]], any[HeaderCarrier])
     }
 
     "get utc date time and pass to connector" in new SetUp() {
       send() shouldBe Right(())
 
-      verify(mockExportsConnector).send(any[NodeSeq], meq(dateTime), any[UUID])(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])
+      verify(mockExportsConnector).send(any[NodeSeq], meq(dateTime), any[UUID])(any[ValidatedPayloadRequest[Any]], any[HeaderCarrier])
     }
 
     "call payload decorator passing incoming xml" in new SetUp() {
@@ -100,18 +100,18 @@ class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfter
         .decorate(meq(TestXmlPayload),
           meq[String](TestSubscriptionFieldsId.value).asInstanceOf[SubscriptionFieldsId],
           meq[UUID](correlationIdUuid).asInstanceOf[CorrelationId],
-          any[LocalDateTime])(any[ValidatedPayloadRequest[_]])
+          any[LocalDateTime])(any[ValidatedPayloadRequest[Any]])
     }
 
     "return InternalServerError ErrorResponse when backend circuit breaker trips" in new SetUp() {
-      when(mockExportsConnector.send(any[NodeSeq], any[LocalDateTime], any[UUID])(any[ValidatedPayloadRequest[_]], any[HeaderCarrier]))
+      when(mockExportsConnector.send(any[NodeSeq], any[LocalDateTime], any[UUID])(any[ValidatedPayloadRequest[Any]], any[HeaderCarrier]))
         .thenReturn(Future.successful(Left(RetryError)))
 
       send() shouldBe Left(errorResponseServiceUnavailable.XmlResult.withConversationId)
     }
 
     "return Forbidden ErrorResponse when backend returns 403" in new SetUp() {
-      when(mockExportsConnector.send(any[NodeSeq], any[LocalDateTime], any[UUID])(any[ValidatedPayloadRequest[_]], any[HeaderCarrier]))
+      when(mockExportsConnector.send(any[NodeSeq], any[LocalDateTime], any[UUID])(any[ValidatedPayloadRequest[Any]], any[HeaderCarrier]))
         .thenReturn(Future.successful(Left(Non2xxResponseError(FORBIDDEN))))
 
       send() shouldBe Left(ErrorResponse.ErrorPayloadForbidden.XmlResult.withConversationId)

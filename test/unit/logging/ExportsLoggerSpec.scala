@@ -17,6 +17,7 @@
 package unit.logging
 
 import org.scalatestplus.mockito.MockitoSugar
+import play.api.mvc.AnyContentAsXml
 import play.api.test.FakeRequest
 import uk.gov.hmrc.customs.inventorylinking.exports.logging.CdsLogger
 import uk.gov.hmrc.customs.inventorylinking.exports.logging.ExportsLogger
@@ -31,12 +32,12 @@ class ExportsLoggerSpec extends UnitSpec with MockitoSugar {
   trait SetUp {
     val mockCdsLogger = mock[CdsLogger]
     val logger = new ExportsLogger(mockCdsLogger)
-    implicit val implicitVpr = ConversationIdRequest(conversationId, EventStart, FakeRequest()
+    implicit val implicitVpr: ConversationIdRequest[AnyContentAsXml] = ConversationIdRequest(conversationId, EventStart, FakeRequest()
       .withXmlBody(TestXmlPayload).withHeaders("Content-Type" -> "Some-Content-Type"))
   }
 
   trait SetUpWithMixedCaseHeader extends SetUp {
-    override implicit val implicitVpr =  ConversationIdRequest(conversationId, EventStart, FakeRequest()
+    override implicit val implicitVpr: ConversationIdRequest[AnyContentAsXml] =  ConversationIdRequest(conversationId, EventStart, FakeRequest()
       .withXmlBody(TestXmlPayload).withHeaders("ConTenT-Type" -> "Some-Content-Type"))
   }
 

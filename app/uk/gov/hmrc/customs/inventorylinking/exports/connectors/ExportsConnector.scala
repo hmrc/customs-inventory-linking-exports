@@ -31,6 +31,7 @@ import uk.gov.hmrc.customs.inventorylinking.exports.services.ExportsConfigServic
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.client.HttpClientV2
+import play.api.libs.ws.writeableOf_String
 
 import java.time.format.DateTimeFormatter
 import java.time.{LocalDateTime, ZoneOffset}
@@ -50,9 +51,9 @@ class ExportsConnector @Inject()(http: HttpClientV2,
 
   override val configKey = "mdg-exports"
 
-  override lazy val numberOfCallsToTriggerStateChange: Int = config.exportsCircuitBreakerConfig.numberOfCallsToTriggerStateChange
-  override lazy val unstablePeriodDurationInMillis: Int = config.exportsCircuitBreakerConfig.unstablePeriodDurationInMillis
-  override lazy val unavailablePeriodDurationInMillis: Int = config.exportsCircuitBreakerConfig.unavailablePeriodDurationInMillis
+  override val numberOfCallsToTriggerStateChange: Int = config.exportsCircuitBreakerConfig.numberOfCallsToTriggerStateChange
+  override val unstablePeriodDurationInMillis: Int = config.exportsCircuitBreakerConfig.unstablePeriodDurationInMillis
+  override val unavailablePeriodDurationInMillis: Int = config.exportsCircuitBreakerConfig.unavailablePeriodDurationInMillis
 
   def send[A](xml: NodeSeq,
               date: LocalDateTime,
@@ -74,7 +75,7 @@ class ExportsConnector @Inject()(http: HttpClientV2,
       http
         .post(url"$url")(hcWithoutAuth)
         .setHeader(exportHeaders: _*)
-        .withBody(xml.toString())
+        .withBody(xml.toString)
         .execute[HttpResponse]
         .map { response =>
           response.status match {

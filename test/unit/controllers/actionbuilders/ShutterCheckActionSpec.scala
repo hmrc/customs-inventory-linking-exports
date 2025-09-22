@@ -50,7 +50,7 @@ class ShutterCheckActionSpec extends UnitSpec with MockitoSugar {
     val versionTwoShuttered = ExportsShutterConfig(Some(false), Some(true))
     val allVersionsShutteringUnspecified = ExportsShutterConfig(None, None)
 
-    when(mockConfigService.ExportsShutterConfig).thenReturn(allVersionsUnshuttered)
+    when(mockConfigService.exportsShutterConfig).thenReturn(allVersionsUnshuttered)
 
     val action = new ShutterCheckAction(mockLogger, mockConfigService)
   }
@@ -83,28 +83,28 @@ class ShutterCheckActionSpec extends UnitSpec with MockitoSugar {
   
   "when shuttered set" should {
     "return 503 error for a valid request with v1 accept header and v1 is shuttered" in new SetUp {
-      when(mockConfigService.ExportsShutterConfig).thenReturn(versionOneShuttered)
+      when(mockConfigService.exportsShutterConfig).thenReturn(versionOneShuttered)
       val result = await(action.refine(TestConversationIdRequestWithV1Headers))
 
       result shouldBe Left(errorResponseVersionShuttered)
     }
 
     "return 503 error for a valid request with v2 accept header and v2 is shuttered" in new SetUp {
-      when(mockConfigService.ExportsShutterConfig).thenReturn(versionTwoShuttered)
+      when(mockConfigService.exportsShutterConfig).thenReturn(versionTwoShuttered)
       val result = await(action.refine(TestConversationIdRequestWithV2Headers))
 
       result shouldBe Left(errorResponseVersionShuttered)
     }
 
     "return 503 error for a valid request with v2 accept header and all versions are shuttered" in new SetUp {
-      when(mockConfigService.ExportsShutterConfig).thenReturn(allVersionsShuttered)
+      when(mockConfigService.exportsShutterConfig).thenReturn(allVersionsShuttered)
       val result = await(action.refine(TestConversationIdRequestWithV2Headers))
 
       result shouldBe Left(errorResponseVersionShuttered)
     }
 
     "be successful when a valid request with v1 accept header and no shuttering is unspecified" in new SetUp {
-      when(mockConfigService.ExportsShutterConfig).thenReturn(allVersionsShutteringUnspecified)
+      when(mockConfigService.exportsShutterConfig).thenReturn(allVersionsShutteringUnspecified)
       val result = await(action.refine(TestConversationIdRequestWithV1Headers))
 
       result shouldBe Right(TestConversationIdRequestWithV1Headers.toApiVersionRequest(VersionOne))

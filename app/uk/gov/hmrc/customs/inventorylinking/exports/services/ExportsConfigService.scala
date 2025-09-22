@@ -65,7 +65,7 @@ class ExportsConfigService @Inject()(configValidatedNel: ConfigValidatedNelAdapt
 
   val exportsConfig: ExportsConfig = exportsConfigHolder.exportsConfig
 
-  val exportsShutterConfig: ExportsShutterConfig = exportsConfigHolder.ExportsShutterConfig
+  val exportsShutterConfig: ExportsShutterConfig = exportsConfigHolder.exportsShutterConfig
 
   val exportsCircuitBreakerConfig: ExportsCircuitBreakerConfig = exportsConfigHolder.exportsCircuitBreakerConfig
 

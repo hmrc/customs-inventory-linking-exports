@@ -23,7 +23,7 @@ import uk.gov.hmrc.customs.inventorylinking.exports.model.{ApiSubscriptionFields
 import uk.gov.hmrc.customs.inventorylinking.exports.model.{ApiSubscriptionKey, ClientId, SubscriptionFieldsId, VersionOne}
 import util.ExternalServicesConfig.{Host, Port}
 import util.TestData.authenticatedEoriValue
-import util.externalservices.exportsExternalServicesConfig._
+import util.externalservices.ExportsExternalServicesConfig._
 
 trait ApiSubscriptionFieldsTestData {
   val fieldsId = "327d9145-4965-4d28-a2c5-39dedee50334"

@@ -47,8 +47,8 @@ class ShutterCheckAction @Inject()(logger: ExportsLogger,
 
     private val errorResponseVersionShuttered: Result = ErrorResponse(SERVICE_UNAVAILABLE, "SERVER_ERROR", "Service unavailable").XmlResult
 
-    private lazy val v1Shuttered: Boolean = config.ExportsShutterConfig.v1Shuttered.getOrElse(false)
-    private lazy val v2Shuttered: Boolean = config.ExportsShutterConfig.v2Shuttered.getOrElse(false)
+    private lazy val v1Shuttered: Boolean = config.exportsShutterConfig.v1Shuttered.getOrElse(false)
+    private lazy val v2Shuttered: Boolean = config.exportsShutterConfig.v2Shuttered.getOrElse(false)
 
     protected val versionsByAcceptHeader: Map[String, ApiVersion] = Map(
       "application/vnd.hmrc.1.0+xml" -> VersionOne,
@@ -76,24 +76,23 @@ class ShutterCheckAction @Inject()(logger: ExportsLogger,
      }
   }
 
-  private def versionShuttered[A](apiVersion: ApiVersion)(implicit cir: ConversationIdRequest[A]): Either[Result, ApiVersionRequest[A]] = {
+private def versionShuttered[A](apiVersion: ApiVersion)(implicit cir: ConversationIdRequest[A]): Either[Result, ApiVersionRequest[A]] = {
 
-    val serviceUnavailableResult = Left(errorResponseVersionShuttered)
+  val serviceUnavailableResult = Left(errorResponseVersionShuttered)
 
-    def unavailableWithLog(apiVersion: ApiVersion) = {
-      logger.warn(s"version ${apiVersion.toString} requested but is shuttered")
-      serviceUnavailableResult
-    }
-
-    apiVersion match {
-      case VersionOne if v1Shuttered =>
-        unavailableWithLog(VersionOne)
-      case VersionTwo if v2Shuttered =>
-        unavailableWithLog(VersionTwo)
-      case _ =>
-        logger.debug(s"$ACCEPT header passed validation with: $apiVersion")
-        Right(ApiVersionRequest(cir.conversationId, cir.start, apiVersion, cir.request))
-    }
+  def unavailableWithLog(apiVersion: ApiVersion) = {
+    logger.warn(s"version ${apiVersion.toString} requested but is shuttered")
+    serviceUnavailableResult
   }
 
+  apiVersion match {
+    case VersionOne if v1Shuttered =>
+      unavailableWithLog(VersionOne)
+    case VersionTwo if v2Shuttered =>
+      unavailableWithLog(VersionTwo)
+    case _ =>
+      logger.debug(s"$ACCEPT header passed validation with: $apiVersion")
+      Right(ApiVersionRequest(cir.conversationId, cir.start, apiVersion, cir.request))
+  }
+}
 }

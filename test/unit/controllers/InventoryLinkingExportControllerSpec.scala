@@ -94,9 +94,9 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
     }
 
     when(mockXmlValidationService.validate(any[NodeSeq])(any[ExecutionContext])).thenReturn(Future.successful(()))
-    when(mockBusinessService.send(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])).thenReturn(Future.successful(Right(())))
-    when(mockApiSubscriptionFieldsConnector.getSubscriptionFields(any[ApiSubscriptionKey])(any[ValidatedHeadersRequest[_]])).thenReturn(Future.successful(Some(ApiSubscriptionFieldsTestData.apiSubscriptionFields)))
-    when(mockExportsConfigService.ExportsShutterConfig).thenReturn(allVersionsUnshuttered)
+    when(mockBusinessService.send(any[ValidatedPayloadRequest[Any]], any[HeaderCarrier])).thenReturn(Future.successful(Right(())))
+    when(mockApiSubscriptionFieldsConnector.getSubscriptionFields(any[ApiSubscriptionKey])(any[ValidatedHeadersRequest[Any]])).thenReturn(Future.successful(Some(ApiSubscriptionFieldsTestData.apiSubscriptionFields)))
+    when(mockExportsConfigService.exportsShutterConfig).thenReturn(allVersionsUnshuttered)
   }
 
   private val errorResultEoriNotFoundInCustomsEnrolment = ErrorResponse(UNAUTHORIZED, errorCode = "UNAUTHORIZED",
@@ -169,7 +169,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
     }
 
     "respond with status 500 for a CSP request with no X-Submitter-Identifier header, no X-Badge-Identifier header and no authenticated EORI" in new SetUp() {
-      when(mockApiSubscriptionFieldsConnector.getSubscriptionFields(any[ApiSubscriptionKey])(any[ValidatedHeadersRequest[_]])).thenReturn(Future.successful(Some(ApiSubscriptionFieldsTestData.apiSubscriptionFieldsNoAuthenticatedEori)))
+      when(mockApiSubscriptionFieldsConnector.getSubscriptionFields(any[ApiSubscriptionKey])(any[ValidatedHeadersRequest[Any]])).thenReturn(Future.successful(Some(ApiSubscriptionFieldsTestData.apiSubscriptionFieldsNoAuthenticatedEori)))
       authoriseCsp()
 
       val result: Result = awaitSubmit(ValidRequestWithSubmitterHeader.withHeaders(ValidRequestWithSubmitterHeader.headers.remove(X_SUBMITTER_IDENTIFIER_NAME).remove(X_BADGE_IDENTIFIER_NAME)))
@@ -290,7 +290,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
     }
 
     "return the error response returned from the Communication service" in new SetUp() {
-      when(mockBusinessService.send(any[ValidatedPayloadRequest[_]], any[HeaderCarrier]))
+      when(mockBusinessService.send(any[ValidatedPayloadRequest[Any]], any[HeaderCarrier]))
         .thenReturn(Future.successful(Left(mockResult)))
       authoriseCsp()
 
