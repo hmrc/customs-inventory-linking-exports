@@ -38,7 +38,7 @@ trait AuthConnectorStubbing extends UnitSpec with MockitoSugar {
 
   def authoriseCsp(): Unit = {
     when(mockAuthConnector.authorise(ameq(cspAuthPredicate), ameq(EmptyRetrieval))(any[HeaderCarrier], any[ExecutionContext]))
-      .thenReturn(())
+      .thenReturn(Future.successful(()))
   }
 
   def authoriseCspError(): Unit = {
@@ -57,13 +57,13 @@ trait AuthConnectorStubbing extends UnitSpec with MockitoSugar {
       Enrolment(customsEnrolmentName).withIdentifier(eoriEnrolmentIdentifier, eori.value)
     }
     when(mockAuthConnector.authorise(ameq(nonCspAuthPredicate), ameq(Retrievals.authorisedEnrolments))(any[HeaderCarrier], any[ExecutionContext]))
-      .thenReturn(Enrolments(Set(customsEnrolment)))
+      .thenReturn(Future.successful(Enrolments(Set(customsEnrolment))))
   }
 
   def authoriseNonCspButDontRetrieveCustomsEnrolment(): Unit = {
     unauthoriseCsp()
     when(mockAuthConnector.authorise(ameq(nonCspAuthPredicate), ameq(Retrievals.authorisedEnrolments))(any[HeaderCarrier], any[ExecutionContext]))
-      .thenReturn(Enrolments(Set.empty))
+      .thenReturn(Future.successful(Enrolments(Set.empty)))
   }
 
   def unauthoriseNonCspOnly(authException: AuthorisationException = new InsufficientEnrolments): Unit = {

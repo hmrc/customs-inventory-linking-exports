@@ -73,7 +73,8 @@ class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfter
     when(mockConfigService.exportsConfig).thenReturn(mockExportsConfig)
     when(mockPayloadDecorator.decorate(meq(TestXmlPayload), meq[String](TestSubscriptionFieldsId.value).asInstanceOf[SubscriptionFieldsId], meq[UUID](correlationIdUuid).asInstanceOf[CorrelationId], any[LocalDateTime])(any[ValidatedPayloadRequest[Any]])).thenReturn(wrappedValidXML)
     when(mockDateTimeProvider.getUtcNow).thenReturn(dateTime)
-    when(mockExportsConnector.send(any[NodeSeq], meq(dateTime), any[UUID])(any[ValidatedPayloadRequest[Any]], any[HeaderCarrier])).thenReturn(Right(mockHttpResponse))
+    when(mockExportsConnector.send(any[NodeSeq], meq(dateTime), any[UUID])(any[ValidatedPayloadRequest[Any]], any[HeaderCarrier])).thenReturn(Future.successful(Right(mockHttpResponse)))
+
   }
 
   "BusinessService" should {

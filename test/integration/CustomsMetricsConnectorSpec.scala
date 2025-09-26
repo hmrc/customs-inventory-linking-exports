@@ -115,5 +115,4 @@ class CustomsMetricsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPe
   private def sendValidRequest() = {
     connector.post(ValidCustomsMetricsRequest)
   }
-  
 }

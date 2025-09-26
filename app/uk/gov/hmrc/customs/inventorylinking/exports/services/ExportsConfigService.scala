@@ -67,7 +67,7 @@ class ExportsConfigService @Inject()(configValidatedNel: ConfigValidatedNelAdapt
 
   val exportsShutterConfig: ExportsShutterConfig = exportsConfigHolder.exportsShutterConfig
 
-  val exportsCircuitBreakerConfig: ExportsCircuitBreakerConfig = exportsConfigHolder.exportsCircuitBreakerConfig
+  lazy val exportsCircuitBreakerConfig: ExportsCircuitBreakerConfig = exportsConfigHolder.exportsCircuitBreakerConfig
 
   private case class ExportsConfigHolder(exportsConfig: ExportsConfig,
                                          exportsShutterConfig: ExportsShutterConfig,

@@ -51,9 +51,9 @@ class ExportsConnector @Inject()(http: HttpClientV2,
 
   override val configKey = "mdg-exports"
 
-  override val numberOfCallsToTriggerStateChange: Int = config.exportsCircuitBreakerConfig.numberOfCallsToTriggerStateChange
-  override val unstablePeriodDurationInMillis: Int = config.exportsCircuitBreakerConfig.unstablePeriodDurationInMillis
-  override val unavailablePeriodDurationInMillis: Int = config.exportsCircuitBreakerConfig.unavailablePeriodDurationInMillis
+  override lazy val numberOfCallsToTriggerStateChange: Int = config.exportsCircuitBreakerConfig.numberOfCallsToTriggerStateChange
+  override lazy val unstablePeriodDurationInMillis: Int = config.exportsCircuitBreakerConfig.unstablePeriodDurationInMillis
+  override lazy val unavailablePeriodDurationInMillis: Int = config.exportsCircuitBreakerConfig.unavailablePeriodDurationInMillis
 
   def send[A](xml: NodeSeq,
               date: LocalDateTime,
