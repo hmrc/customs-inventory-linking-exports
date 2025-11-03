@@ -35,7 +35,8 @@ import play.api.mvc.AnyContentAsXml
 import play.api.test.Helpers
 import play.api.test.Helpers.ACCEPT
 import uk.gov.hmrc.customs.inventorylinking.exports.connectors.CircuitBreakerConnector
-import uk.gov.hmrc.customs.inventorylinking.exports.connectors.ExportsConnector.RetryError
+//import uk.gov.hmrc.customs.inventorylinking.exports.connectors.ExportsConnector.RetryError
+import uk.gov.hmrc.customs.inventorylinking.exports.model.*
 import uk.gov.hmrc.customs.inventorylinking.exports.config.{ServiceConfig, ServiceConfigProvider}
 import uk.gov.hmrc.customs.inventorylinking.exports.connectors.ExportsConnector
 import uk.gov.hmrc.customs.inventorylinking.exports.logging.CdsLogger
@@ -169,7 +170,7 @@ class ExportsConnectorSpec
     }
   }
 
-  private def awaitRequest[A]()(implicit vpr: ValidatedPayloadRequest[A]): Either[ExportsConnector.Error, HttpResponse] = {
+  private def awaitRequest[A]()(implicit vpr: ValidatedPayloadRequest[A]): Either[ConnectionError, HttpResponse] = {
     await(connector.send(xml, date, correlationIdUuid))
   }
 

@@ -18,18 +18,18 @@ package uk.gov.hmrc.customs.inventorylinking.exports.connectors
 
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.pattern.CircuitBreakerOpenException
-import com.google.inject._
+import com.google.inject.*
 import play.api.http.HeaderNames.{ACCEPT, CONTENT_TYPE, DATE, X_FORWARDED_HOST}
 import play.api.http.{MimeTypes, Status}
 import uk.gov.hmrc.customs.inventorylinking.exports.services.DateTimeService
 import uk.gov.hmrc.customs.inventorylinking.exports.config.ServiceConfigProvider
-import uk.gov.hmrc.customs.inventorylinking.exports.connectors.ExportsConnector._
 import uk.gov.hmrc.customs.inventorylinking.exports.logging.CdsLogger
 import uk.gov.hmrc.customs.inventorylinking.exports.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.ValidatedPayloadRequest
+import uk.gov.hmrc.customs.inventorylinking.exports.model.*
 import uk.gov.hmrc.customs.inventorylinking.exports.services.ExportsConfigService
-import uk.gov.hmrc.http.HttpReads.Implicits._
-import uk.gov.hmrc.http._
+import uk.gov.hmrc.http.HttpReads.Implicits.*
+import uk.gov.hmrc.http.*
 import uk.gov.hmrc.http.client.HttpClientV2
 import play.api.libs.ws.writeableOf_String
 
@@ -58,7 +58,7 @@ class ExportsConnector @Inject()(http: HttpClientV2,
   def send[A](xml: NodeSeq,
               date: LocalDateTime,
               correlationId: UUID)
-             (implicit vpr: ValidatedPayloadRequest[A], hc: HeaderCarrier): Future[Either[ExportsConnector.Error, HttpResponse]] = {
+             (implicit vpr: ValidatedPayloadRequest[A], hc: HeaderCarrier): Future[Either[ConnectionError, HttpResponse]] = {
     val config = Option(serviceConfigProvider.getConfig(s"${vpr.requestedApiVersion.configPrefix}$configKey")).getOrElse(throw new IllegalArgumentException("config not found"))
     val bearerToken = "Bearer " + config.bearerToken.getOrElse(throw new IllegalStateException("no bearer token was found in config"))
 
@@ -67,7 +67,6 @@ class ExportsConnector @Inject()(http: HttpClientV2,
       Seq(HeaderNames.authorisation -> bearerToken) ++
       getCustomsApiStubExtraHeaders(hc)
 
-    case class Non2xxResponseException(status: Int) extends Throwable
     val url = config.url
     withCircuitBreaker {
       logger.debug(s"Posting inventory linking exports.\nurl = $url\npayload = \n${xml.toString}")
@@ -106,12 +105,3 @@ class ExportsConnector @Inject()(http: HttpClientV2,
   }
 }
 
-object ExportsConnector {
-  sealed trait Error
-
-  case class Non2xxResponseError(status: Int) extends Error
-
-  case object RetryError extends Error
-
-  case class UnexpectedError(t: Throwable) extends Error
-}

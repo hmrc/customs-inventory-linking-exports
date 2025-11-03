@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.customs.inventorylinking.exports.connectors
+package uk.gov.hmrc.customs.inventorylinking.exports.model
 
-import uk.gov.hmrc.http.HttpException
+sealed trait ConnectionError
 
-/**
-  * Exception we raise for any HTTPResponse we receive that are not a 2xx statuses.
-  *
-  * Used only to maintain legacy code that previously relied upon http-verbs throwing
-  * UpstreamErrorResponse exceptions for non 2xx statuses
-  *
-  * @param status that we received
-  */
-class Non2xxResponseException(status: Int) extends HttpException("Received a non 2XX response", status)
+case class Non2xxResponseError(status: Int) extends ConnectionError
+
+case object RetryError extends ConnectionError
+
+case class UnexpectedError(t: Throwable) extends ConnectionError
+
+case class Non2xxResponseException(status: Int) extends Throwable

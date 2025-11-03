@@ -18,7 +18,6 @@ package uk.gov.hmrc.customs.inventorylinking.exports.xml
 
 import uk.gov.hmrc.customs.inventorylinking.exports.model._
 import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.ValidatedPayloadRequest
-import uk.gov.hmrc.customs.inventorylinking.exports.model.{CorrelationId, NonCsp, SubscriptionFieldsId}
 import uk.gov.hmrc.customs.inventorylinking.exports.services.DateTimeService
 
 import java.time.format.DateTimeFormatter

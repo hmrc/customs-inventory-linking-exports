@@ -18,13 +18,11 @@ package uk.gov.hmrc.customs.inventorylinking.exports.services
 
 import play.api.mvc.Result
 import play.mvc.Http.Status.{FORBIDDEN, INTERNAL_SERVER_ERROR}
-import uk.gov.hmrc.customs.inventorylinking.exports.connectors.ExportsConnector.RetryError
 import uk.gov.hmrc.customs.inventorylinking.exports.controllers.ErrorResponse
 import uk.gov.hmrc.customs.inventorylinking.exports.controllers.ErrorResponse.{ErrorInternalServerError, ErrorPayloadForbidden, errorInternalServerError}
 import uk.gov.hmrc.customs.inventorylinking.exports.connectors.ExportsConnector
-import uk.gov.hmrc.customs.inventorylinking.exports.connectors.ExportsConnector._
 import uk.gov.hmrc.customs.inventorylinking.exports.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.exports.model._
+import uk.gov.hmrc.customs.inventorylinking.exports.model.*
 import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.ActionBuilderModelHelper._
 import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.ValidatedPayloadRequest
 import uk.gov.hmrc.customs.inventorylinking.exports.xml.PayloadDecorator
@@ -39,8 +37,7 @@ class BusinessService @Inject()(logger: ExportsLogger,
                                 connector: ExportsConnector,
                                 wrapper: PayloadDecorator,
                                 dateTimeProvider: DateTimeService,
-                                uniqueIdsService: UniqueIdsService,
-                                configService: ExportsConfigService)
+                                uniqueIdsService: UniqueIdsService)
                                (implicit ec: ExecutionContext) {
   def send[A](implicit vpr: ValidatedPayloadRequest[A], hc: HeaderCarrier): Future[Either[Result, Unit]] = {
     val subscriptionFieldsId = SubscriptionFieldsId(vpr.apiSubscriptionFields.fieldsId.toString)

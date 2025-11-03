@@ -49,10 +49,8 @@ object LoggingHelper {
   }
 
   private def format(r: HasConversationId): String = {
-    def conversationId = r match {
-      case c: HasConversationId => s"[conversationId=${c.conversationId}]"
-      case _ => ""
-    }
+    def conversationId =  s"[conversationId=${r.conversationId}]"
+
     def apiVersion = r match {
       case a: HasApiVersion => s"[requestedApiVersion=${a.requestedApiVersion}]"
       case _ => ""

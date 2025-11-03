@@ -20,10 +20,8 @@ import uk.gov.hmrc.customs.inventorylinking.exports.controllers.ErrorResponse
 
 import java.net.URLEncoder
 
-//import cats.implicits._
 import play.api.mvc.{ActionRefiner, Result}
 import uk.gov.hmrc.customs.inventorylinking.exports.connectors.ApiSubscriptionFieldsConnector
-import uk.gov.hmrc.customs.inventorylinking.exports.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.exports.model.ApiSubscriptionKey
 import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.ActionBuilderModelHelper._
 import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.{ApiSubscriptionFieldsRequest, ValidatedHeadersRequest}
@@ -32,8 +30,7 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class ApiSubscriptionFieldsAction @Inject()(connector: ApiSubscriptionFieldsConnector,
-                                            logger: ExportsLogger)
+class ApiSubscriptionFieldsAction @Inject()(connector: ApiSubscriptionFieldsConnector)
                                            (implicit ec: ExecutionContext) extends ActionRefiner[ValidatedHeadersRequest, ApiSubscriptionFieldsRequest] {
 
   protected def executionContext: ExecutionContext = ec

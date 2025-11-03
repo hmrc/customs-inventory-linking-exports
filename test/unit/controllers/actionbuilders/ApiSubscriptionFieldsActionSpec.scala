@@ -42,7 +42,7 @@ class ApiSubscriptionFieldsActionSpec extends UnitSpec with MockitoSugar {
   trait SetUp {
     private[ApiSubscriptionFieldsActionSpec] val connector = mock[ApiSubscriptionFieldsConnector]
     private[ApiSubscriptionFieldsActionSpec] val logger = mock[ExportsLogger]
-    private[ApiSubscriptionFieldsActionSpec] val service = new ApiSubscriptionFieldsAction(connector, logger)
+    private[ApiSubscriptionFieldsActionSpec] val service = new ApiSubscriptionFieldsAction(connector)
 
     private[ApiSubscriptionFieldsActionSpec] def vhr(request: FakeRequest[AnyContentAsXml]): ValidatedHeadersRequest[AnyContentAsXml] = {
       ApiVersionRequest(conversationId, EventStart, VersionOne, request)

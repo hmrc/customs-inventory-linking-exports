@@ -24,7 +24,7 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.AnyContentAsXml
 import play.api.test.Helpers.*
 import uk.gov.hmrc.customs.inventorylinking.exports.connectors.ExportsConnector
-import uk.gov.hmrc.customs.inventorylinking.exports.connectors.ExportsConnector.*
+import uk.gov.hmrc.customs.inventorylinking.exports.model.Non2xxResponseError
 import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.ValidatedPayloadRequest
 import uk.gov.hmrc.http.{Authorization, *}
 import util.ExternalServicesConfig.{AuthToken, Host, Port}

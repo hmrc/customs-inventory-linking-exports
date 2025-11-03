@@ -76,23 +76,23 @@ class ShutterCheckAction @Inject()(logger: ExportsLogger,
      }
   }
 
-private def versionShuttered[A](apiVersion: ApiVersion)(implicit cir: ConversationIdRequest[A]): Either[Result, ApiVersionRequest[A]] = {
+  private def versionShuttered[A](apiVersion: ApiVersion)(implicit cir: ConversationIdRequest[A]): Either[Result, ApiVersionRequest[A]] = {
 
-  val serviceUnavailableResult = Left(errorResponseVersionShuttered)
+    val serviceUnavailableResult = Left(errorResponseVersionShuttered)
 
-  def unavailableWithLog(apiVersion: ApiVersion) = {
-    logger.warn(s"version ${apiVersion.toString} requested but is shuttered")
-    serviceUnavailableResult
+    def unavailableWithLog(apiVersion: ApiVersion) = {
+      logger.warn(s"version ${apiVersion.toString} requested but is shuttered")
+      serviceUnavailableResult
+    }
+
+    apiVersion match {
+      case VersionOne if v1Shuttered =>
+        unavailableWithLog(VersionOne)
+      case VersionTwo if v2Shuttered =>
+        unavailableWithLog(VersionTwo)
+      case _ =>
+        logger.debug(s"$ACCEPT header passed validation with: $apiVersion")
+        Right(ApiVersionRequest(cir.conversationId, cir.start, apiVersion, cir.request))
+    }
   }
-
-  apiVersion match {
-    case VersionOne if v1Shuttered =>
-      unavailableWithLog(VersionOne)
-    case VersionTwo if v2Shuttered =>
-      unavailableWithLog(VersionTwo)
-    case _ =>
-      logger.debug(s"$ACCEPT header passed validation with: $apiVersion")
-      Right(ApiVersionRequest(cir.conversationId, cir.start, apiVersion, cir.request))
-  }
-}
 }

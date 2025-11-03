@@ -25,7 +25,6 @@ import play.api.mvc.{AnyContentAsXml, Result}
 import play.api.test.Helpers
 import uk.gov.hmrc.customs.inventorylinking.exports.controllers.ErrorResponse
 import uk.gov.hmrc.customs.inventorylinking.exports.controllers.ErrorResponse.errorInternalServerError
-import uk.gov.hmrc.customs.inventorylinking.exports.connectors.ExportsConnector.{Non2xxResponseError, RetryError}
 import uk.gov.hmrc.customs.inventorylinking.exports.connectors.ExportsConnector
 import uk.gov.hmrc.customs.inventorylinking.exports.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.exports.model.*
@@ -62,7 +61,7 @@ class BusinessServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfter
     protected val mockHttpResponse: HttpResponse = mock[HttpResponse]
 
     protected lazy val service: BusinessService = new BusinessService(mockLogger, mockExportsConnector,
-      mockPayloadDecorator, mockDateTimeProvider, stubUniqueIdsService, mockConfigService)
+      mockPayloadDecorator, mockDateTimeProvider, stubUniqueIdsService)
 
     protected def send(vpr: ValidatedPayloadRequest[AnyContentAsXml] = TestCspValidatedPayloadRequestWithEori, hc: HeaderCarrier = headerCarrier): Either[Result, Unit] = {
       await(service.send(vpr, hc))

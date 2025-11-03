@@ -42,18 +42,18 @@ class ExportsConfigService @Inject()(configValidatedNel: ConfigValidatedNelAdapt
   private val unavailablePeriodDurationInMillisNel = root.int("circuitBreaker.unavailablePeriodDurationInMillis")
   private val unstablePeriodDurationInMillisNel = root.int("circuitBreaker.unstablePeriodDurationInMillis")
 
-  private val validatedExportsConfig: CustomsValidatedNel[ExportsConfig] = (apiSubscriptionFieldsServiceUrlNel, customsMetricsServiceUrlNel) mapN ExportsConfig
+  private val validatedExportsConfig: CustomsValidatedNel[ExportsConfig] = (apiSubscriptionFieldsServiceUrlNel, customsMetricsServiceUrlNel) mapN ExportsConfig.apply
 
   private val validatedExportsShutterConfig: CustomsValidatedNel[ExportsShutterConfig] = (
     v1ShutteredNel, v2ShutteredNel
-  ) mapN ExportsShutterConfig
+  ) mapN ExportsShutterConfig.apply
 
   private val validatedExportsCircuitBreakerConfig: CustomsValidatedNel[ExportsCircuitBreakerConfig] = (
     numberOfCallsToTriggerStateChangeNel, unavailablePeriodDurationInMillisNel, unstablePeriodDurationInMillisNel
-  ) mapN ExportsCircuitBreakerConfig
+  ) mapN ExportsCircuitBreakerConfig.apply
 
   private val exportsConfigHolder =
-    (validatedExportsConfig, validatedExportsShutterConfig, validatedExportsCircuitBreakerConfig) mapN ExportsConfigHolder fold(
+    (validatedExportsConfig, validatedExportsShutterConfig, validatedExportsCircuitBreakerConfig) mapN ExportsConfigHolder.apply fold(
       { nel =>
         // error case exposes a NEL
         val errorMsg = nel.toList.mkString("\n", "\n", "")
