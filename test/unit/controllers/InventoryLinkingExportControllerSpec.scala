@@ -27,16 +27,16 @@ import play.api.mvc._
 import play.api.test.Helpers
 import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.ErrorResponse
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.ErrorResponse.{ErrorInternalServerError, errorBadRequest, errorInternalServerError}
-import uk.gov.hmrc.customs.inventorylinking.export.connectors.{ApiSubscriptionFieldsConnector, CustomsMetricsConnector}
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders._
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.{HeaderValidator, InventoryLinkingExportController}
-import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{HasConversationId, ValidatedHeadersRequest, ValidatedPayloadRequest}
-import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionKey, CustomsMetricsRequest, Eori}
-import uk.gov.hmrc.customs.inventorylinking.export.services._
+import uk.gov.hmrc.customs.inventorylinking.exports.controllers.ErrorResponse
+import uk.gov.hmrc.customs.inventorylinking.exports.controllers.ErrorResponse.{ErrorInternalServerError, errorBadRequest, errorInternalServerError}
+import uk.gov.hmrc.customs.inventorylinking.exports.connectors.{ApiSubscriptionFieldsConnector, CustomsMetricsConnector}
+import uk.gov.hmrc.customs.inventorylinking.exports.controllers.actionbuilders._
+import uk.gov.hmrc.customs.inventorylinking.exports.controllers.{HeaderValidator, InventoryLinkingExportController}
+import uk.gov.hmrc.customs.inventorylinking.exports.logging.ExportsLogger
+import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.ActionBuilderModelHelper._
+import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.{HasConversationId, ValidatedHeadersRequest, ValidatedPayloadRequest}
+import uk.gov.hmrc.customs.inventorylinking.exports.model.{ApiSubscriptionKey, CustomsMetricsRequest, Eori}
+import uk.gov.hmrc.customs.inventorylinking.exports.services._
 import uk.gov.hmrc.http.HeaderCarrier
 import util.CustomsMetricsTestData.{EventEnd, EventStart}
 import util.RequestHeaders._
@@ -67,7 +67,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
 
     protected val stubConversationIdAction: ConversationIdAction = new ConversationIdAction(stubUniqueIdsService, mockDateTimeService, mockExportsLogger)
     protected val stubShutterCheckAction = new ShutterCheckAction(mockExportsLogger, mockExportsConfigService)
-    protected val stubFieldsAction: ApiSubscriptionFieldsAction = new ApiSubscriptionFieldsAction(mockApiSubscriptionFieldsConnector, mockExportsLogger)
+    protected val stubFieldsAction: ApiSubscriptionFieldsAction = new ApiSubscriptionFieldsAction(mockApiSubscriptionFieldsConnector)
     protected val stubAuthAction: AuthAction = new AuthAction(customsAuthService, headerValidator, mockExportsLogger)
     protected val stubValidateAndExtractHeadersAction: ValidateAndExtractHeadersAction = new ValidateAndExtractHeadersAction(new HeaderValidator(mockExportsLogger))
     protected val stubPayloadValidationAction: PayloadValidationAction = new PayloadValidationAction(mockXmlValidationService, mockExportsLogger)
@@ -94,8 +94,8 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
     }
 
     when(mockXmlValidationService.validate(any[NodeSeq])(any[ExecutionContext])).thenReturn(Future.successful(()))
-    when(mockBusinessService.send(any[ValidatedPayloadRequest[_]], any[HeaderCarrier])).thenReturn(Future.successful(Right(())))
-    when(mockApiSubscriptionFieldsConnector.getSubscriptionFields(any[ApiSubscriptionKey])(any[ValidatedHeadersRequest[_]])).thenReturn(Future.successful(Some(ApiSubscriptionFieldsTestData.apiSubscriptionFields)))
+    when(mockBusinessService.send(any[ValidatedPayloadRequest[Any]], any[HeaderCarrier])).thenReturn(Future.successful(Right(())))
+    when(mockApiSubscriptionFieldsConnector.getSubscriptionFields(any[ApiSubscriptionKey])(any[ValidatedHeadersRequest[Any]])).thenReturn(Future.successful(Some(ApiSubscriptionFieldsTestData.apiSubscriptionFields)))
     when(mockExportsConfigService.exportsShutterConfig).thenReturn(allVersionsUnshuttered)
   }
 
@@ -169,7 +169,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
     }
 
     "respond with status 500 for a CSP request with no X-Submitter-Identifier header, no X-Badge-Identifier header and no authenticated EORI" in new SetUp() {
-      when(mockApiSubscriptionFieldsConnector.getSubscriptionFields(any[ApiSubscriptionKey])(any[ValidatedHeadersRequest[_]])).thenReturn(Future.successful(Some(ApiSubscriptionFieldsTestData.apiSubscriptionFieldsNoAuthenticatedEori)))
+      when(mockApiSubscriptionFieldsConnector.getSubscriptionFields(any[ApiSubscriptionKey])(any[ValidatedHeadersRequest[Any]])).thenReturn(Future.successful(Some(ApiSubscriptionFieldsTestData.apiSubscriptionFieldsNoAuthenticatedEori)))
       authoriseCsp()
 
       val result: Result = awaitSubmit(ValidRequestWithSubmitterHeader.withHeaders(ValidRequestWithSubmitterHeader.headers.remove(X_SUBMITTER_IDENTIFIER_NAME).remove(X_BADGE_IDENTIFIER_NAME)))
@@ -290,7 +290,7 @@ class InventoryLinkingExportControllerSpec extends UnitSpec
     }
 
     "return the error response returned from the Communication service" in new SetUp() {
-      when(mockBusinessService.send(any[ValidatedPayloadRequest[_]], any[HeaderCarrier]))
+      when(mockBusinessService.send(any[ValidatedPayloadRequest[Any]], any[HeaderCarrier]))
         .thenReturn(Future.successful(Left(mockResult)))
       authoriseCsp()
 

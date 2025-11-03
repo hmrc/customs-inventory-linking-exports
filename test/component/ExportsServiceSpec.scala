@@ -22,7 +22,7 @@ import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.Result
 import play.api.test.Helpers._
-import uk.gov.hmrc.customs.inventorylinking.export.xml.ValidateXmlAgainstSchema
+import uk.gov.hmrc.customs.inventorylinking.exports.xml.ValidateXmlAgainstSchema
 import util.RequestHeaders.X_CONVERSATION_ID_NAME
 import util.TestData._
 import util.externalservices.{ApiSubscriptionFieldsService, AuthService, CustomsMetricsService, InventoryLinkingExportsService}

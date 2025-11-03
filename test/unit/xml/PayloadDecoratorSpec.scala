@@ -19,9 +19,9 @@ package unit.xml
 import org.scalatest.prop.TableDrivenPropertyChecks._
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.mvc.AnyContentAsXml
-import uk.gov.hmrc.customs.inventorylinking.`export`.services.DateTimeService
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ValidatedPayloadRequest
-import uk.gov.hmrc.customs.inventorylinking.export.xml.PayloadDecorator
+import uk.gov.hmrc.customs.inventorylinking.exports.services.DateTimeService
+import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.ValidatedPayloadRequest
+import uk.gov.hmrc.customs.inventorylinking.exports.xml.PayloadDecorator
 import util.UnitSpec
 import util.ApiSubscriptionFieldsTestData._
 import util.TestData._

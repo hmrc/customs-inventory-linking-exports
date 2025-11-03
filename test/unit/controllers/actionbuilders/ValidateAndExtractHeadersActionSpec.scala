@@ -22,14 +22,14 @@ import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.mvc.{AnyContentAsXml, Result}
 import play.api.test.Helpers
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.ErrorResponse.ErrorContentTypeHeaderInvalid
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames.XConversationIdHeaderName
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.HeaderValidator
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders.ValidateAndExtractHeadersAction
-import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model.VersionOne
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper.ConversationIdRequestOps
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ApiVersionRequest, ValidatedHeadersRequest}
+import uk.gov.hmrc.customs.inventorylinking.exports.controllers.ErrorResponse.ErrorContentTypeHeaderInvalid
+import uk.gov.hmrc.customs.inventorylinking.exports.controllers.CustomHeaderNames.XConversationIdHeaderName
+import uk.gov.hmrc.customs.inventorylinking.exports.controllers.HeaderValidator
+import uk.gov.hmrc.customs.inventorylinking.exports.controllers.actionbuilders.ValidateAndExtractHeadersAction
+import uk.gov.hmrc.customs.inventorylinking.exports.logging.ExportsLogger
+import uk.gov.hmrc.customs.inventorylinking.exports.model.VersionOne
+import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.ActionBuilderModelHelper.ConversationIdRequestOps
+import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.{ApiVersionRequest, ValidatedHeadersRequest}
 import util.TestData.{TestConversationIdRequest, TestExtractedHeaders, TestValidatedHeadersRequest, conversationIdValue}
 import util.UnitSpec
 
@@ -47,7 +47,7 @@ class ValidateAndExtractHeadersActionSpec extends UnitSpec with MockitoSugar wit
   "HeaderValidationAction when validation succeeds" should {
     "extract headers from incoming request and copy relevant values on to the ValidatedHeaderRequest" in new SetUp {
       val apiVersionRequest: ApiVersionRequest[AnyContentAsXml] = TestConversationIdRequest.toApiVersionRequest(VersionOne)
-      when(mockHeaderValidator.validateHeaders(any[ApiVersionRequest[_]])).thenReturn(Right(TestExtractedHeaders))
+      when(mockHeaderValidator.validateHeaders(any[ApiVersionRequest[Any]])).thenReturn(Right(TestExtractedHeaders))
 
       val actualResult: Either[Result, ValidatedHeadersRequest[_]] = await(validateAndExtractHeadersAction.refine(apiVersionRequest))
 
@@ -58,7 +58,7 @@ class ValidateAndExtractHeadersActionSpec extends UnitSpec with MockitoSugar wit
   "HeaderValidationAction when validation fails" should {
     "return error with conversation Id in the headers" in new SetUp {
       val apiVersionRequest: ApiVersionRequest[AnyContentAsXml] = TestConversationIdRequest.toApiVersionRequest(VersionOne)
-      when(mockHeaderValidator.validateHeaders(any[ApiVersionRequest[_]])).thenReturn(Left(ErrorContentTypeHeaderInvalid))
+      when(mockHeaderValidator.validateHeaders(any[ApiVersionRequest[Any]])).thenReturn(Left(ErrorContentTypeHeaderInvalid))
 
       val actualResult: Either[Result, ValidatedHeadersRequest[_]] = await(validateAndExtractHeadersAction.refine(apiVersionRequest))
 

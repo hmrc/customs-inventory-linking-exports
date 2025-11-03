@@ -16,7 +16,7 @@
 
 package unit.xml
 
-import uk.gov.hmrc.customs.inventorylinking.export.xml.ValidateXmlAgainstSchema
+import uk.gov.hmrc.customs.inventorylinking.exports.xml.ValidateXmlAgainstSchema
 import util.UnitSpec
 
 import javax.xml.validation.Schema

@@ -21,10 +21,10 @@ import play.api.http.HeaderNames._
 import play.api.http.MimeTypes
 import play.api.mvc.{AnyContentAsXml, Headers}
 import play.api.test.FakeRequest
-import uk.gov.hmrc.customs.inventorylinking.export.model._
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders._
-import uk.gov.hmrc.customs.inventorylinking.export.services.{UniqueIdsService, UuidService}
+import uk.gov.hmrc.customs.inventorylinking.exports.model._
+import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.ActionBuilderModelHelper._
+import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders._
+import uk.gov.hmrc.customs.inventorylinking.exports.services.{UniqueIdsService, UuidService}
 import util.CustomsMetricsTestData.{EventStart, UtcZoneId}
 import util.RequestHeaders._
 import util.TestData._
@@ -117,7 +117,7 @@ object TestData {
 
   val TestXmlPayload: Elem = <foo>bar</foo>
   val TestFakeRequest: FakeRequest[AnyContentAsXml] = FakeRequest().withXmlBody(TestXmlPayload)
-  val TestFakeRequestWithV1Headers = FakeRequest().withXmlBody(TestXmlPayload).withHeaders(ValidHeaders.toSeq: _*)
+  val TestFakeRequestWithV1Headers: FakeRequest[AnyContentAsXml] = FakeRequest().withXmlBody(TestXmlPayload).withHeaders(ValidHeaders.toSeq: _*)
 
   def testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId(maybeBadgeIdString: Option[String] = Some(badgeIdentifier.value), maybeSubmitterIdString: Option[String] = Some(declarantEori.value)): FakeRequest[AnyContentAsXml] = {
     val headers = Headers(maybeBadgeIdString.fold(("", ""))(badgeId => (X_BADGE_IDENTIFIER_NAME, badgeId)), maybeSubmitterIdString.fold(("", ""))(submitterId => (X_SUBMITTER_IDENTIFIER_NAME, submitterId)))
@@ -140,37 +140,37 @@ object TestData {
 
 object RequestHeaders {
 
-  val X_CONVERSATION_ID_NAME = "X-Conversation-ID"
-  val X_CONVERSATION_ID_HEADER: (String, String) = X_CONVERSATION_ID_NAME -> conversationIdUuid.toString
+  lazy val X_CONVERSATION_ID_NAME = "X-Conversation-ID"
+  lazy val X_CONVERSATION_ID_HEADER: (String, String) = X_CONVERSATION_ID_NAME -> conversationIdUuid.toString
 
-  val API_SUBSCRIPTION_FIELDS_ID_NAME = "api-subscription-fields-id"
-  val API_SUBSCRIPTION_FIELDS_ID_HEADER: (String, String) = API_SUBSCRIPTION_FIELDS_ID_NAME -> ApiSubscriptionFieldsTestData.fieldsId
+  lazy val API_SUBSCRIPTION_FIELDS_ID_NAME = "api-subscription-fields-id"
+  lazy val API_SUBSCRIPTION_FIELDS_ID_HEADER: (String, String) = API_SUBSCRIPTION_FIELDS_ID_NAME -> ApiSubscriptionFieldsTestData.fieldsId
 
-  val X_CLIENT_ID_NAME = "X-Client-ID"
-  val X_CLIENT_ID_HEADER: (String, String) = X_CLIENT_ID_NAME -> ApiSubscriptionFieldsTestData.xClientIdValue
-  val X_CLIENT_ID_HEADER_INVALID: (String, String) = X_CLIENT_ID_NAME -> "This is not a UUID"
+  lazy val X_CLIENT_ID_NAME = "X-Client-ID"
+  lazy val X_CLIENT_ID_HEADER: (String, String) = X_CLIENT_ID_NAME -> ApiSubscriptionFieldsTestData.xClientIdValue
+  lazy val X_CLIENT_ID_HEADER_INVALID: (String, String) = X_CLIENT_ID_NAME -> "This is not a UUID"
 
-  val X_BADGE_IDENTIFIER_NAME = "X-Badge-Identifier"
-  val X_BADGE_IDENTIFIER_HEADER: (String, String) = X_BADGE_IDENTIFIER_NAME -> validBadgeIdentifierValue
-  val X_BADGE_IDENTIFIER_HEADER_INVALID: (String, String) = X_BADGE_IDENTIFIER_NAME -> "SHORT"
+  lazy val X_BADGE_IDENTIFIER_NAME = "X-Badge-Identifier"
+  lazy val X_BADGE_IDENTIFIER_HEADER: (String, String) = X_BADGE_IDENTIFIER_NAME -> validBadgeIdentifierValue
+  lazy val X_BADGE_IDENTIFIER_HEADER_INVALID: (String, String) = X_BADGE_IDENTIFIER_NAME -> "SHORT"
 
-  val X_SUBMITTER_IDENTIFIER_NAME = "X-Submitter-Identifier"
-  val X_SUBMITTER_IDENTIFIER_NAME_CAMEL_CASE = "X-Submitter-Identifier"
+  lazy val X_SUBMITTER_IDENTIFIER_NAME = "X-Submitter-Identifier"
+  lazy val X_SUBMITTER_IDENTIFIER_NAME_CAMEL_CASE = "X-Submitter-Identifier"
 
-  val X_SUBMITTER_IDENTIFIER_HEADER: (String, String) = X_SUBMITTER_IDENTIFIER_NAME -> declarantEoriValue
-  val X_SUBMITTER_IDENTIFIER_HEADER_CAMEL_CASE: (String, String) = X_SUBMITTER_IDENTIFIER_NAME_CAMEL_CASE -> declarantEoriValue
-  val X_SUBMITTER_IDENTIFIER_HEADER_INVALID: (String, String) = X_SUBMITTER_IDENTIFIER_NAME -> "X_SUBMITTER_IDENTIFIER_TOO_LONG"
+  lazy val X_SUBMITTER_IDENTIFIER_HEADER: (String, String) = X_SUBMITTER_IDENTIFIER_NAME -> declarantEoriValue
+  lazy val X_SUBMITTER_IDENTIFIER_HEADER_CAMEL_CASE: (String, String) = X_SUBMITTER_IDENTIFIER_NAME_CAMEL_CASE -> declarantEoriValue
+  lazy val X_SUBMITTER_IDENTIFIER_HEADER_INVALID: (String, String) = X_SUBMITTER_IDENTIFIER_NAME -> "X_SUBMITTER_IDENTIFIER_TOO_LONG"
 
-  val CONTENT_TYPE_HEADER: (String, String) = CONTENT_TYPE -> (MimeTypes.XML + "; charset=utf-8")
-  val CONTENT_TYPE_HEADER_INVALID: (String, String) = CONTENT_TYPE -> "somethinginvalid"
+  lazy val CONTENT_TYPE_HEADER: (String, String) = CONTENT_TYPE -> (MimeTypes.XML + "; charset=utf-8")
+  lazy val CONTENT_TYPE_HEADER_INVALID: (String, String) = CONTENT_TYPE -> "somethinginvalid"
 
-  val ACCEPT_HMRC_XML_HEADER: (String, String) = ACCEPT -> "application/vnd.hmrc.1.0+xml"
+  lazy val ACCEPT_HMRC_XML_HEADER: (String, String) = ACCEPT -> "application/vnd.hmrc.1.0+xml"
 
-  val ACCEPT_HMRC_XML_HEADER_V2: (String, String) = ACCEPT -> "application/vnd.hmrc.2.0+xml"
+  lazy val ACCEPT_HMRC_XML_HEADER_V2: (String, String) = ACCEPT -> "application/vnd.hmrc.2.0+xml"
 
-  val ACCEPT_HEADER_INVALID: (String, String) = ACCEPT -> MimeTypes.XML
+  lazy val ACCEPT_HEADER_INVALID: (String, String) = ACCEPT -> MimeTypes.XML
 
-  val ValidHeaders = Map(
+  lazy val ValidHeaders: Map[String, String] = Map(
     X_CLIENT_ID_HEADER,
     CONTENT_TYPE_HEADER,
     ACCEPT_HMRC_XML_HEADER,

@@ -21,12 +21,14 @@ import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.test.Helpers._
-import uk.gov.hmrc.customs.inventorylinking.export.connectors.ApiSubscriptionFieldsConnector
-import uk.gov.hmrc.customs.inventorylinking.export.model.ApiSubscriptionFields
+import play.api.mvc.AnyContentAsXml
+import play.api.test.Helpers.*
+import uk.gov.hmrc.customs.inventorylinking.exports.connectors.ApiSubscriptionFieldsConnector
+import uk.gov.hmrc.customs.inventorylinking.exports.model.ApiSubscriptionFields
+import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.ValidatedHeadersRequest
 import util.ExternalServicesConfig.{Host, Port}
-import util.TestData._
-import util._
+import util.TestData.*
+import util.*
 import util.externalservices.{ApiSubscriptionFieldsService, ExportsExternalServicesConfig}
 
 class ApiSubscriptionFieldsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite with MockitoSugar
@@ -34,7 +36,7 @@ class ApiSubscriptionFieldsConnectorSpec extends IntegrationTestSpec with GuiceO
 
   private lazy val connector = app.injector.instanceOf[ApiSubscriptionFieldsConnector]
 
-  private implicit val vhr = TestValidatedHeadersRequest
+  private implicit val vhr: ValidatedHeadersRequest[AnyContentAsXml] = TestValidatedHeadersRequest
 
   override protected def beforeAll(): Unit = {
     startMockServer()

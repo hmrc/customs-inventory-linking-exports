@@ -22,13 +22,15 @@ import play.api.Application
 import play.api.http.Status.{NOT_FOUND, OK}
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import uk.gov.hmrc.customs.inventorylinking.export.connectors.ApiSubscriptionFieldsConnector
+import play.api.mvc.AnyContentAsXml
+import uk.gov.hmrc.customs.inventorylinking.exports.connectors.ApiSubscriptionFieldsConnector
+import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.ValidatedHeadersRequest
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.test.WireMockSupport
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.play.audit.http.HttpAuditing
 import uk.gov.hmrc.play.bootstrap.http.{DefaultHttpAuditing, HttpClientV2Provider}
-import util.ExternalServicesConfig._
+import util.ExternalServicesConfig.*
 import util.{ApiSubscriptionFieldsTestData, TestData, UnitSpec}
 
 class ApiSubscriptionFieldsConnectorSpec extends UnitSpec
@@ -38,7 +40,7 @@ class ApiSubscriptionFieldsConnectorSpec extends UnitSpec
 
   private val expectedUrl = "/field/application/SOME_X_CLIENT_ID/context/some/api/context/version/1.0"
 
-  private implicit val vhr = TestData.TestValidatedHeadersRequest
+  private implicit val vhr: ValidatedHeadersRequest[AnyContentAsXml] = TestData.TestValidatedHeadersRequest
 
   override lazy val app: Application = new GuiceApplicationBuilder()
     .configure(

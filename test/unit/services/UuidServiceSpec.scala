@@ -16,7 +16,7 @@
 
 package unit.services
 
-import uk.gov.hmrc.customs.inventorylinking.export.services.UuidService
+import uk.gov.hmrc.customs.inventorylinking.exports.services.UuidService
 import util.UnitSpec
 
 class UuidServiceSpec extends UnitSpec {

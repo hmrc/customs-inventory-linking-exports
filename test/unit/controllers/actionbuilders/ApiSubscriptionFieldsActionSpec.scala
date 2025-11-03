@@ -21,13 +21,13 @@ import org.mockito.Mockito._
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.mvc.{AnyContentAsXml, Result}
 import play.api.test.{FakeRequest, Helpers}
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.CustomHeaderNames.XConversationIdHeaderName
-import uk.gov.hmrc.customs.inventorylinking.export.connectors.ApiSubscriptionFieldsConnector
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders.ApiSubscriptionFieldsAction
-import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ApiSubscriptionFieldsRequest, ApiVersionRequest, ValidatedHeadersRequest}
-import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionKey, VersionOne}
+import uk.gov.hmrc.customs.inventorylinking.exports.controllers.CustomHeaderNames.XConversationIdHeaderName
+import uk.gov.hmrc.customs.inventorylinking.exports.connectors.ApiSubscriptionFieldsConnector
+import uk.gov.hmrc.customs.inventorylinking.exports.controllers.actionbuilders.ApiSubscriptionFieldsAction
+import uk.gov.hmrc.customs.inventorylinking.exports.logging.ExportsLogger
+import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.ActionBuilderModelHelper._
+import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.{ApiSubscriptionFieldsRequest, ApiVersionRequest, ValidatedHeadersRequest}
+import uk.gov.hmrc.customs.inventorylinking.exports.model.{ApiSubscriptionKey, VersionOne}
 import util.CustomsMetricsTestData.EventStart
 import util.TestData.{TestExtractedHeaders, TestValidatedHeadersRequestV2, conversationId, declarantEori, testFakeRequestWithMaybeBadgeIdAndMaybeSubmitterId}
 import util.{ApiSubscriptionFieldsTestData, UnitSpec}
@@ -42,7 +42,7 @@ class ApiSubscriptionFieldsActionSpec extends UnitSpec with MockitoSugar {
   trait SetUp {
     private[ApiSubscriptionFieldsActionSpec] val connector = mock[ApiSubscriptionFieldsConnector]
     private[ApiSubscriptionFieldsActionSpec] val logger = mock[ExportsLogger]
-    private[ApiSubscriptionFieldsActionSpec] val service = new ApiSubscriptionFieldsAction(connector, logger)
+    private[ApiSubscriptionFieldsActionSpec] val service = new ApiSubscriptionFieldsAction(connector)
 
     private[ApiSubscriptionFieldsActionSpec] def vhr(request: FakeRequest[AnyContentAsXml]): ValidatedHeadersRequest[AnyContentAsXml] = {
       ApiVersionRequest(conversationId, EventStart, VersionOne, request)

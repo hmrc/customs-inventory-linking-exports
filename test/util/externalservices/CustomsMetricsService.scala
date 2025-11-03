@@ -22,7 +22,7 @@ import play.api.http.MimeTypes
 import play.api.http.Status.OK
 import play.api.libs.json.Json
 import play.api.test.Helpers.JSON
-import uk.gov.hmrc.customs.inventorylinking.export.model.CustomsMetricsRequest
+import uk.gov.hmrc.customs.inventorylinking.exports.model.CustomsMetricsRequest
 import util.WireMockRunner
 
 trait CustomsMetricsService extends WireMockRunner {

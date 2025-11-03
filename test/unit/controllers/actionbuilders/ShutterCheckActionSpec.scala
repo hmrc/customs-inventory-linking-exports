@@ -22,14 +22,14 @@ import play.api.http.Status.SERVICE_UNAVAILABLE
 import play.api.mvc.Result
 import play.api.test.Helpers.ACCEPT
 import play.api.test.{FakeRequest, Helpers}
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.ErrorResponse
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.ErrorResponse.ErrorAcceptHeaderInvalid
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders.ShutterCheckAction
-import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper.ConversationIdRequestOps
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ConversationIdRequest
-import uk.gov.hmrc.customs.inventorylinking.export.model.{ExportsShutterConfig, VersionOne, VersionTwo}
-import uk.gov.hmrc.customs.inventorylinking.export.services.ExportsConfigService
+import uk.gov.hmrc.customs.inventorylinking.exports.controllers.ErrorResponse
+import uk.gov.hmrc.customs.inventorylinking.exports.controllers.ErrorResponse.ErrorAcceptHeaderInvalid
+import uk.gov.hmrc.customs.inventorylinking.exports.controllers.actionbuilders.ShutterCheckAction
+import uk.gov.hmrc.customs.inventorylinking.exports.logging.ExportsLogger
+import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.ActionBuilderModelHelper.ConversationIdRequestOps
+import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.ConversationIdRequest
+import uk.gov.hmrc.customs.inventorylinking.exports.model.{ExportsShutterConfig, VersionOne, VersionTwo}
+import uk.gov.hmrc.customs.inventorylinking.exports.services.ExportsConfigService
 import util.CustomsMetricsTestData.EventStart
 import util.RequestHeaders.{ACCEPT_HEADER_INVALID, ValidHeaders, X_CONVERSATION_ID_NAME}
 import util.TestData._

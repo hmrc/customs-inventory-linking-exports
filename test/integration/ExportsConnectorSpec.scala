@@ -21,10 +21,12 @@ import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.test.Helpers._
-import uk.gov.hmrc.customs.inventorylinking.export.connectors.ExportsConnector
-import uk.gov.hmrc.customs.inventorylinking.export.connectors.ExportsConnector._
-import uk.gov.hmrc.http.{Authorization, _}
+import play.api.mvc.AnyContentAsXml
+import play.api.test.Helpers.*
+import uk.gov.hmrc.customs.inventorylinking.exports.connectors.ExportsConnector
+import uk.gov.hmrc.customs.inventorylinking.exports.model.Non2xxResponseError
+import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.ValidatedPayloadRequest
+import uk.gov.hmrc.http.{Authorization, *}
 import util.ExternalServicesConfig.{AuthToken, Host, Port}
 import util.TestData
 import util.XMLTestData.ValidInventoryLinkingMovementRequestXML
@@ -57,7 +59,7 @@ class ExportsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPerSuite 
   private val incomingBearerToken = "some_client's_bearer_token"
   private val incomingAuthToken = s"Bearer $incomingBearerToken"
   private val correlationId = UUID.randomUUID()
-  private implicit val vpr = TestData.TestCspValidatedPayloadRequestWithEori
+  private implicit val vpr: ValidatedPayloadRequest[AnyContentAsXml] = TestData.TestCspValidatedPayloadRequestWithEori
 
   private implicit val hc: HeaderCarrier = HeaderCarrier(authorization = Some(Authorization(incomingAuthToken)))
 

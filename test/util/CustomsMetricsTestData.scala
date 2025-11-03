@@ -18,7 +18,7 @@ package util
 
 import java.time.{ZoneId, ZonedDateTime}
 
-import uk.gov.hmrc.customs.inventorylinking.export.model.CustomsMetricsRequest
+import uk.gov.hmrc.customs.inventorylinking.exports.model.CustomsMetricsRequest
 
 object CustomsMetricsTestData {
 

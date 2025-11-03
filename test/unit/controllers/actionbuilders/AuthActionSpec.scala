@@ -21,16 +21,16 @@ import play.api.http.Status
 import play.api.http.Status.UNAUTHORIZED
 import play.api.mvc.AnyContentAsXml
 import play.api.test.{FakeRequest, Helpers}
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.ErrorResponse.ErrorInternalServerError
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.ErrorResponse
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.ErrorResponse.{UnauthorizedCode, errorBadRequest, errorInternalServerError}
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders.AuthAction
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.{CustomHeaderNames, HeaderValidator}
-import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model.{ApiSubscriptionFields, NonCsp, VersionOne}
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{ApiSubscriptionFieldsRequest, ApiVersionRequest, AuthorisedRequest}
-import uk.gov.hmrc.customs.inventorylinking.export.services.CustomsAuthService
+import uk.gov.hmrc.customs.inventorylinking.exports.controllers.ErrorResponse.ErrorInternalServerError
+import uk.gov.hmrc.customs.inventorylinking.exports.controllers.ErrorResponse
+import uk.gov.hmrc.customs.inventorylinking.exports.controllers.ErrorResponse.{UnauthorizedCode, errorBadRequest, errorInternalServerError}
+import uk.gov.hmrc.customs.inventorylinking.exports.controllers.actionbuilders.AuthAction
+import uk.gov.hmrc.customs.inventorylinking.exports.controllers.{CustomHeaderNames, HeaderValidator}
+import uk.gov.hmrc.customs.inventorylinking.exports.logging.ExportsLogger
+import uk.gov.hmrc.customs.inventorylinking.exports.model.{ApiSubscriptionFields, NonCsp, VersionOne}
+import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.ActionBuilderModelHelper._
+import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.{ApiSubscriptionFieldsRequest, ApiVersionRequest, AuthorisedRequest}
+import uk.gov.hmrc.customs.inventorylinking.exports.services.CustomsAuthService
 import util.CustomsMetricsTestData.EventStart
 import util.TestData._
 import util.{ApiSubscriptionFieldsTestData, AuthConnectorStubbing, RequestHeaders, UnitSpec}

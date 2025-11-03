@@ -36,14 +36,14 @@ import org.mockito.Mockito._
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.mvc.{AnyContentAsText, AnyContentAsXml, Result}
 import play.api.test.{FakeRequest, Helpers}
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.{ErrorResponse, ResponseContents}
-import uk.gov.hmrc.customs.inventorylinking.export.model.VersionOne
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ApiVersionRequest
-import uk.gov.hmrc.customs.inventorylinking.export.controllers.actionbuilders.PayloadValidationAction
-import uk.gov.hmrc.customs.inventorylinking.export.logging.ExportsLogger
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.ActionBuilderModelHelper._
-import uk.gov.hmrc.customs.inventorylinking.export.model.actionbuilders.{AuthorisedRequest, ConversationIdRequest, ValidatedPayloadRequest}
-import uk.gov.hmrc.customs.inventorylinking.export.services.XmlValidationService
+import uk.gov.hmrc.customs.inventorylinking.exports.controllers.{ErrorResponse, ResponseContents}
+import uk.gov.hmrc.customs.inventorylinking.exports.model.VersionOne
+import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.ApiVersionRequest
+import uk.gov.hmrc.customs.inventorylinking.exports.controllers.actionbuilders.PayloadValidationAction
+import uk.gov.hmrc.customs.inventorylinking.exports.logging.ExportsLogger
+import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.ActionBuilderModelHelper._
+import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.{AuthorisedRequest, ConversationIdRequest, ValidatedPayloadRequest}
+import uk.gov.hmrc.customs.inventorylinking.exports.services.XmlValidationService
 import util.CustomsMetricsTestData.EventStart
 import util.TestData._
 import util.{ApiSubscriptionFieldsTestData, UnitSpec}

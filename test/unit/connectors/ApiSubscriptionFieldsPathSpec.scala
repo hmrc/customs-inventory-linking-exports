@@ -16,7 +16,7 @@
 
 package unit.connectors
 
-import uk.gov.hmrc.customs.inventorylinking.export.connectors.ApiSubscriptionFieldsPath
+import uk.gov.hmrc.customs.inventorylinking.exports.connectors.ApiSubscriptionFieldsPath
 import util.UnitSpec
 import util.ApiSubscriptionFieldsTestData
 
