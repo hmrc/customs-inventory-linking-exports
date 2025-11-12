@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-package integration
-
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import uk.gov.hmrc.customs.inventorylinking.exports.config.{InvalidEnvironmentException, ServiceConfigProvider}

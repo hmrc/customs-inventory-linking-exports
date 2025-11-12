@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-package integration
-
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application

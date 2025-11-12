@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-package component
-
 import org.scalatest.OptionValues
 import org.scalatest.matchers.should.Matchers
 import play.api.Application
