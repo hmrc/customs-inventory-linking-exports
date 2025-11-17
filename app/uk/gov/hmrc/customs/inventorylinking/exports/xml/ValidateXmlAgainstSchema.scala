@@ -26,6 +26,7 @@ import javax.xml.validation.{Schema, SchemaFactory}
 import scala.collection.mutable
 import scala.util.Try
 import scala.xml.NodeSeq
+import scala.language.implicitConversions
 
 class ValidateXmlAgainstSchema(schema: Schema) {
 
