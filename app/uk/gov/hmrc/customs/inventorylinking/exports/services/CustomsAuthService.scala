@@ -26,7 +26,7 @@ import uk.gov.hmrc.customs.inventorylinking.exports.controllers.ErrorResponse
 import uk.gov.hmrc.customs.inventorylinking.exports.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.HasConversationId
 import uk.gov.hmrc.customs.inventorylinking.exports.model.{Eori, NonCsp}
-import uk.gov.hmrc.http.{Authorization, HeaderCarrier}
+import uk.gov.hmrc.http.HeaderCarrier
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}

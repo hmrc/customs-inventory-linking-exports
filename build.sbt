@@ -39,7 +39,12 @@ lazy val microservice = (project in file("."))
     unitTestSettings,
     integrationComponentTestSettings,
     allTest,
-    scoverageSettings
+    scoverageSettings,
+    scalacOptions ++= Seq(
+      "-Wconf:src=routes/.*:s",
+      "-Wconf:src=views/.*:s",
+      "-Wconf:msg=Flag.*repeatedly:s"
+    )
   )
   .settings(majorVersion := 1)
   .settings(playDefaultPort := 9823)
