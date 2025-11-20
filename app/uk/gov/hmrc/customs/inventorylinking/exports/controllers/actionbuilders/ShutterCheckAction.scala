@@ -76,7 +76,7 @@ class ShutterCheckAction @Inject()(logger: ExportsLogger,
      }
   }
 
-  private def versionShuttered[A](apiVersion: ApiVersion)(implicit cir: ConversationIdRequest[A]): Either[Result, ApiVersionRequest[A]] = {
+    private def versionShuttered[A](apiVersion: ApiVersion)(implicit cir: ConversationIdRequest[A]): Either[Result, ApiVersionRequest[A]] = {
 
     val serviceUnavailableResult = Left(errorResponseVersionShuttered)
 

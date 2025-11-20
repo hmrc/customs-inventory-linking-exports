@@ -58,7 +58,7 @@ class ApiSubscriptionFieldsActionSpec extends UnitSpec with MockitoSugar {
     "get Right of fields for a valid request" in new SetUp {
       when(connector.getSubscriptionFields(any[ApiSubscriptionKey])(ameq(vhr))).thenReturn(Future.successful(Some(ApiSubscriptionFieldsTestData.apiSubscriptionFields)))
 
-      val Right(actual: ApiSubscriptionFieldsRequest[AnyContentAsXml]) = await(service.refine(vhr))
+      val Right(actual: ApiSubscriptionFieldsRequest[AnyContentAsXml]) = await(service.refine(vhr)) : @unchecked
 
       actual shouldBe vhr.toApiSubscriptionFieldsRequest(ApiSubscriptionFieldsTestData.apiSubscriptionFields)
     }
@@ -66,7 +66,7 @@ class ApiSubscriptionFieldsActionSpec extends UnitSpec with MockitoSugar {
     "ensure that correct version is used in call to subscription service" in new SetUp {
       when(connector.getSubscriptionFields(any[ApiSubscriptionKey])(ameq(TestValidatedHeadersRequestV2))).thenReturn(Future.successful(Some(ApiSubscriptionFieldsTestData.apiSubscriptionFields)))
 
-      val Right(actual: ApiSubscriptionFieldsRequest[AnyContentAsXml]) = await(service.refine(TestValidatedHeadersRequestV2))
+      val Right(actual: ApiSubscriptionFieldsRequest[AnyContentAsXml]) = await(service.refine(TestValidatedHeadersRequestV2)) : @unchecked
 
       actual shouldBe TestValidatedHeadersRequestV2.toApiSubscriptionFieldsRequest(ApiSubscriptionFieldsTestData.apiSubscriptionFields)
     }
@@ -74,7 +74,7 @@ class ApiSubscriptionFieldsActionSpec extends UnitSpec with MockitoSugar {
     "get Left of fields for a valid request" in new SetUp {
       when(connector.getSubscriptionFields(any[ApiSubscriptionKey])(ameq(vhr))).thenReturn(Future.successful(None))
 
-      val Left(actual: Result) = await(service.refine(vhr))
+      val Left(actual: Result) = await(service.refine(vhr)) : @unchecked
 
       actual.header.headers.get(XConversationIdHeaderName).get shouldBe vhr.conversationId.toString
     }

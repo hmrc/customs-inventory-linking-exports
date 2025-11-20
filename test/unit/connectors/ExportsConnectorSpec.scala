@@ -35,12 +35,10 @@ import play.api.mvc.AnyContentAsXml
 import play.api.test.Helpers
 import play.api.test.Helpers.ACCEPT
 import uk.gov.hmrc.customs.inventorylinking.exports.connectors.CircuitBreakerConnector
-//import uk.gov.hmrc.customs.inventorylinking.exports.connectors.ExportsConnector.RetryError
 import uk.gov.hmrc.customs.inventorylinking.exports.model.*
 import uk.gov.hmrc.customs.inventorylinking.exports.config.{ServiceConfig, ServiceConfigProvider}
 import uk.gov.hmrc.customs.inventorylinking.exports.connectors.ExportsConnector
 import uk.gov.hmrc.customs.inventorylinking.exports.logging.CdsLogger
-import uk.gov.hmrc.customs.inventorylinking.exports.model.ExportsCircuitBreakerConfig
 import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.ValidatedPayloadRequest
 import uk.gov.hmrc.customs.inventorylinking.exports.services.ExportsConfigService
 import uk.gov.hmrc.http.client.{HttpClientV2, RequestBuilder}
