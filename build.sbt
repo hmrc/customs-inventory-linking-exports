@@ -6,7 +6,6 @@ import sbt.Tests.{Group, SubProcess}
 import sbt.{Test, inConfig}
 import uk.gov.hmrc.DefaultBuildSettings.addTestReportOption
 import uk.gov.hmrc.gitstamp.GitStampPlugin.*
-import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin.*
 
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -26,13 +25,12 @@ lazy val microservice = (project in file("."))
   .enablePlugins(PlayScala)
   .enablePlugins(SbtDistributablesPlugin)
   .disablePlugins(sbt.plugins.JUnitXmlReportPlugin)
-  .settings(playDefaultPort := 9823)
   .settings(
+    playDefaultPort := 9823,
     scalaVersion := "3.3.6",
     commonSettings,
     unitTestSettings,
-    integrationComponentTestSettings,
-    allTest,
+    it,
     scoverageSettings,
     scalacOptions ++= Seq(
       "-Wconf:src=routes/.*:s",
