@@ -14,9 +14,7 @@ import scala.language.postfixOps
 
 name := "customs-inventory-linking-exports"
 
-lazy val CdsIntegrationComponentTest = config("it") extend Test
 
-val testConfig = Seq(CdsIntegrationComponentTest, Test)
 
 def forkedJvmPerTestConfig(tests: Seq[TestDefinition], packages: String*): Seq[Group] =
   tests.groupBy(_.name.takeWhile(_ != '.')).filter(packageAndTests => packages contains packageAndTests._1) map {
@@ -24,21 +22,14 @@ def forkedJvmPerTestConfig(tests: Seq[TestDefinition], packages: String*): Seq[G
       Group(packg, theTests, SubProcess(ForkOptions()))
   } toSeq
 
-lazy val testAll = TaskKey[Unit]("test-all")
-lazy val allTest = Seq(testAll := (CdsIntegrationComponentTest / test).dependsOn(Test / test).value)
-
 lazy val microservice = (project in file("."))
   .enablePlugins(PlayScala)
   .enablePlugins(SbtDistributablesPlugin)
   .disablePlugins(sbt.plugins.JUnitXmlReportPlugin)
-  .configs(testConfig: _*)
-  .settings(playDefaultPort := 9823)
   .settings(
     scalaVersion := "3.3.6",
     commonSettings,
     unitTestSettings,
-    integrationComponentTestSettings,
-    allTest,
     scoverageSettings,
     scalacOptions ++= Seq(
       "-Wconf:src=routes/.*:s",
@@ -58,14 +49,18 @@ lazy val unitTestSettings =
       addTestReportOption(Test, "test-reports")
     )
 
-lazy val integrationComponentTestSettings =
-  inConfig(CdsIntegrationComponentTest)(Defaults.testTasks) ++
-    Seq(
-      CdsIntegrationComponentTest / testOptions := Seq(Tests.Filter(integrationComponentTestFilter)),
-      CdsIntegrationComponentTest / parallelExecution := false,
-      addTestReportOption(CdsIntegrationComponentTest, "int-comp-test-reports"),
-      CdsIntegrationComponentTest / testGrouping := forkedJvmPerTestConfig((Test / definedTests).value, "integration", "component")
-    )
+lazy val it = (project in file("it"))
+  .enablePlugins(PlayScala)
+  .dependsOn(microservice % "test->test;compile->compile")
+  .settings(
+    scalaVersion := "3.3.6",
+    majorVersion := 1,
+    Test / testOptions := Seq(Tests.Filter(integrationComponentTestFilter)),
+    Test / parallelExecution := false,
+    addTestReportOption(Test, "int-comp-test-reports"),
+    Test / testGrouping := forkedJvmPerTestConfig((Test / definedTests).value, "integration", "component"),
+    libraryDependencies ++= AppDependencies.test
+  )
 
 lazy val commonSettings: Seq[Setting[_]] = gitStampSettings
 
