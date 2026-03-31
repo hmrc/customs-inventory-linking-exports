@@ -11,7 +11,8 @@
         "status": "BETA",
         "endpointsEnabled": @v1Enabled,
         "access": {
-          "type": "PUBLIC"
+          "type": "PRIVATE",
+          "isTrial": true
         },
         "fieldDefinitions": [
           {
@@ -46,7 +47,8 @@
         "status": "BETA",
         "endpointsEnabled": @v2Enabled,
         "access": {
-          "type": "PRIVATE"
+          "type": "PRIVATE",
+          "isTrial": true
         },
         "fieldDefinitions": [
           {
