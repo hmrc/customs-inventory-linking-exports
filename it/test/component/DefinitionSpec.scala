@@ -78,7 +78,8 @@ class DefinitionSpec extends ComponentTestSpec
           |        "status": "BETA",
           |        "endpointsEnabled": true,
           |        "access": {
-          |          "type": "PUBLIC"
+          |          "type": "PRIVATE",
+          |          "isTrial": true
           |        },
           |        "fieldDefinitions": [
           |          {
@@ -113,7 +114,8 @@ class DefinitionSpec extends ComponentTestSpec
           |        "status": "BETA",
           |        "endpointsEnabled": false,
           |        "access": {
-          |          "type": "PRIVATE"
+          |          "type": "PRIVATE",
+          |          "isTrial": true
           |        },
           |        "fieldDefinitions": [
           |          {
