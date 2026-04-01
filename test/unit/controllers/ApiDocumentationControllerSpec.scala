@@ -69,7 +69,8 @@ class ApiDocumentationControllerSpec extends PlaySpec with MockitoSugar with Res
          |            "status":"BETA",
          |            "endpointsEnabled":$v1Enabled,
          |            "access":{
-         |              "type": "PUBLIC"
+         |              "type": "PRIVATE",
+         |              "isTrial": true
          |            },
          |            "fieldDefinitions":[
          |             {
@@ -104,7 +105,8 @@ class ApiDocumentationControllerSpec extends PlaySpec with MockitoSugar with Res
          |            "status":"BETA",
          |            "endpointsEnabled":$v2Enabled,
          |            "access":{
-         |               "type": "PRIVATE"
+         |               "type": "PRIVATE",
+         |               "isTrial": true
          |            },
          |            "fieldDefinitions":[
          |             {
