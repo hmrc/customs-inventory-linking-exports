@@ -27,6 +27,7 @@
 			<xs:element name="masterOpt" type="masterOpt" minOccurs="0" />
 			<xs:element name="movementReference" type="movementReference" minOccurs="0" nillable="true" />
 			<xs:element name="transportDetails" type="transportDetails"	minOccurs="0" />
+			<xs:element name="isFinal" type="flag" minOccurs="0" maxOccurs="1" />
 		</xs:sequence>
 	</xs:complexType>
  
