@@ -9,8 +9,8 @@ info:
     You can download the following zipped archive, which contains XML schemas and examples of the request and response payloads for each of the API endpoints:
 
     [Schemas and example messages](/api-documentation/docs/api/download/customs-inventory-linking-exports/2.0/inventory-linking-exports-schemas.zip)
-
-    ZIP, 3.5MB last updated 25/06/2026
+    
+    ZIP, 2.6MB last updated 25/06/2026
 servers:
   - url: https://test-api.service.hmrc.gov.uk
     description: Sandbox
