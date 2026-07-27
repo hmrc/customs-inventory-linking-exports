@@ -67,6 +67,24 @@ object XMLTestData {
       <goodsLocation>Secret location</goodsLocation>
     </inventoryLinkingMovementRequest>
 
+  val ValidInventoryLinkingMovementWithIsFinalRequestXML: Elem =
+    <inv:inventoryLinkingMovementRequest xmlns="http://gov.uk/customs/inventoryLinking/v1">
+      <inv:messageCode>EDL</inv:messageCode>
+        <inv:ucrBlock>
+          <inv:ucr>4GB610693642685-L7F7QAUXU</inv:ucr>
+          <inv:ucrType>D</inv:ucrType>
+        </inv:ucrBlock>
+      <inv:goodsLocation>GBAUEUTEUTEUTGVM</inv:goodsLocation>
+      <inv:goodsDepartureDateTime>2024-12-06T15:47:04.004Z</inv:goodsDepartureDateTime>
+      <inv:movementReference>ALM71UZZVODGS7L048KT6VDMN</inv:movementReference>
+      <inv:transportDetails>
+        <inv:transportID>11CSCLGLOBE</inv:transportID>
+        <inv:transportMode>1</inv:transportMode>
+        <inv:transportNationality>GB</inv:transportNationality>
+      </inv:transportDetails>
+      <inv:isFinal>0</inv:isFinal>
+    </inv:inventoryLinkingMovementRequest>
+
   val ValidInventoryLinkingConsolidationRequestXML: Elem =
     <inventoryLinkingConsolidationRequest xmlns="http://gov.uk/customs/inventoryLinking/v1">
       <messageCode>EAC</messageCode>
@@ -114,6 +132,73 @@ object XMLTestData {
           </inventoryLinkingMovementRequest>
       </n1:requestDetail>
       </n1:InventoryLinkingExportsInboundRequest>
+
+  val TestXmlPayloadWithFinal: Elem =
+    <n1:InventoryLinkingExportsInboundRequest xmlns:n1="http://www.hmrc.gov.uk/cds/inventorylinking/exportmovement"
+                                              xmlns:gw="http://gov.uk/customs/inventoryLinking/gatewayHeader/v1"
+                                              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                                              xmlns:inv="http://gov.uk/customs/inventoryLinking/v1"
+                                              xsi:schemaLocation="http://www.hmrc.gov.uk/cds/inventorylinking/exportmovement DEC39_Root.xsd">
+      <n1:requestCommon>
+        <gw:badgeIdentifier>{validBadgeIdentifierValue}</gw:badgeIdentifier>
+        <gw:submitter>{declarantEoriValue}</gw:submitter>
+        <gw:clientID>{TestSubscriptionFieldsId.value}</gw:clientID>
+        <gw:conversationID>{conversationIdValue}</gw:conversationID>
+        <gw:correlationID>{correlationIdValue}</gw:correlationID>
+        <gw:dateTimeStamp>{dateTime.atOffset(ZoneOffset.UTC).format(new DateTimeService().isoFormatNoMillis)}</gw:dateTimeStamp>
+      </n1:requestCommon>
+      <n1:requestDetail>
+        <inv:inventoryLinkingMovementRequest xmlns="http://gov.uk/customs/inventoryLinking/v1">
+          <inv:messageCode>EDL</inv:messageCode>
+          <inv:ucrBlock>
+            <inv:ucr>4GB610693642685-L7F7QAUXU</inv:ucr>
+            <inv:ucrType>D</inv:ucrType>
+          </inv:ucrBlock>
+          <inv:goodsLocation>GBAUEUTEUTEUTGVM</inv:goodsLocation>
+          <inv:goodsDepartureDateTime>2024-12-06T15:47:04.004Z</inv:goodsDepartureDateTime>
+          <inv:movementReference>ALM71UZZVODGS7L048KT6VDMN</inv:movementReference>
+          <inv:transportDetails>
+            <inv:transportID>11CSCLGLOBE</inv:transportID>
+            <inv:transportMode>1</inv:transportMode>
+            <inv:transportNationality>GB</inv:transportNationality>
+          </inv:transportDetails>
+          <inv:isFinal>0</inv:isFinal>
+        </inv:inventoryLinkingMovementRequest>
+      </n1:requestDetail>
+    </n1:InventoryLinkingExportsInboundRequest>
+
+  val TestXmlPayloadWithoutFinal: Elem =
+    <n1:InventoryLinkingExportsInboundRequest xmlns:n1="http://www.hmrc.gov.uk/cds/inventorylinking/exportmovement"
+                                              xmlns:gw="http://gov.uk/customs/inventoryLinking/gatewayHeader/v1"
+                                              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                                              xmlns:inv="http://gov.uk/customs/inventoryLinking/v1"
+                                              xsi:schemaLocation="http://www.hmrc.gov.uk/cds/inventorylinking/exportmovement DEC39_Root.xsd">
+      <n1:requestCommon>
+        <gw:badgeIdentifier>{validBadgeIdentifierValue}</gw:badgeIdentifier>
+        <gw:submitter>{declarantEoriValue}</gw:submitter>
+        <gw:clientID>{TestSubscriptionFieldsId.value}</gw:clientID>
+        <gw:conversationID>{conversationIdValue}</gw:conversationID>
+        <gw:correlationID>{correlationIdValue}</gw:correlationID>
+        <gw:dateTimeStamp>{dateTime.atOffset(ZoneOffset.UTC).format(new DateTimeService().isoFormatNoMillis)}</gw:dateTimeStamp>
+      </n1:requestCommon>
+      <n1:requestDetail>
+        <inv:inventoryLinkingMovementRequest xmlns="http://gov.uk/customs/inventoryLinking/v1">
+          <inv:messageCode>EDL</inv:messageCode>
+          <inv:ucrBlock>
+            <inv:ucr>4GB610693642685-L7F7QAUXU</inv:ucr>
+            <inv:ucrType>D</inv:ucrType>
+          </inv:ucrBlock>
+          <inv:goodsLocation>GBAUEUTEUTEUTGVM</inv:goodsLocation>
+          <inv:goodsDepartureDateTime>2024-12-06T15:47:04.004Z</inv:goodsDepartureDateTime>
+          <inv:movementReference>ALM71UZZVODGS7L048KT6VDMN</inv:movementReference>
+          <inv:transportDetails>
+            <inv:transportID>11CSCLGLOBE</inv:transportID>
+            <inv:transportMode>1</inv:transportMode>
+            <inv:transportNationality>GB</inv:transportNationality>
+          </inv:transportDetails>
+        </inv:inventoryLinkingMovementRequest>
+      </n1:requestDetail>
+    </n1:InventoryLinkingExportsInboundRequest>
 
   val xmlRequests = Table(
     ("linkingType", "xml"),

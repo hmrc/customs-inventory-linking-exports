@@ -16,16 +16,18 @@
 
 package unit.xml
 
-import org.scalatest.prop.TableDrivenPropertyChecks._
+import org.mockito.Mockito.{when, reset}
+import org.scalatest.prop.TableDrivenPropertyChecks.*
 import org.scalatestplus.mockito.MockitoSugar
+import play.api.Configuration
 import play.api.mvc.AnyContentAsXml
-import uk.gov.hmrc.customs.inventorylinking.exports.services.DateTimeService
+import uk.gov.hmrc.customs.inventorylinking.exports.services.{DateTimeService, ExportsConfigService}
 import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.ValidatedPayloadRequest
 import uk.gov.hmrc.customs.inventorylinking.exports.xml.PayloadDecorator
 import util.UnitSpec
-import util.ApiSubscriptionFieldsTestData._
-import util.TestData._
-import util.XMLTestData._
+import util.ApiSubscriptionFieldsTestData.*
+import util.TestData.*
+import util.XMLTestData.*
 
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
@@ -33,11 +35,11 @@ import scala.xml.NodeSeq
 
 class PayloadDecoratorSpec extends UnitSpec with MockitoSugar {
 
+  protected val mockConfig: Configuration = mock[Configuration]
+
   private val xmlPayload: NodeSeq = <node1></node1>
-
   private val commonLabel = "requestCommon"
-
-  private val decorator = new PayloadDecorator()
+  private val decorator = new PayloadDecorator(mockConfig)
 
   "PayloadDecorator for CSP" should {
     val vprWithEoriAndBadgeIdentifier: ValidatedPayloadRequest[AnyContentAsXml] = TestCspValidatedPayloadRequestWithEoriAndBadgeIdentifier
@@ -45,10 +47,26 @@ class PayloadDecoratorSpec extends UnitSpec with MockitoSugar {
       decorator.decorate(payload, TestSubscriptionFieldsId, correlationId, dateTime)(vprWithEoriAndBadgeIdentifier)
     }
 
+    when(mockConfig.getOptional[Boolean]("features.removeIsFinalFlag")).thenReturn(Some(true))
+
     "wrap passed complete inventoryLinkingMovementRequest" in {
       val result = wrapPayloadWithEoriAndBadgeIdentifier(ValidInventoryLinkingMovementRequestXML)
 
        scala.xml.Utility.trim(result.head) shouldBe scala.xml.Utility.trim(wrappedValidXML.head)
+    }
+
+    "remove isFinal when feature flag removeIsFinalFlag is set to true" in {
+      val result = wrapPayloadWithEoriAndBadgeIdentifier(ValidInventoryLinkingMovementWithIsFinalRequestXML)
+
+      scala.xml.Utility.trim(result.head) shouldBe scala.xml.Utility.trim(TestXmlPayloadWithoutFinal.head)
+    }
+
+    "keep isFinal when feature flag removeIsFinalFlag is set to false" in {
+      reset(mockConfig)
+      when(mockConfig.getOptional[Boolean]("features.removeIsFinalFlag")).thenReturn(Some(false))
+      val result = wrapPayloadWithEoriAndBadgeIdentifier(ValidInventoryLinkingMovementWithIsFinalRequestXML)
+
+      scala.xml.Utility.trim(result.head) shouldBe scala.xml.Utility.trim(TestXmlPayloadWithFinal.head)
     }
 
     forAll(xmlRequests) { (linkingType, xml) =>
@@ -133,6 +151,8 @@ class PayloadDecoratorSpec extends UnitSpec with MockitoSugar {
   }
 
   "PayloadDecorator for non-CSP" should {
+    when(mockConfig.getOptional[Boolean]("features.removeIsFinalFlag")).thenReturn(Some(true))
+
     implicit val vpr: ValidatedPayloadRequest[AnyContentAsXml] = TestNonCspValidatedPayloadRequest
     def wrapPayload(payload: NodeSeq = xmlPayload): NodeSeq = decorator.decorate(payload, TestSubscriptionFieldsId, correlationId, dateTime)
 

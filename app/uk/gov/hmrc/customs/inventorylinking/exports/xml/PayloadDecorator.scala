@@ -16,17 +16,18 @@
 
 package uk.gov.hmrc.customs.inventorylinking.exports.xml
 
-import uk.gov.hmrc.customs.inventorylinking.exports.model._
+import play.api.Configuration
+import uk.gov.hmrc.customs.inventorylinking.exports.model.*
 import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.ValidatedPayloadRequest
 import uk.gov.hmrc.customs.inventorylinking.exports.services.DateTimeService
 
 import java.time.format.DateTimeFormatter
 import java.time.{LocalDateTime, ZoneOffset}
-import javax.inject.Singleton
-import scala.xml.NodeSeq
+import javax.inject.{Inject, Singleton}
+import scala.xml.{Elem, NodeSeq}
 
 @Singleton
-class PayloadDecorator() {
+class PayloadDecorator @Inject() (config: Configuration){
 
   private def maybeBadgeIdentifierElement(authorisedAs: AuthorisedAs): NodeSeq = {
     def badgeIdElementFrom(badgeIdentifier: BadgeIdentifier): NodeSeq = {
@@ -61,7 +62,10 @@ class PayloadDecorator() {
   }
 
   def decorate[A](xml: NodeSeq, clientId: SubscriptionFieldsId, correlationId: CorrelationId, dateTime: LocalDateTime)(implicit vpr: ValidatedPayloadRequest[A]): NodeSeq = {
+    val featureFlagName: String = "features.removeIsFinalFlag"
+    val removeIsFinalFlag: Option[Boolean] = config.getOptional[Boolean](featureFlagName)
     val isoFormatDate: DateTimeFormatter = new DateTimeService().isoFormatNoMillis
+    val xmlBody = if (removeIsFinalFlag.getOrElse(false)) removeElementFromPayload(xml, "isFinal") else xml
 
     <n1:InventoryLinkingExportsInboundRequest xmlns:inv="http://gov.uk/customs/inventoryLinking/v1"
                                               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -77,8 +81,16 @@ class PayloadDecorator() {
         <gw:dateTimeStamp>{dateTime.atOffset(ZoneOffset.UTC).format(isoFormatDate)}</gw:dateTimeStamp>
       </n1:requestCommon>
       <n1:requestDetail>
-        { xml }
+        { xmlBody }
       </n1:requestDetail>
     </n1:InventoryLinkingExportsInboundRequest>
+  }
+
+  private def removeElementFromPayload(xmlPayload: NodeSeq, elementToRemove: String): NodeSeq = {
+    xmlPayload.map {
+      case e: Elem =>
+        e.copy(child = e.child.filterNot(_.label == elementToRemove))
+      case other => other
+    }
   }
 }
