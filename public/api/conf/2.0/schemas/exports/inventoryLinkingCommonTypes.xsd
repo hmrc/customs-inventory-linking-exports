@@ -266,4 +266,24 @@ Change History:
 		</xs:restriction>
 	</xs:simpleType>
 
+	<xs:simpleType name="flag">
+		<xs:annotation>
+			<xs:documentation>
+				<xs:description value="Used for attributes that can have a positive or a negative value."/>
+			</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:token">
+			<xs:enumeration value="0">
+				<xs:annotation>
+					<xs:documentation>NO</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="1">
+				<xs:annotation>
+					<xs:documentation>YES</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+		</xs:restriction>
+	</xs:simpleType>
+
 </xs:schema>
