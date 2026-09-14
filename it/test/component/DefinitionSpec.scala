@@ -77,10 +77,7 @@ class DefinitionSpec extends ComponentTestSpec
           |        "version": "1.0",
           |        "status": "BETA",
           |        "endpointsEnabled": true,
-          |        "access": {
-          |          "type": "PRIVATE",
-          |          "isTrial": true
-          |        },
+          |        "access": "CONTROLLED",
           |        "fieldDefinitions": [
           |          {
           |            "name": "callbackUrl",
@@ -113,10 +110,7 @@ class DefinitionSpec extends ComponentTestSpec
           |        "version": "2.0",
           |        "status": "BETA",
           |        "endpointsEnabled": false,
-          |        "access": {
-          |          "type": "PRIVATE",
-          |          "isTrial": true
-          |        },
+          |        "access": "CONTROLLED",
           |        "fieldDefinitions": [
           |          {
           |            "name": "callbackUrl",
