@@ -64,8 +64,15 @@ class CustomsMetricsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPe
    *
    * @return
    */
-  def localhostString(): String = "127.0.0.1"
+  def localhostString(): String = {
+    val isJenkins = System.getenv("HOME") == "/home/jenkins"
+    val isWsl = Option(System.getenv("WSL_DISTRO_NAME")).isDefined
 
+    if (isJenkins || isWsl)
+      "127.0.0.1"
+    else
+      "[0:0:0:0:0:0:0:1]"
+  }
   override protected def beforeAll(): Unit =  {
     startMockServer()
   }
