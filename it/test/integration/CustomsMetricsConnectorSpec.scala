@@ -32,6 +32,7 @@ package integration
  * limitations under the License.
  */
 
+import org.scalactic.Prettifier.default
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
@@ -41,7 +42,7 @@ import play.api.test.Helpers.{BAD_REQUEST, INTERNAL_SERVER_ERROR, NOT_FOUND}
 import uk.gov.hmrc.customs.inventorylinking.exports.connectors.CustomsMetricsConnector
 import uk.gov.hmrc.customs.inventorylinking.exports.logging.ExportsLogger
 import uk.gov.hmrc.customs.inventorylinking.exports.model.actionbuilders.ValidatedPayloadRequest
-import uk.gov.hmrc.http._
+import uk.gov.hmrc.http.*
 import util.CustomsMetricsTestData.ValidCustomsMetricsRequest
 import util.ExternalServicesConfig.{Host, Port}
 import util.TestData
@@ -63,9 +64,7 @@ class CustomsMetricsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPe
    *
    * @return
    */
-  def localhostString(): String = {
-    if (System.getenv("HOME") == "/home/jenkins") "127.0.0.1" else "[0:0:0:0:0:0:0:1]"
-  }
+  def localhostString(): String = "127.0.0.1"
 
   override protected def beforeAll(): Unit =  {
     startMockServer()
@@ -118,14 +117,14 @@ class CustomsMetricsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPe
       verifyExportsLoggerError("Call to customs metrics failed. url=http://localhost:6001/log-times, status=500, error=received a non 2XX response")
     }
 
-//    "return a failed future when fail to connect the external service" in {
-//      stopMockServer()
-//
-//      intercept[RuntimeException](await(sendValidRequest())).getCause.getClass shouldBe classOf[BadGatewayException]
-//      verifyExportsLoggerError(s"Call to customs metrics failed. url=http://localhost:6001/log-times, status=502, error=POST of 'http://localhost:6001/log-times' failed. Caused by: 'Connection refused: localhost/${localhostString()}:6001'")
-//
-//      startMockServer()
-//    }
+    "return a failed future when fail to connect the external service" in {
+      stopMockServer()
+
+      intercept[RuntimeException](await(sendValidRequest())).getCause.getClass shouldBe classOf[BadGatewayException]
+      verifyExportsLoggerError(s"Call to customs metrics failed. url=http://localhost:6001/log-times, status=502, error=POST of 'http://localhost:6001/log-times' failed. Caused by: 'Connection refused: localhost/${localhostString()}:6001'")
+
+      startMockServer()
+    }
   }
 
   private def sendValidRequest() = {
