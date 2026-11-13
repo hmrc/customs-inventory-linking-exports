@@ -65,14 +65,15 @@ class CustomsMetricsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPe
    * @return
    */
   def localhostString(): String = {
-    val isJenkins = System.getenv("HOME") == "/home/jenkins"
+    val home = Option(System.getenv("HOME")).getOrElse("")
     val isWsl = Option(System.getenv("WSL_DISTRO_NAME")).isDefined
 
-    if (isJenkins || isWsl)
+    if (home.contains("jenkins") || isWsl)
       "127.0.0.1"
     else
       "[0:0:0:0:0:0:0:1]"
   }
+
   override protected def beforeAll(): Unit =  {
     startMockServer()
   }
@@ -129,7 +130,6 @@ class CustomsMetricsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPe
 
       intercept[RuntimeException](await(sendValidRequest())).getCause.getClass shouldBe classOf[BadGatewayException]
       verifyExportsLoggerError(s"Call to customs metrics failed. url=http://localhost:6001/log-times, status=502, error=POST of 'http://localhost:6001/log-times' failed. Caused by: 'Connection refused: localhost/${localhostString()}:6001'")
-
       startMockServer()
     }
   }
