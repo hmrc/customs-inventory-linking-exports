@@ -64,16 +64,25 @@ class CustomsMetricsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPe
    *
    * @return
    */
-  def localhostString(): String = {
-    val home = Option(System.getenv("HOME")).getOrElse("")
-    val isWsl = Option(System.getenv("WSL_DISTRO_NAME")).isDefined
+  def isJenkins: Boolean =
+    System.getenv("HOME") == "/home/jenkins"
 
-    if (home.contains("jenkins") || isWsl)
+  private def localhostString(): String = {
+    val isWsl = Option(System.getenv("WSL_DISTRO_NAME")).isDefined
+    if (isJenkins || isWsl) {
       "127.0.0.1"
-    else
+    } else {
       "[0:0:0:0:0:0:0:1]"
+    }
   }
 
+  private def connectionFailedString: String = {
+    if (isJenkins) {
+      " (connect failed)"
+    } else {
+      ""
+    }
+  }
   override protected def beforeAll(): Unit =  {
     startMockServer()
   }
@@ -126,12 +135,12 @@ class CustomsMetricsConnectorSpec extends IntegrationTestSpec with GuiceOneAppPe
     }
 
     "return a failed future when fail to connect the external service" in {
-      eventually{
-        stopMockServer()
-        Thread.sleep(2000)
-        intercept[RuntimeException](await(sendValidRequest())).getCause.getClass shouldBe classOf[BadGatewayException]
-        verifyExportsLoggerError(s"Call to customs metrics failed. url=http://localhost:6001/log-times, status=502, error=POST of 'http://localhost:6001/log-times' failed. Caused by: 'Connection refused: localhost/${localhostString()}:6001'")
-      }
+      val expectedString = s"Call to customs metrics failed. url=http://localhost:6001/log-times, status=502, error=POST of 'http://localhost:6001/log-times' failed. Caused by: 'Connection refused$connectionFailedString: localhost/${localhostString()}:6001'"
+      println(s"ExpectedString:$expectedString")
+      stopMockServer()
+      intercept[RuntimeException](await(sendValidRequest())).getCause.getClass shouldBe classOf[BadGatewayException]
+      verifyExportsLoggerError(expectedString)
+
       startMockServer()
     }
   }

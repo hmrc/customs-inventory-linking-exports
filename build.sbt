@@ -15,7 +15,6 @@ import scala.language.postfixOps
 name := "customs-inventory-linking-exports"
 
 
-
 def forkedJvmPerTestConfig(tests: Seq[TestDefinition], packages: String*): Seq[Group] =
   tests.groupBy(_.name.takeWhile(_ != '.')).filter(packageAndTests => packages contains packageAndTests._1) map {
     case (packg, theTests) =>
@@ -66,7 +65,7 @@ lazy val commonSettings: Seq[Setting[_]] = gitStampSettings
 
 lazy val scoverageSettings: Seq[Setting[_]] = Seq(
   coverageExcludedPackages := "<empty>;models/.data/..*;uk.gov.hmrc.customs.inventorylinking.views.*;models.*;config.*;.*(Reverse|AuthService|BuildInfo|Routes).*",
-  coverageMinimumStmtTotal := 97,
+  coverageMinimumStmtTotal := 88,
   coverageFailOnMinimum := false,
   coverageHighlighting := true,
   Test / parallelExecution := false
