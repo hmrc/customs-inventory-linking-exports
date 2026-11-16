@@ -17,5 +17,4 @@ object AppDependencies {
     "org.scalatestplus"             %% "mockito-4-11"                % "3.2.18.0"  % Test,
     "uk.gov.hmrc"                   %% s"bootstrap-test-$playVersion"% bootstrap   % Test
   )
-
 }
